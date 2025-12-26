@@ -1,0 +1,21 @@
+
+> vite_react_shadcn_ts@0.0.0 dev
+> vite --host 0.0.0.0
+
+
+  VITE v5.4.21  ready in 3261 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://10.255.255.254:5173/
+  ➜  Network: http://172.29.87.250:5173/
+10:58:50 AM [vite] vite.config.ts changed, restarting server...
+Re-optimizing dependencies because lockfile has changed
+10:58:51 AM [vite] server restarted.
+10:58:59 AM [vite] page reload index.html
+11:02:41 AM [vite] .env changed, restarting server...
+11:02:41 AM [vite] server restarted.
+12:09:41 PM [vite] vite.config.ts changed, restarting server...
+12:09:41 PM [vite] .env changed, restarting server...
+12:09:41 PM [vite] page reload index.html
+12:09:41 PM [vite] server restarted.
+(!) Could not auto-determine entry point from rollupOptions or html files and there are no explicit optimizeDeps.include patterns. Skipping dependency pre-bundling.
