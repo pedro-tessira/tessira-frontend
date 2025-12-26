@@ -1,5 +1,4 @@
 # Horizon Frontend Docs
 
-For backend details, see the server repository:
-
+For backend services and API details, see:
 - https://github.com/pedro-tessira/horizon-backend
