@@ -25,7 +25,7 @@ const LOAD_MORE_MONTHS = 3;
 const SCROLL_THRESHOLD = 500;
 
 const getScopeIcon = (scope: EventScope) => {
-  if (scope === 'COMPANY') return Building2;
+  if (scope === 'GLOBAL') return Building2;
   if (scope === 'TEAM') return Users;
   return User;
 };
@@ -110,7 +110,7 @@ export default function SharedView() {
 
   const timelineEvents = useMemo<TimelineEvent[]>(() => {
     if (!timeline) return [];
-    const companyEvents = timeline.companyLane.events.map(event => ({
+    const companyEvents = timeline.globalLane.events.map(event => ({
       ...event,
       eventTypeId: event.eventTypeId ?? event.eventType?.id ?? null,
       employeeId: null,
@@ -131,7 +131,7 @@ export default function SharedView() {
   const aggregationByRow = useMemo(() => {
     const map = new Map<string, { hasMore: boolean; hiddenCount: number }>();
     if (!timeline) return map;
-    map.set(COMPANY_ROW_ID, timeline.companyLane.aggregation);
+    map.set(COMPANY_ROW_ID, timeline.globalLane.aggregation);
     timeline.rows.forEach(row => {
       map.set(row.employee.id, row.aggregation);
     });

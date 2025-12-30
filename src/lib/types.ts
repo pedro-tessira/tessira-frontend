@@ -1,4 +1,4 @@
-export type EventScope = "INDIVIDUAL" | "TEAM" | "COMPANY";
+export type EventScope = "INDIVIDUAL" | "TEAM" | "GLOBAL";
 export type EventSource = "WORKDAY" | "MANUAL";
 export type EventLevel = "individual" | "team" | "company";
 
@@ -24,9 +24,31 @@ export interface MeDto extends EmployeeDto {
   employeeId: string;
 }
 
+export type TeamRole = "OWNER" | "MEMBER";
+
 export interface TeamEmployeeDto extends EmployeeDto {
   teamId: string;
   isOwner?: boolean;
+  membershipId?: string;
+  roleInTeam?: TeamRole;
+}
+
+export interface TeamMembershipDto {
+  id: string;
+  teamId: string;
+  employeeId: string;
+  employeeDisplayName: string;
+  employeeEmail: string;
+  roleInTeam: TeamRole;
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface EmployeeSearchDto {
+  id: string;
+  displayName: string;
+  email: string;
+  source?: "INTERNAL_WORKDAY" | "EXTERNAL_MANUAL";
 }
 
 export interface EventTypeConfig {
@@ -61,7 +83,9 @@ export interface EventDto {
 }
 
 export interface TimelineResponseDto {
-  companyLane: {
+  team: TeamDto;
+  range: { from: string; to: string };
+  globalLane: {
     events: EventDto[];
     aggregation: { hasMore: boolean; hiddenCount: number };
   };

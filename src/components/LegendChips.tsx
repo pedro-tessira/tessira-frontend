@@ -4,7 +4,7 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 import { getEventColorClass } from '@/lib/eventColors';
 
 const getScopeIcon = (scope: EventScope) => {
-  if (scope === 'COMPANY') return Building2;
+  if (scope === 'GLOBAL') return Building2;
   if (scope === 'TEAM') return Users;
   return User;
 };

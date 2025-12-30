@@ -18,7 +18,7 @@ export function EventChip({ event, style }: EventChipProps) {
   const { toast } = useToast();
   const isCompanyRow = event.employeeId === null;
   const scopeIcon =
-    event.scope === 'COMPANY' ? Building2 : event.scope === 'TEAM' ? Users : User;
+    event.scope === 'GLOBAL' ? Building2 : event.scope === 'TEAM' ? Users : User;
   const ScopeIcon = scopeIcon;
   const colorClass = getEventColorClass(event.eventType, event.eventTypeId);
 

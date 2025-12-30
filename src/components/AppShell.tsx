@@ -20,7 +20,6 @@ import { AddEventModal } from './AddEventModal';
 import { ManageEventTypesModal } from './ManageEventTypesModal';
 import { useRowHeights } from '@/hooks/useRowHeights';
 import { useToast } from '@/hooks/use-toast';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getEventColorClass } from '@/lib/eventColors';
 import { clearToken } from '@/lib/auth';
 import { useTeams } from '@/queries/useTeams';
@@ -29,6 +28,10 @@ import { useEventTypes } from '@/queries/useEventTypes';
 import { useTimeline } from '@/queries/useTimeline';
 import { employeeEventsQueryOptions } from '@/queries/useEmployeeEvents';
 import { useCreateEvent } from '@/queries/useCreateEvent';
+import { useCreateTeam, useDeleteTeam, useUpdateTeam } from '@/queries/useTeamMutations';
+import { useCreateEventType, useDeleteEventType, useUpdateEventType } from '@/queries/useEventTypeMutations';
+import { useCreateTeamMember, useDeleteTeamMember, useUpdateTeamMember } from '@/queries/useTeamMemberMutations';
+import { useEmployeeSearch } from '@/queries/useEmployeeSearch';
 
 const COL_WIDTH = 80;
 const TODAY = new Date();
@@ -39,7 +42,7 @@ const SCROLL_THRESHOLD = 500; // pixels from edge to trigger load
 
 const mapScopeToLevel = (scope: EventScope): EventLevel => {
   if (scope === 'TEAM') return 'team';
-  if (scope === 'COMPANY') return 'company';
+  if (scope === 'GLOBAL') return 'company';
   return 'individual';
 };
 
@@ -147,7 +150,7 @@ export function AppShell() {
 
   const timelineEvents = useMemo<TimelineEvent[]>(() => {
     if (!timeline) return [];
-    const companyEvents = timeline.companyLane.events.map(event => ({
+    const companyEvents = timeline.globalLane.events.map(event => ({
       ...event,
       eventTypeId: event.eventTypeId ?? event.eventType?.id ?? null,
       employeeId: null,
@@ -168,7 +171,7 @@ export function AppShell() {
   const aggregationByRow = useMemo(() => {
     const map = new Map<string, { hasMore: boolean; hiddenCount: number }>();
     if (!timeline) return map;
-    map.set(COMPANY_ROW_ID, timeline.companyLane.aggregation);
+    map.set(COMPANY_ROW_ID, timeline.globalLane.aggregation);
     timeline.rows.forEach(row => {
       map.set(row.employee.id, row.aggregation);
     });
@@ -237,6 +240,8 @@ export function AppShell() {
     });
   };
 
+  const columns = useMemo(() => generateDayColumns(rangeStart, rangeEnd), [rangeStart, rangeEnd]);
+
   const scrollToToday = () => {
     if (timelineRef.current) {
       const daysFromStart = differenceInDays(TODAY, rangeStart);
@@ -258,6 +263,16 @@ export function AppShell() {
   }, [hasScrolledToToday, rangeStart, columns.length]);
 
   const createEventMutation = useCreateEvent();
+  const createTeamMutation = useCreateTeam();
+  const updateTeamMutation = useUpdateTeam();
+  const deleteTeamMutation = useDeleteTeam();
+  const createTeamMemberMutation = useCreateTeamMember();
+  const updateTeamMemberMutation = useUpdateTeamMember();
+  const deleteTeamMemberMutation = useDeleteTeamMember();
+  const searchEmployees = useEmployeeSearch();
+  const createEventTypeMutation = useCreateEventType(selectedTeamId);
+  const updateEventTypeMutation = useUpdateEventType(selectedTeamId);
+  const deleteEventTypeMutation = useDeleteEventType(selectedTeamId);
 
   const handleAddEvent = (payload: {
     title: string;
@@ -295,10 +310,10 @@ export function AppShell() {
     );
   };
 
-  const notifyNotImplemented = (action: string) => {
+  const notifyNotImplemented = (action: string, detail?: string) => {
     toast({
       title: 'Not implemented yet',
-      description: `${action} will be available in a future update.`,
+      description: detail ?? `${action} will be available in a future update.`,
     });
   };
 
@@ -307,15 +322,257 @@ export function AppShell() {
     window.location.assign('/');
   };
 
-  const handleAddEmployee = () => notifyNotImplemented('Adding team members');
-  const handleRemoveEmployee = () => notifyNotImplemented('Removing team members');
-  const handleUpdateEmployee = () => notifyNotImplemented('Updating team members');
-  const handleAddTeam = () => notifyNotImplemented('Creating teams');
-  const handleUpdateTeam = () => notifyNotImplemented('Updating teams');
-  const handleRemoveTeam = () => notifyNotImplemented('Deleting teams');
-  const handleAddEventType = () => notifyNotImplemented('Adding event types');
-  const handleUpdateEventType = () => notifyNotImplemented('Updating event types');
-  const handleRemoveEventType = () => notifyNotImplemented('Deleting event types');
+  const handleAddEmployee = async (name: string, teamId: string) => {
+    const query = name.trim();
+    if (!query) return;
+    try {
+      const matches = await searchEmployees(query);
+      if (matches.length === 0) {
+        toast({
+          title: 'Employee not found',
+          description: 'Use a more specific name or email.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      if (matches.length > 1) {
+        toast({
+          title: 'Multiple matches',
+          description: 'Use the employee email or ID to be specific.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      const [employee] = matches;
+      if (!employee) return;
+      if (teamEmployees.some(member => member.id === employee.id)) {
+        toast({
+          title: 'Already a member',
+          description: `${employee.displayName} is already in this team.`,
+        });
+        return;
+      }
+      createTeamMemberMutation.mutate(
+        { teamId, payload: { employeeId: employee.id, roleInTeam: 'MEMBER' } },
+        {
+          onSuccess: () => {
+            toast({
+              title: 'Member added',
+              description: `${employee.displayName} was added to the team.`,
+            });
+          },
+          onError: (error: { message?: string }) => {
+            toast({
+              title: 'Add member failed',
+              description: error?.message ?? 'Unable to add team member.',
+              variant: 'destructive',
+            });
+          },
+        }
+      );
+    } catch (error: unknown) {
+      const message = typeof error === 'object' && error && 'message' in error ? String(error.message) : 'Unable to search employees.';
+      toast({
+        title: 'Employee search failed',
+        description: message,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleRemoveEmployee = (teamId: string, membershipId: string) => {
+    deleteTeamMemberMutation.mutate(
+      { teamId, membershipId },
+      {
+      onSuccess: () => {
+        toast({
+          title: 'Member removed',
+          description: 'Team member removed successfully.',
+        });
+      },
+      onError: (error: { message?: string }) => {
+        toast({
+          title: 'Remove member failed',
+          description: error?.message ?? 'Unable to remove team member.',
+          variant: 'destructive',
+        });
+      },
+      }
+    );
+  };
+
+  const handleUpdateEmployee = (teamId: string, membershipId: string, _name: string, isOwner?: boolean) => {
+    if (typeof isOwner !== 'boolean') {
+      notifyNotImplemented('Renaming team members', 'Renaming team members is not available.');
+      return;
+    }
+    updateTeamMemberMutation.mutate(
+      { teamId, membershipId, payload: { roleInTeam: isOwner ? 'OWNER' : 'MEMBER' } },
+      {
+        onSuccess: () => {
+          toast({
+            title: 'Member updated',
+            description: 'Team member updated successfully.',
+          });
+        },
+        onError: (error: { message?: string }) => {
+          toast({
+            title: 'Member update failed',
+            description: error?.message ?? 'Unable to update team member.',
+            variant: 'destructive',
+          });
+        },
+      }
+    );
+  };
+  const handleAddTeam = (name: string) => {
+    createTeamMutation.mutate(
+      { name },
+      {
+        onSuccess: () => {
+          toast({
+            title: 'Team created',
+            description: `"${name}" has been created.`,
+          });
+        },
+        onError: (error: { message?: string }) => {
+          toast({
+            title: 'Team creation failed',
+            description: error?.message ?? 'Unable to create team.',
+            variant: 'destructive',
+          });
+        },
+      }
+    );
+  };
+  const handleUpdateTeam = (teamId: string, name: string) => {
+    updateTeamMutation.mutate(
+      { teamId, payload: { name } },
+      {
+        onSuccess: () => {
+          toast({
+            title: 'Team updated',
+            description: 'Team name updated successfully.',
+          });
+        },
+        onError: (error: { message?: string }) => {
+          toast({
+            title: 'Team update failed',
+            description: error?.message ?? 'Unable to update team.',
+            variant: 'destructive',
+          });
+        },
+      }
+    );
+  };
+  const handleRemoveTeam = (teamId: string) => {
+    deleteTeamMutation.mutate(teamId, {
+      onSuccess: () => {
+        toast({
+          title: 'Team deleted',
+          description: 'Team deleted successfully.',
+        });
+      },
+      onError: (error: { message?: string }) => {
+        toast({
+          title: 'Team deletion failed',
+          description: error?.message ?? 'Unable to delete team.',
+          variant: 'destructive',
+        });
+      },
+    });
+  };
+
+  const resolveEventTypeScope = (level: EventLevel): EventScope => {
+    if (level === 'team') return 'TEAM';
+    if (level === 'company') return 'GLOBAL';
+    return 'INDIVIDUAL';
+  };
+
+  const resolveEventTypeTeamId = (level: EventLevel, teamIds?: string[]) => {
+    if (level === 'team') {
+      return teamIds?.[0] ?? selectedTeamId ?? null;
+    }
+    return null;
+  };
+
+  const handleAddEventType = (eventType: Omit<EventTypeConfig, 'id'>) => {
+    createEventTypeMutation.mutate(
+      {
+        name: eventType.label,
+        scope: resolveEventTypeScope(eventType.level),
+        teamId: resolveEventTypeTeamId(eventType.level, eventType.teamIds),
+        color: eventType.color,
+        userCreatable: true,
+      },
+      {
+        onSuccess: () => {
+          toast({
+            title: 'Event type added',
+            description: `"${eventType.label}" has been added.`,
+          });
+        },
+        onError: (error: { message?: string }) => {
+          toast({
+            title: 'Event type failed',
+            description: error?.message ?? 'Unable to create event type.',
+            variant: 'destructive',
+          });
+        },
+      }
+    );
+  };
+
+  const handleUpdateEventType = (eventTypeId: string, updates: Partial<EventTypeConfig>) => {
+    const existing = eventTypeConfigs.find(eventType => eventType.id === eventTypeId);
+    if (!existing) return;
+    const merged: EventTypeConfig = { ...existing, ...updates };
+    updateEventTypeMutation.mutate(
+      {
+        eventTypeId,
+        payload: {
+          name: merged.label,
+          scope: resolveEventTypeScope(merged.level),
+          teamId: resolveEventTypeTeamId(merged.level, merged.teamIds),
+          color: merged.color,
+          userCreatable: true,
+        },
+      },
+      {
+        onSuccess: () => {
+          toast({
+            title: 'Event type updated',
+            description: 'Event type updated successfully.',
+          });
+        },
+        onError: (error: { message?: string }) => {
+          toast({
+            title: 'Event type update failed',
+            description: error?.message ?? 'Unable to update event type.',
+            variant: 'destructive',
+          });
+        },
+      }
+    );
+  };
+
+  const handleRemoveEventType = (eventTypeId: string) => {
+    deleteEventTypeMutation.mutate(eventTypeId, {
+      onSuccess: () => {
+        toast({
+          title: 'Event type deleted',
+          description: 'Event type deleted successfully.',
+        });
+      },
+      onError: (error: { message?: string }) => {
+        toast({
+          title: 'Event type deletion failed',
+          description: error?.message ?? 'Unable to delete event type.',
+          variant: 'destructive',
+        });
+      },
+    });
+  };
 
   const eventTypeConfigs = useMemo<EventTypeConfig[]>(() => {
     return eventTypes.map(eventType => ({
@@ -343,13 +600,10 @@ export function AppShell() {
       if (!teamId) return [];
       return (query.data ?? []).map(employee => ({
         ...employee,
-        teamId,
-        isOwner: false,
+        teamId: employee.teamId ?? teamId,
       }));
     });
   }, [manageEmployeesQueries, teams]);
-
-  const columns = useMemo(() => generateDayColumns(rangeStart, rangeEnd), [rangeStart, rangeEnd]);
 
   const toggleExpand = (employeeId: string) => {
     setExpandedRows(prev => {
@@ -475,14 +729,6 @@ export function AppShell() {
                   className="w-full pl-10 pr-4 py-2 bg-muted border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild></TooltipTrigger>
-                  <TooltipContent>
-                    <p>Add member</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
             </div>
           </div>
 

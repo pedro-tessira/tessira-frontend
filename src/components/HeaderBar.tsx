@@ -12,8 +12,8 @@ interface HeaderBarProps {
   selectedTeamId: string;
   onTeamChange: (teamId: string) => void;
   onAddEmployee: (name: string, teamId: string) => void;
-  onRemoveEmployee: (employeeId: string) => void;
-  onUpdateEmployee: (employeeId: string, name: string, isOwner?: boolean) => void;
+  onRemoveEmployee: (teamId: string, membershipId: string) => void;
+  onUpdateEmployee: (teamId: string, membershipId: string, name: string, isOwner?: boolean) => void;
   onAddTeam: (name: string) => void;
   onUpdateTeam: (teamId: string, name: string) => void;
   onRemoveTeam: (teamId: string) => void;

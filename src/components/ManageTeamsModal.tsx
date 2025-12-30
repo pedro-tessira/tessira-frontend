@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Pencil, Check, Crown, Users } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, Plus, Trash2, Pencil, Check, Crown, Users, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { TeamDto, TeamEmployeeDto, TimelineEvent } from '@/lib/types';
+import { EmployeeSearchDto, TeamDto, TeamEmployeeDto, TimelineEvent } from '@/lib/types';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useEmployeeSearch } from '@/queries/useEmployeeSearch';
 
 interface ManageTeamsModalProps {
   open: boolean;
@@ -27,8 +28,8 @@ interface ManageTeamsModalProps {
   events: TimelineEvent[];
   selectedTeamId: string;
   onAddEmployee: (name: string, teamId: string) => void;
-  onRemoveEmployee: (employeeId: string) => void;
-  onUpdateEmployee: (employeeId: string, name: string, isOwner?: boolean) => void;
+  onRemoveEmployee: (teamId: string, membershipId: string) => void;
+  onUpdateEmployee: (teamId: string, membershipId: string, name: string, isOwner?: boolean) => void;
   onAddTeam: (name: string) => void;
   onUpdateTeam: (teamId: string, name: string) => void;
   onRemoveTeam: (teamId: string) => void;
@@ -57,6 +58,13 @@ export function ManageTeamsModal({
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [editingMemberName, setEditingMemberName] = useState('');
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [memberSearchResults, setMemberSearchResults] = useState<EmployeeSearchDto[]>([]);
+  const [isSearchingMembers, setIsSearchingMembers] = useState(false);
+  const [showMemberSuggestions, setShowMemberSuggestions] = useState(false);
+  const [highlightedMemberIndex, setHighlightedMemberIndex] = useState(-1);
+  const searchTimeoutRef = useRef<number | null>(null);
+  const searchRequestIdRef = useRef(0);
+  const searchEmployees = useEmployeeSearch();
 
   const managingTeam = teams.find(t => t.id === managingTeamId);
   const teamEmployees = employees.filter(e => e.teamId === managingTeamId);
@@ -64,6 +72,13 @@ export function ManageTeamsModal({
     const employee = employees.find(emp => emp.id === e.employeeId);
     return employee?.teamId === managingTeamId;
   });
+  const getInitials = (name: string) =>
+    name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -72,6 +87,8 @@ export function ManageTeamsModal({
       setIsAddingNewTeam(false);
       setNewTeamName('');
       setIsEditingTeamName(false);
+      setMemberSearchResults([]);
+      setShowMemberSuggestions(false);
     }
   }, [open, selectedTeamId]);
 
@@ -81,6 +98,18 @@ export function ManageTeamsModal({
       setEditingTeamName(managingTeam.name);
     }
   }, [managingTeam]);
+
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        window.clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    setHighlightedMemberIndex(memberSearchResults.length > 0 ? 0 : -1);
+  }, [memberSearchResults]);
 
   const handleCreateTeam = () => {
     if (newTeamName.trim()) {
@@ -112,6 +141,8 @@ export function ManageTeamsModal({
     if (newMemberName.trim()) {
       onAddEmployee(newMemberName.trim(), managingTeamId);
       setNewMemberName('');
+      setMemberSearchResults([]);
+      setShowMemberSuggestions(false);
     }
   };
 
@@ -123,18 +154,65 @@ export function ManageTeamsModal({
   const handleSaveMemberEdit = () => {
     if (editingMemberId && editingMemberName.trim()) {
       const employee = employees.find(e => e.id === editingMemberId);
-      onUpdateEmployee(editingMemberId, editingMemberName.trim(), employee?.isOwner);
+      if (employee?.membershipId) {
+        onUpdateEmployee(managingTeamId, employee.membershipId, editingMemberName.trim(), employee?.isOwner);
+      }
       setEditingMemberId(null);
       setEditingMemberName('');
     }
   };
 
   const handleToggleOwner = (employee: TeamEmployeeDto) => {
-    onUpdateEmployee(employee.id, employee.displayName, !employee.isOwner);
+    if (!employee.membershipId) return;
+    onUpdateEmployee(managingTeamId, employee.membershipId, employee.displayName, !employee.isOwner);
   };
 
   const getTeamEventCount = () => {
     return teamEvents.length;
+  };
+
+  const handleMemberSearch = (value: string) => {
+    setNewMemberName(value);
+    if (searchTimeoutRef.current) {
+      window.clearTimeout(searchTimeoutRef.current);
+    }
+
+    const query = value.trim();
+    if (query.length < 2) {
+      setMemberSearchResults([]);
+      setHighlightedMemberIndex(-1);
+      return;
+    }
+
+    const requestId = searchRequestIdRef.current + 1;
+    searchRequestIdRef.current = requestId;
+    setIsSearchingMembers(true);
+    searchTimeoutRef.current = window.setTimeout(async () => {
+      try {
+        const results = await searchEmployees(query);
+        if (searchRequestIdRef.current !== requestId) return;
+        const filtered = results.filter(
+          result => !teamEmployees.some(member => member.id === result.id)
+        );
+        setMemberSearchResults(filtered);
+      } catch {
+        if (searchRequestIdRef.current !== requestId) return;
+        setMemberSearchResults([]);
+      } finally {
+        if (searchRequestIdRef.current === requestId) {
+          setIsSearchingMembers(false);
+        }
+      }
+    }, 250);
+  };
+
+  const handleSelectMember = (employee: EmployeeSearchDto) => {
+    const identifier = employee.email || employee.displayName;
+    onAddEmployee(identifier, managingTeamId);
+    setNewMemberName('');
+    setMemberSearchResults([]);
+    setShowMemberSuggestions(false);
+    setHighlightedMemberIndex(-1);
   };
 
   return (
@@ -321,18 +399,81 @@ export function ManageTeamsModal({
               {/* Members Tab */}
               <TabsContent value="members" className="mt-4 space-y-4">
                 {/* Add new member */}
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Add new member..."
-                    value={newMemberName}
-                    onChange={(e) => setNewMemberName(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleAddMember()}
-                    className="flex-1"
-                  />
-                  <Button onClick={handleAddMember} size="sm" disabled={!newMemberName.trim()}>
-                    <Plus className="w-4 h-4 mr-1" />
-                    Add
-                  </Button>
+                <div className="flex">
+                  <div className="relative flex-1">
+                    <Input
+                      placeholder="Add new member..."
+                      value={newMemberName}
+                      onChange={(e) => handleMemberSearch(e.target.value)}
+                      onFocus={() => setShowMemberSuggestions(true)}
+                      onBlur={() => {
+                        window.setTimeout(() => setShowMemberSuggestions(false), 100);
+                      }}
+                      onKeyDown={(event) => {
+                        if (!showMemberSuggestions) return;
+                        if (event.key === 'ArrowDown') {
+                          event.preventDefault();
+                          setHighlightedMemberIndex((prev) => {
+                            if (memberSearchResults.length === 0) return -1;
+                            return prev >= memberSearchResults.length - 1 ? 0 : prev + 1;
+                          });
+                        }
+                        if (event.key === 'ArrowUp') {
+                          event.preventDefault();
+                          setHighlightedMemberIndex((prev) => {
+                            if (memberSearchResults.length === 0) return -1;
+                            return prev <= 0 ? memberSearchResults.length - 1 : prev - 1;
+                          });
+                        }
+                        if (event.key === 'Enter') {
+                          if (highlightedMemberIndex < 0) return;
+                          const selected = memberSearchResults[highlightedMemberIndex];
+                          if (!selected) return;
+                          event.preventDefault();
+                          handleSelectMember(selected);
+                        }
+                        if (event.key === 'Escape') {
+                          setShowMemberSuggestions(false);
+                        }
+                      }}
+                      className="flex-1"
+                    />
+                    {showMemberSuggestions && (
+                      <div className="absolute z-20 mt-1 w-full rounded-md border border-border bg-popover shadow-md">
+                        <div className="max-h-56 overflow-y-auto py-1">
+                          {newMemberName.trim().length < 2 && (
+                            <div className="px-3 py-2 text-xs text-muted-foreground">
+                              Type at least 2 characters to search.
+                            </div>
+                          )}
+                          {isSearchingMembers && (
+                            <div className="px-3 py-2 text-xs text-muted-foreground flex items-center gap-2">
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              Searching...
+                            </div>
+                          )}
+                          {!isSearchingMembers && newMemberName.trim().length >= 2 && memberSearchResults.length === 0 && (
+                            <div className="px-3 py-2 text-xs text-muted-foreground">
+                              No matches found
+                            </div>
+                          )}
+                          {!isSearchingMembers && memberSearchResults.map((employee, index) => (
+                            <button
+                              key={employee.id}
+                              type="button"
+                              onMouseDown={() => handleSelectMember(employee)}
+                              className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                                index === highlightedMemberIndex ? 'bg-muted' : 'hover:bg-muted'
+                              }`}
+                            >
+                              <div className="font-medium text-foreground">{employee.displayName}</div>
+                              <div className="text-xs text-muted-foreground">{employee.email}</div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Member list */}
@@ -348,7 +489,7 @@ export function ManageTeamsModal({
                         className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
                       >
                         <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium">
-                          {employee.initials}
+                          {getInitials(employee.displayName)}
                         </div>
 
                         {editingMemberId === employee.id ? (
@@ -433,7 +574,10 @@ export function ManageTeamsModal({
                                     <Button
                                       size="sm"
                                       variant="ghost"
-                                      onClick={() => onRemoveEmployee(employee.id)}
+                                      onClick={() => {
+                                        if (!employee.membershipId) return;
+                                        onRemoveEmployee(managingTeamId, employee.membershipId);
+                                      }}
                                       className="h-8 w-8 p-0 hover:text-destructive"
                                     >
                                       <Trash2 className="w-4 h-4" />
