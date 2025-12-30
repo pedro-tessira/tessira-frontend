@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, LogOut, Share2, Users } from 'lucide-react';
-import { TeamDto, TeamEmployeeDto, TimelineEvent } from '@/lib/types';
+import { EventTypeDto, TeamDto, TeamEmployeeDto, TimelineEvent } from '@/lib/types';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { ManageTeamsModal } from './ManageTeamsModal';
 import { ShareViewModal } from './ShareViewModal';
@@ -9,6 +9,7 @@ interface HeaderBarProps {
   teams: TeamDto[];
   employees: TeamEmployeeDto[];
   events: TimelineEvent[];
+  eventTypes: EventTypeDto[];
   selectedTeamId: string;
   onTeamChange: (teamId: string) => void;
   onAddEmployee: (name: string, teamId: string) => void;
@@ -24,6 +25,7 @@ export function HeaderBar({
   teams,
   employees,
   events,
+  eventTypes,
   selectedTeamId,
   onTeamChange,
   onAddEmployee,
@@ -36,6 +38,17 @@ export function HeaderBar({
 }: HeaderBarProps) {
   const [showManageModal, setShowManageModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const shareStorageKey = `horizon-share-links-${selectedTeamId}`;
+  const hasSavedShare = (() => {
+    try {
+      const raw = localStorage.getItem(shareStorageKey);
+      if (!raw) return false;
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) && parsed.length > 0;
+    } catch {
+      return false;
+    }
+  })();
 
   return (
     <>
@@ -92,6 +105,11 @@ export function HeaderBar({
                 >
                   <Share2 className="w-4 h-4" />
                   Share View
+                  {hasSavedShare && (
+                    <span className="ml-1 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                      Active
+                    </span>
+                  )}
                 </button>
               </TooltipTrigger>
               <TooltipContent>
@@ -136,6 +154,8 @@ export function HeaderBar({
         open={showShareModal}
         onOpenChange={setShowShareModal}
         teamId={selectedTeamId}
+        employees={employees.filter(employee => employee.teamId === selectedTeamId)}
+        eventTypes={eventTypes}
       />
     </>
   );
