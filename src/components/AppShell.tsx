@@ -50,6 +50,14 @@ const getEventTypeLabel = (eventType: EventTypeDto) => {
   return eventType.name ?? eventType.code ?? 'Event type';
 };
 
+const deriveEventTypeCode = (label: string) => {
+  return label
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+};
+
 export function AppShell() {
   const { toast } = useToast();
   const { data: teams = [] } = useTeams();
@@ -496,12 +504,20 @@ export function AppShell() {
     return null;
   };
 
+  const resolveEventTypeTeamIds = (level: EventLevel, teamIds?: string[], isGlobal?: boolean) => {
+    if (level !== 'company') return null;
+    if (isGlobal) return [];
+    return teamIds ?? [];
+  };
+
   const handleAddEventType = (eventType: Omit<EventTypeConfig, 'id'>) => {
     createEventTypeMutation.mutate(
       {
         name: eventType.label,
+        code: eventType.code || deriveEventTypeCode(eventType.label),
         scope: resolveEventTypeScope(eventType.level),
         teamId: resolveEventTypeTeamId(eventType.level, eventType.teamIds),
+        teamIds: resolveEventTypeTeamIds(eventType.level, eventType.teamIds, eventType.isGlobal),
         color: eventType.color,
         userCreatable: true,
       },
@@ -532,8 +548,10 @@ export function AppShell() {
         eventTypeId,
         payload: {
           name: merged.label,
+          code: merged.code || deriveEventTypeCode(merged.label),
           scope: resolveEventTypeScope(merged.level),
           teamId: resolveEventTypeTeamId(merged.level, merged.teamIds),
+          teamIds: resolveEventTypeTeamIds(merged.level, merged.teamIds, merged.isGlobal),
           color: merged.color,
           userCreatable: true,
         },
@@ -577,13 +595,13 @@ export function AppShell() {
   const eventTypeConfigs = useMemo<EventTypeConfig[]>(() => {
     return eventTypes.map(eventType => ({
       id: eventType.id,
-      type: eventType.code ?? eventType.id,
+      code: eventType.code ?? deriveEventTypeCode(eventType.name ?? ''),
       label: getEventTypeLabel(eventType),
       color: getEventColorClass(eventType, eventType.id),
       source: eventType.source ?? 'MANUAL',
       level: mapScopeToLevel(eventType.scope),
-      teamIds: eventType.teamId ? [eventType.teamId] : undefined,
-      isGlobal: !eventType.teamId,
+      teamIds: eventType.teamIds ?? (eventType.teamId ? [eventType.teamId] : undefined),
+      isGlobal: eventType.scope === 'GLOBAL' && !(eventType.teamIds?.length || eventType.teamId),
     }));
   }, [eventTypes]);
 

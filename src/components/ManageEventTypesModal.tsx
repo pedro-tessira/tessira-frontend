@@ -38,6 +38,14 @@ const levelLabels: Record<EventLevel, { label: string; icon: React.ReactNode; de
   company: { label: 'Company', icon: <Building2 className="w-3 h-3" />, description: 'Shared across multiple teams' },
 };
 
+const deriveEventTypeCode = (label: string) => {
+  return label
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+};
+
 interface ManageEventTypesModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -68,17 +76,21 @@ export function ManageEventTypesModal({
   // Event type editing state
   const [editingEventTypeId, setEditingEventTypeId] = useState<string | null>(null);
   const [editingEventTypeLabel, setEditingEventTypeLabel] = useState('');
+  const [editingEventTypeCode, setEditingEventTypeCode] = useState('');
   const [editingEventTypeColor, setEditingEventTypeColor] = useState('');
   const [editingEventTypeLevel, setEditingEventTypeLevel] = useState<EventLevel>('individual');
   const [editingEventTypeTeamIds, setEditingEventTypeTeamIds] = useState<string[]>([]);
   const [editingEventTypeIsGlobal, setEditingEventTypeIsGlobal] = useState(false);
+  const [editingCodeTouched, setEditingCodeTouched] = useState(false);
   
   const [isAddingEventType, setIsAddingEventType] = useState(false);
   const [newEventTypeLabel, setNewEventTypeLabel] = useState('');
+  const [newEventTypeCode, setNewEventTypeCode] = useState('');
   const [newEventTypeColor, setNewEventTypeColor] = useState('bg-blue-500');
   const [newEventTypeLevel, setNewEventTypeLevel] = useState<EventLevel>('individual');
   const [newEventTypeTeamIds, setNewEventTypeTeamIds] = useState<string[]>([]);
   const [newEventTypeIsGlobal, setNewEventTypeIsGlobal] = useState(false);
+  const [newCodeTouched, setNewCodeTouched] = useState(false);
   
   const [deleteEventTypeConfirmOpen, setDeleteEventTypeConfirmOpen] = useState(false);
   const [eventTypeToDelete, setEventTypeToDelete] = useState<string | null>(null);
@@ -98,27 +110,44 @@ export function ManageEventTypesModal({
       setEditingEventTypeId(null);
       setIsAddingEventType(false);
       setNewEventTypeLabel('');
+      setNewEventTypeCode('');
       setNewEventTypeColor('bg-blue-500');
       setNewEventTypeLevel('individual');
       setNewEventTypeTeamIds([]);
       setNewEventTypeIsGlobal(false);
+      setNewCodeTouched(false);
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!newCodeTouched) {
+      setNewEventTypeCode(deriveEventTypeCode(newEventTypeLabel));
+    }
+  }, [newCodeTouched, newEventTypeLabel]);
+
+  useEffect(() => {
+    if (!editingCodeTouched) {
+      setEditingEventTypeCode(deriveEventTypeCode(editingEventTypeLabel));
+    }
+  }, [editingCodeTouched, editingEventTypeLabel]);
 
   // Event type handlers
   const handleStartEventTypeEdit = (eventType: EventTypeConfig) => {
     setEditingEventTypeId(eventType.id);
     setEditingEventTypeLabel(eventType.label);
+    setEditingEventTypeCode(eventType.code);
     setEditingEventTypeColor(eventType.color);
     setEditingEventTypeLevel(eventType.level);
     setEditingEventTypeTeamIds(eventType.teamIds || []);
     setEditingEventTypeIsGlobal(eventType.isGlobal || false);
+    setEditingCodeTouched(false);
   };
 
   const handleSaveEventTypeEdit = () => {
     if (editingEventTypeId && editingEventTypeLabel.trim()) {
       onUpdateEventType(editingEventTypeId, {
         label: editingEventTypeLabel.trim(),
+        code: editingEventTypeCode.trim() || deriveEventTypeCode(editingEventTypeLabel),
         color: editingEventTypeColor,
         level: editingEventTypeLevel,
         teamIds: editingEventTypeLevel === 'company' ? editingEventTypeTeamIds : undefined,
@@ -131,17 +160,18 @@ export function ManageEventTypesModal({
   const handleCancelEventTypeEdit = () => {
     setEditingEventTypeId(null);
     setEditingEventTypeLabel('');
+    setEditingEventTypeCode('');
     setEditingEventTypeColor('');
     setEditingEventTypeLevel('individual');
     setEditingEventTypeTeamIds([]);
     setEditingEventTypeIsGlobal(false);
+    setEditingCodeTouched(false);
   };
 
   const handleAddEventType = () => {
     if (newEventTypeLabel.trim()) {
-      const typeSlug = newEventTypeLabel.trim().toLowerCase().replace(/\s+/g, '-');
       onAddEventType({
-        type: typeSlug,
+        code: newEventTypeCode.trim() || deriveEventTypeCode(newEventTypeLabel),
         label: newEventTypeLabel.trim(),
         color: newEventTypeColor,
         source: 'MANUAL',
@@ -150,10 +180,12 @@ export function ManageEventTypesModal({
         isGlobal: newEventTypeLevel === 'company' ? newEventTypeIsGlobal : undefined,
       });
       setNewEventTypeLabel('');
+      setNewEventTypeCode('');
       setNewEventTypeColor('bg-blue-500');
       setNewEventTypeLevel('individual');
       setNewEventTypeTeamIds([]);
       setNewEventTypeIsGlobal(false);
+      setNewCodeTouched(false);
       setIsAddingEventType(false);
     }
   };
@@ -268,6 +300,15 @@ export function ManageEventTypesModal({
                       autoFocus
                       className="flex-1"
                     />
+                    <Input
+                      placeholder="CODE"
+                      value={newEventTypeCode}
+                      onChange={(e) => {
+                        setNewEventTypeCode(e.target.value);
+                        setNewCodeTouched(true);
+                      }}
+                      className="w-[180px]"
+                    />
                   </div>
                   <div className="flex gap-2 items-center flex-wrap">
                     <Select value={newEventTypeColor} onValueChange={setNewEventTypeColor}>
@@ -328,7 +369,7 @@ export function ManageEventTypesModal({
 
               {/* Event type list */}
               {eventTypeConfigs.map((eventType) => {
-                const count = events.filter(e => e.type === eventType.type).length;
+                const count = events.filter(e => e.eventTypeId === eventType.id || e.eventType?.id === eventType.id).length;
                 const isLocked = eventType.source === 'WORKDAY';
                 const isEditing = editingEventTypeId === eventType.id;
 
@@ -345,6 +386,15 @@ export function ManageEventTypesModal({
                           }}
                           autoFocus
                           className="flex-1"
+                        />
+                        <Input
+                          value={editingEventTypeCode}
+                          onChange={(e) => {
+                            setEditingEventTypeCode(e.target.value);
+                            setEditingCodeTouched(true);
+                          }}
+                          placeholder="CODE"
+                          className="w-[180px]"
                         />
                       </div>
                       <div className="flex gap-2 items-center flex-wrap">

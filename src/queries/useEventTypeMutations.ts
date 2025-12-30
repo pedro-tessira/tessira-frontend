@@ -7,6 +7,7 @@ type CreateEventTypeRequest = {
   code?: string;
   scope: "INDIVIDUAL" | "TEAM" | "GLOBAL";
   teamId?: string | null;
+  teamIds?: string[] | null;
   color?: string | null;
   userCreatable?: boolean;
 };
@@ -16,6 +17,7 @@ type UpdateEventTypeRequest = {
   code?: string;
   scope?: "INDIVIDUAL" | "TEAM" | "GLOBAL";
   teamId?: string | null;
+  teamIds?: string[] | null;
   color?: string | null;
   userCreatable?: boolean;
 };

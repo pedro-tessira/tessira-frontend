@@ -8,6 +8,7 @@ export interface EventTypeDto {
   name: string;
   scope: EventScope;
   teamId?: string | null;
+  teamIds?: string[] | null;
   source?: EventSource;
   color?: string | null;
   userCreatable?: boolean;
@@ -53,7 +54,7 @@ export interface EmployeeSearchDto {
 
 export interface EventTypeConfig {
   id: string;
-  type: string;
+  code: string;
   label: string;
   color: string;
   source: EventSource;
