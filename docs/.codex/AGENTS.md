@@ -104,3 +104,4 @@
 
 ## Recent Context
 - Team member add flow now uses an autocomplete dropdown in `src/components/ManageTeamsModal.tsx` (search `/api/employees` with keyboard navigation; add by selecting a suggestion).
+- Event type management supports free-string `code` with an auto-suggested value derived from the label, and GLOBAL event types can be scoped to multiple teams via `teamIds`.
