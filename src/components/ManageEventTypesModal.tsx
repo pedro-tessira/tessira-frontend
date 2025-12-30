@@ -545,9 +545,9 @@ export function ManageEventTypesModal({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Event Type</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this event type? Events of this type will no longer be categorized. This action cannot be undone.
-            </AlertDialogDescription>
+          <AlertDialogDescription>
+            Are you sure you want to delete this event type? All events of this type will be deleted as well. This action cannot be undone.
+          </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
