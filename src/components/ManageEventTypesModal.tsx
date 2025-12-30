@@ -22,14 +22,14 @@ import { Label } from '@/components/ui/label';
 
 
 const colorOptions = [
-  { value: 'bg-emerald-500', label: 'Green' },
-  { value: 'bg-red-500', label: 'Red' },
-  { value: 'bg-blue-500', label: 'Blue' },
-  { value: 'bg-purple-500', label: 'Purple' },
-  { value: 'bg-amber-500', label: 'Orange' },
-  { value: 'bg-pink-500', label: 'Pink' },
-  { value: 'bg-cyan-500', label: 'Cyan' },
-  { value: 'bg-indigo-500', label: 'Indigo' },
+  { value: '#22c55e', label: 'Green' },
+  { value: '#ef4444', label: 'Red' },
+  { value: '#3b82f6', label: 'Blue' },
+  { value: '#a855f7', label: 'Purple' },
+  { value: '#f59e0b', label: 'Orange' },
+  { value: '#ec4899', label: 'Pink' },
+  { value: '#06b6d4', label: 'Cyan' },
+  { value: '#6366f1', label: 'Indigo' },
 ];
 
 const levelLabels: Record<EventLevel, { label: string; icon: React.ReactNode; description: string }> = {
@@ -45,6 +45,8 @@ const deriveEventTypeCode = (label: string) => {
     .replace(/[^A-Z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '');
 };
+
+const isHexColor = (value: string) => /^#([0-9a-fA-F]{6})$/.test(value);
 
 interface ManageEventTypesModalProps {
   open: boolean;
@@ -86,7 +88,7 @@ export function ManageEventTypesModal({
   const [isAddingEventType, setIsAddingEventType] = useState(false);
   const [newEventTypeLabel, setNewEventTypeLabel] = useState('');
   const [newEventTypeCode, setNewEventTypeCode] = useState('');
-  const [newEventTypeColor, setNewEventTypeColor] = useState('bg-blue-500');
+  const [newEventTypeColor, setNewEventTypeColor] = useState('#3b82f6');
   const [newEventTypeLevel, setNewEventTypeLevel] = useState<EventLevel>('individual');
   const [newEventTypeTeamIds, setNewEventTypeTeamIds] = useState<string[]>([]);
   const [newEventTypeIsGlobal, setNewEventTypeIsGlobal] = useState(false);
@@ -111,7 +113,7 @@ export function ManageEventTypesModal({
       setIsAddingEventType(false);
       setNewEventTypeLabel('');
       setNewEventTypeCode('');
-      setNewEventTypeColor('bg-blue-500');
+      setNewEventTypeColor('#3b82f6');
       setNewEventTypeLevel('individual');
       setNewEventTypeTeamIds([]);
       setNewEventTypeIsGlobal(false);
@@ -133,10 +135,13 @@ export function ManageEventTypesModal({
 
   // Event type handlers
   const handleStartEventTypeEdit = (eventType: EventTypeConfig) => {
+    const resolvedColor = isHexColor(eventType.color)
+      ? eventType.color
+      : colorOptions[0]?.value ?? '#3b82f6';
     setEditingEventTypeId(eventType.id);
     setEditingEventTypeLabel(eventType.label);
     setEditingEventTypeCode(eventType.code);
-    setEditingEventTypeColor(eventType.color);
+    setEditingEventTypeColor(resolvedColor);
     setEditingEventTypeLevel(eventType.level);
     setEditingEventTypeTeamIds(eventType.teamIds || []);
     setEditingEventTypeIsGlobal(eventType.isGlobal || false);
@@ -181,7 +186,7 @@ export function ManageEventTypesModal({
       });
       setNewEventTypeLabel('');
       setNewEventTypeCode('');
-      setNewEventTypeColor('bg-blue-500');
+      setNewEventTypeColor('#3b82f6');
       setNewEventTypeLevel('individual');
       setNewEventTypeTeamIds([]);
       setNewEventTypeIsGlobal(false);
@@ -314,7 +319,7 @@ export function ManageEventTypesModal({
                     <Select value={newEventTypeColor} onValueChange={setNewEventTypeColor}>
                       <SelectTrigger className="w-[120px]">
                         <div className="flex items-center gap-2">
-                          <div className={`w-3 h-3 rounded-full ${newEventTypeColor}`} />
+                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: newEventTypeColor }} />
                           <span>{colorOptions.find(c => c.value === newEventTypeColor)?.label}</span>
                         </div>
                       </SelectTrigger>
@@ -322,7 +327,7 @@ export function ManageEventTypesModal({
                         {colorOptions.map((color) => (
                           <SelectItem key={color.value} value={color.value}>
                             <div className="flex items-center gap-2">
-                              <div className={`w-3 h-3 rounded-full ${color.value}`} />
+                              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color.value }} />
                               {color.label}
                             </div>
                           </SelectItem>
@@ -400,22 +405,22 @@ export function ManageEventTypesModal({
                       <div className="flex gap-2 items-center flex-wrap">
                         <Select value={editingEventTypeColor} onValueChange={setEditingEventTypeColor}>
                           <SelectTrigger className="w-[120px]">
-                            <div className="flex items-center gap-2">
-                              <div className={`w-3 h-3 rounded-full ${editingEventTypeColor}`} />
-                              <span>{colorOptions.find(c => c.value === editingEventTypeColor)?.label}</span>
-                            </div>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {colorOptions.map((color) => (
-                              <SelectItem key={color.value} value={color.value}>
-                                <div className="flex items-center gap-2">
-                                  <div className={`w-3 h-3 rounded-full ${color.value}`} />
-                                  {color.label}
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: editingEventTypeColor }} />
+                            <span>{colorOptions.find(c => c.value === editingEventTypeColor)?.label}</span>
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {colorOptions.map((color) => (
+                            <SelectItem key={color.value} value={color.value}>
+                              <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color.value }} />
+                                {color.label}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                         <Select value={editingEventTypeLevel} onValueChange={(v) => setEditingEventTypeLevel(v as EventLevel)}>
                           <SelectTrigger className="w-[140px]">
                             <div className="flex items-center gap-2">
@@ -460,7 +465,10 @@ export function ManageEventTypesModal({
                     key={eventType.id}
                     className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
                   >
-                    <div className={`w-4 h-4 rounded-full ${eventType.color}`} />
+                    <div
+                      className="w-4 h-4 rounded-full"
+                      style={{ backgroundColor: isHexColor(eventType.color) ? eventType.color : colorOptions[0]?.value }}
+                    />
                     <div className="flex-1">
                       <span className="text-sm text-foreground">{eventType.label}</span>
                       {eventType.level === 'company' && eventType.isGlobal && (

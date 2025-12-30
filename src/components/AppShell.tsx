@@ -597,7 +597,7 @@ export function AppShell() {
       id: eventType.id,
       code: eventType.code ?? deriveEventTypeCode(eventType.name ?? ''),
       label: getEventTypeLabel(eventType),
-      color: getEventColorClass(eventType, eventType.id),
+      color: eventType.color ?? getEventColorClass(eventType, eventType.id),
       source: eventType.source ?? 'MANUAL',
       level: mapScopeToLevel(eventType.scope),
       teamIds: eventType.teamIds ?? (eventType.teamId ? [eventType.teamId] : undefined),
