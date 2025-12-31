@@ -111,6 +111,7 @@
 - OpenAPI now includes event edit/delete endpoints (`PATCH /api/events/{eventId}`, `DELETE /api/events/{eventId}`) but frontend wiring is still pending.
 - Added `src/queries/useEventMutations.ts` for event update/delete API wiring (UI hookup pending).
 - Added `src/components/EditEventModal.tsx` and wired `src/components/EventChip.tsx` to edit/delete endpoints.
+- Fixed `src/components/EventChip.tsx` JSX to wrap multiple roots in a fragment (Vite parse error).
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).
