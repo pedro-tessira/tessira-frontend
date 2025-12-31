@@ -106,6 +106,9 @@
 - Team member add flow now uses an autocomplete dropdown in `src/components/ManageTeamsModal.tsx` (search `/api/employees` with keyboard navigation; add by selecting a suggestion).
 - Event type management supports free-string `code` with an auto-suggested value derived from the label, and GLOBAL event types can be scoped to multiple teams via `teamIds`.
 - Share links now use backend APIs: `POST /api/shares`, `GET /api/shares?teamId=...`, `POST /api/shares/{shareId}/revoke`, and public `GET /api/share/{token}` with `from/to` params. The share modal shows recent links per team and includes hover details for employees/event types.
+- Share API updates: `includeGlobalLane` replaces `includeCompanyLane`, share timeline uses `globalLane`, and share summaries include `createdByName`, `employeeNames`, and `eventTypeNames`.
+- Share UI entry points: `src/pages/SharePage.tsx` (public view), `src/queries/useShare.ts` (public fetch with from/to), `src/queries/useShares.ts` (per-team share list).
+- OpenAPI now includes event edit/delete endpoints (`PATCH /api/events/{eventId}`, `DELETE /api/events/{eventId}`) but frontend wiring is still pending.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).
