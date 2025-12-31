@@ -112,6 +112,7 @@
 - Added `src/queries/useEventMutations.ts` for event update/delete API wiring (UI hookup pending).
 - Added `src/components/EditEventModal.tsx` and wired `src/components/EventChip.tsx` to edit/delete endpoints.
 - Fixed `src/components/EventChip.tsx` JSX to wrap multiple roots in a fragment (Vite parse error).
+- Renamed event type labels from Company to Global in `src/components/ManageEventTypesModal.tsx`.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).

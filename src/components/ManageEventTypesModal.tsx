@@ -34,8 +34,8 @@ const colorOptions = [
 
 const levelLabels: Record<EventLevel, { label: string; icon: React.ReactNode; description: string }> = {
   individual: { label: 'Individual', icon: <User className="w-3 h-3" />, description: 'User adds event for themselves' },
-  team: { label: 'Team', icon: <Users className="w-3 h-3" />, description: 'Shown on Company row for the team' },
-  company: { label: 'Company', icon: <Building2 className="w-3 h-3" />, description: 'Shared across multiple teams' },
+  team: { label: 'Team', icon: <Users className="w-3 h-3" />, description: 'Shown on Global row for the team' },
+  company: { label: 'Global', icon: <Building2 className="w-3 h-3" />, description: 'Shared across multiple teams' },
 };
 
 const deriveEventTypeCode = (label: string) => {
