@@ -63,6 +63,38 @@ export interface EventTypeConfig {
   isGlobal?: boolean; // For company level: available to all teams (admin only)
 }
 
+export interface CreateShareRequest {
+  teamId: string;
+  title?: string | null;
+  employeeIds?: string[] | null;
+  eventTypeIds?: string[] | null;
+  includeGlobalLane: boolean;
+  expiresAt?: string | null;
+}
+
+export interface CreateShareResponse {
+  token: string;
+  urlPath: string;
+  id?: string;
+}
+
+export interface ShareSummary {
+  id: string;
+  token: string;
+  urlPath: string;
+  title?: string | null;
+  teamId: string;
+  createdAt: string;
+  expiresAt?: string | null;
+  createdByUserId: string;
+  createdByName?: string | null;
+  includeGlobalLane: boolean;
+  employeeIds?: string[] | null;
+  employeeNames?: string[] | null;
+  eventTypeIds?: string[] | null;
+  eventTypeNames?: string[] | null;
+}
+
 export interface TeamDto {
   id: string;
   name: string;
@@ -102,6 +134,23 @@ export interface EmployeeEventsResponseDto {
   employee: EmployeeDto;
   range: { from: string; to: string };
   events: EventDto[];
+}
+
+export interface ShareTimelineResponse {
+  title?: string | null;
+  team: TeamDto;
+  generatedAt: string;
+  timeline: {
+    globalLane?: {
+      events: EventDto[];
+      aggregation?: { hasMore: boolean; hiddenCount: number };
+    };
+    rows: {
+      employee: EmployeeDto;
+      events: EventDto[];
+      aggregation?: { hasMore: boolean; hiddenCount: number };
+    }[];
+  };
 }
 
 export interface TimelineEvent extends EventDto {

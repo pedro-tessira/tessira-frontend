@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ChevronDown, LogOut, Share2, Users } from 'lucide-react';
 import { EventTypeDto, TeamDto, TeamEmployeeDto, TimelineEvent } from '@/lib/types';
+import { useShares } from '@/queries/useShares';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { ManageTeamsModal } from './ManageTeamsModal';
 import { ShareViewModal } from './ShareViewModal';
@@ -38,17 +39,8 @@ export function HeaderBar({
 }: HeaderBarProps) {
   const [showManageModal, setShowManageModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
-  const shareStorageKey = `horizon-share-links-${selectedTeamId}`;
-  const hasSavedShare = (() => {
-    try {
-      const raw = localStorage.getItem(shareStorageKey);
-      if (!raw) return false;
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) && parsed.length > 0;
-    } catch {
-      return false;
-    }
-  })();
+  const { data: shares = [] } = useShares(selectedTeamId);
+  const hasSavedShare = useMemo(() => shares.length > 0, [shares.length]);
 
   return (
     <>

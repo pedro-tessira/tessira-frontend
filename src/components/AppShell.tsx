@@ -691,6 +691,7 @@ export function AppShell() {
         teams={teams}
         employees={allEmployees}
         events={timelineEvents}
+        eventTypes={eventTypes}
         selectedTeamId={selectedTeamId}
         onTeamChange={setSelectedTeamId}
         onAddEmployee={handleAddEmployee}

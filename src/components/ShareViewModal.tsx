@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Copy, Check, Link, Ban } from 'lucide-react';
+import { formatDistanceToNowStrict, differenceInDays, format } from 'date-fns';
+import { Copy, Check, Link, Ban, CalendarClock, UserRound } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -11,9 +12,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { EventTypeDto, TeamEmployeeDto } from '@/lib/types';
-import { useCreateShare, useRevokeShare } from '@/queries/useShares';
+import { useCreateShare, useRevokeShare, useShares } from '@/queries/useShares';
 
 interface ShareViewModalProps {
   open: boolean;
@@ -30,19 +32,26 @@ export function ShareViewModal({ open, onOpenChange, teamId, employees, eventTyp
   const [shareId, setShareId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
-  const [includeCompanyLane, setIncludeCompanyLane] = useState(true);
+  const [includeGlobalLane, setIncludeGlobalLane] = useState(true);
   const [limitEmployees, setLimitEmployees] = useState(false);
   const [limitEventTypes, setLimitEventTypes] = useState(false);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
   const [selectedEventTypes, setSelectedEventTypes] = useState<string[]>([]);
-  const [shareHistory, setShareHistory] = useState<
-    { id: string; url: string; title?: string; expiresAt?: string; createdAt: string }[]
-  >([]);
-
-  const shareStorageKey = `horizon-share-links-${teamId}`;
+  const isShareId = (value: string) => /^[0-9a-fA-F-]{36}$/.test(value);
+  const formatDateTime = (value?: string | null) => {
+    if (!value) return 'No expiration';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Invalid date';
+    const days = Math.abs(differenceInDays(new Date(), date));
+    if (days <= 5) {
+      return formatDistanceToNowStrict(date, { addSuffix: true });
+    }
+    return format(date, 'MMM d, yyyy h:mm a');
+  };
 
   const createShare = useCreateShare();
   const revokeShare = useRevokeShare();
+  const { data: shareHistory = [], refetch: refetchShares, isLoading: isSharesLoading } = useShares(teamId);
 
   const employeeOptions = useMemo(() => employees, [employees]);
   const eventTypeOptions = useMemo(() => eventTypes, [eventTypes]);
@@ -79,24 +88,22 @@ export function ShareViewModal({ open, onOpenChange, teamId, employees, eventTyp
         title: title.trim() || null,
         employeeIds: limitEmployees ? selectedEmployees : null,
         eventTypeIds: limitEventTypes ? selectedEventTypes : null,
-        includeCompanyLane,
+        includeGlobalLane,
         expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
       },
       {
         onSuccess: (response) => {
-          setShareId(response.id ?? response.token);
+          if (!response.id) {
+            toast({
+              title: 'Share link created',
+              description: 'Link created, but revoke is unavailable (missing share id).',
+            });
+          }
+          const createdShareId = response.id && isShareId(response.id) ? response.id : null;
+          setShareId(createdShareId);
           const url = `${window.location.origin}${response.urlPath}`;
           setShareUrl(url);
-          setShareHistory(prev => [
-            {
-              id: response.id ?? response.token,
-              url,
-              title: title.trim() || undefined,
-              expiresAt: expiresAt || undefined,
-              createdAt: new Date().toISOString(),
-            },
-            ...prev,
-          ]);
+          refetchShares();
           toast({
             title: 'Share link created',
             description: 'This view is now available via the share link.',
@@ -140,7 +147,7 @@ export function ShareViewModal({ open, onOpenChange, teamId, employees, eventTyp
       setShareId(null);
       setTitle('');
       setExpiresAt('');
-      setIncludeCompanyLane(true);
+      setIncludeGlobalLane(true);
       setLimitEmployees(false);
       setLimitEventTypes(false);
       setSelectedEmployees([]);
@@ -150,29 +157,17 @@ export function ShareViewModal({ open, onOpenChange, teamId, employees, eventTyp
   };
 
   useEffect(() => {
-    if (!open) return;
-    try {
-      const raw = localStorage.getItem(shareStorageKey);
-      if (raw) {
-        setShareHistory(JSON.parse(raw));
-      }
-    } catch {
-      // Ignore storage errors.
+    setShareUrl(null);
+    setShareId(null);
+    setCopied(false);
+    if (open) {
+      refetchShares();
     }
-  }, [open, shareStorageKey]);
-
-  useEffect(() => {
-    if (!open) return;
-    try {
-      localStorage.setItem(shareStorageKey, JSON.stringify(shareHistory));
-    } catch {
-      // Ignore storage errors.
-    }
-  }, [open, shareHistory, shareStorageKey]);
+  }, [teamId, open, refetchShares]);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="w-[90vw] sm:w-fit sm:max-w-[720px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Link className="w-5 h-5" />
@@ -209,12 +204,12 @@ export function ShareViewModal({ open, onOpenChange, teamId, employees, eventTyp
 
               <div className="flex items-center gap-2">
                 <Checkbox
-                  id="include-company"
-                  checked={includeCompanyLane}
-                  onCheckedChange={(checked) => setIncludeCompanyLane(checked === true)}
+                  id="include-global"
+                  checked={includeGlobalLane}
+                  onCheckedChange={(checked) => setIncludeGlobalLane(checked === true)}
                 />
-                <Label htmlFor="include-company" className="text-sm cursor-pointer">
-                  Include company lane (global events)
+                <Label htmlFor="include-global" className="text-sm cursor-pointer">
+                  Include global lane (global events)
                 </Label>
               </div>
 
@@ -284,56 +279,152 @@ export function ShareViewModal({ open, onOpenChange, teamId, employees, eventTyp
                 {createShare.isPending ? 'Creating link...' : 'Generate Share Link'}
               </Button>
 
+              {isSharesLoading && (
+                <p className="text-xs text-muted-foreground">Loading share links...</p>
+              )}
+
               {shareHistory.length > 0 && (
                 <div className="space-y-2 border-t border-border pt-3">
                   <div className="text-sm font-medium text-foreground">Recent links</div>
-                  <p className="text-xs text-muted-foreground">Available in this session.</p>
                   <div className="space-y-2">
                     {shareHistory.map(link => (
-                      <div key={link.id} className="flex items-center gap-2 rounded-md border border-border p-2">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-foreground truncate">
-                            {link.title ?? 'Shared timeline'}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">{link.url}</p>
-                          {link.expiresAt && (
-                            <p className="text-[11px] text-muted-foreground">
-                              Expires {new Date(link.expiresAt).toLocaleString()}
+                      <div key={link.id} className="rounded-lg border border-border bg-card p-3 space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-foreground truncate">
+                              {link.title ?? 'Shared timeline'}
                             </p>
-                          )}
+                          </div>
+                          <TooltipProvider>
+                            <div className="flex items-center gap-1">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() =>
+                                      navigator.clipboard.writeText(
+                                        `${window.location.origin}${link.urlPath}`
+                                      )
+                                    }
+                                    className="h-8 w-8"
+                                  >
+                                    <Copy className="w-4 h-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Copy link</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      if (!link.id || !isShareId(link.id)) return;
+                                      revokeShare.mutate(link.id, {
+                                        onSuccess: () => {
+                                          toast({
+                                            title: 'Share link revoked',
+                                            description: 'This link is no longer active.',
+                                          });
+                                          refetchShares();
+                                        },
+                                        onError: (error: { message?: string }) => {
+                                          toast({
+                                            title: 'Revoke failed',
+                                            description: error?.message ?? 'Unable to revoke share link.',
+                                            variant: 'destructive',
+                                          });
+                                        },
+                                      });
+                                    }}
+                                    disabled={revokeShare.isPending || !link.id || !isShareId(link.id)}
+                                    className="h-8 w-8 text-destructive hover:text-destructive"
+                                  >
+                                    <Ban className="w-4 h-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Revoke link</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
+                          </TooltipProvider>
                         </div>
-                        <Button
-                          size="icon"
-                          variant="outline"
-                          onClick={() => navigator.clipboard.writeText(link.url)}
-                        >
-                          <Copy className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="destructive"
-                          onClick={() => {
-                            revokeShare.mutate(link.id, {
-                              onSuccess: () => {
-                                toast({
-                                  title: 'Share link revoked',
-                                  description: 'This link is no longer active.',
-                                });
-                                setShareHistory(prev => prev.filter(item => item.id !== link.id));
-                              },
-                              onError: (error: { message?: string }) => {
-                                toast({
-                                  title: 'Revoke failed',
-                                  description: error?.message ?? 'Unable to revoke share link.',
-                                  variant: 'destructive',
-                                });
-                              },
-                            });
-                          }}
-                          disabled={revokeShare.isPending}
-                        >
-                          <Ban className="w-4 h-4" />
-                        </Button>
+
+                          <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <UserRound className="w-3.5 h-3.5" />
+                            <span>{link.createdByName ?? link.createdByUserId}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <CalendarClock className="w-3.5 h-3.5" />
+                            <span>{formatDateTime(link.createdAt)}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <CalendarClock className="w-3.5 h-3.5" />
+                            <span>{formatDateTime(link.expiresAt)}</span>
+                          </div>
+                        </div>
+
+                        <div className="h-9 w-full overflow-hidden rounded border border-border bg-muted/30 px-2 text-xs text-muted-foreground flex items-center">
+                          <div className="overflow-x-auto whitespace-nowrap scrollbar-thin">
+                            {`${window.location.origin}${link.urlPath}`}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                          {link.includeGlobalLane && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="rounded-full bg-blue-50 text-blue-600 px-2 py-0.5 cursor-default">
+                                    Global lane
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Includes global events in the timeline.</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="rounded-full bg-slate-100 text-slate-600 px-2 py-0.5 cursor-default">
+                                  {link.employeeIds && link.employeeIds.length > 0
+                                    ? `${link.employeeIds.length} employee(s)`
+                                    : 'All employees'}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <div className="max-w-[240px] max-h-[160px] overflow-y-auto text-xs">
+                                  {link.employeeNames && link.employeeNames.length > 0
+                                    ? link.employeeNames.join(', ')
+                                    : 'All employees included'}
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="rounded-full bg-purple-50 text-purple-600 px-2 py-0.5 cursor-default">
+                                  {link.eventTypeIds && link.eventTypeIds.length > 0
+                                    ? `${link.eventTypeIds.length} event type(s)`
+                                    : 'All event types'}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <div className="max-w-[240px] max-h-[160px] overflow-y-auto text-xs">
+                                  {link.eventTypeNames && link.eventTypeNames.length > 0
+                                    ? link.eventTypeNames.join(', ')
+                                    : 'All event types included'}
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -342,17 +433,17 @@ export function ShareViewModal({ open, onOpenChange, teamId, employees, eventTyp
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Input
-                  readOnly
-                  value={shareUrl}
-                  className="flex-1 text-sm"
-                />
+              <div className="flex items-start gap-2 min-w-0">
+                <div className="h-9 flex-1 min-w-0 rounded-md border border-border bg-background px-3 sm:max-w-[420px] flex items-center">
+                  <div className="overflow-x-auto whitespace-nowrap text-sm text-foreground scrollbar-thin">
+                    {shareUrl}
+                  </div>
+                </div>
                 <Button
                   size="icon"
                   variant="outline"
                   onClick={handleCopy}
-                  className="shrink-0"
+                  className="shrink-0 self-end h-9 w-9"
                 >
                   {copied ? (
                     <Check className="w-4 h-4 text-green-500" />

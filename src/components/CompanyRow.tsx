@@ -20,7 +20,7 @@ export function CompanyRow({
         <Building2 className="w-5 h-5" />
       </div>
       <span className="text-sm font-medium text-foreground truncate flex-1">
-        Company 
+        Global
       </span>
       {hasOverflow && <div className="text-muted-foreground">
           {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
