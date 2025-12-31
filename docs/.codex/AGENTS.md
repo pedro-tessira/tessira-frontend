@@ -112,3 +112,4 @@
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).
+- Update this documentation on every change.
