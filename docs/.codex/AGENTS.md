@@ -109,6 +109,7 @@
 - Share API updates: `includeGlobalLane` replaces `includeCompanyLane`, share timeline uses `globalLane`, and share summaries include `createdByName`, `employeeNames`, and `eventTypeNames`.
 - Share UI entry points: `src/pages/SharePage.tsx` (public view), `src/queries/useShare.ts` (public fetch with from/to), `src/queries/useShares.ts` (per-team share list).
 - OpenAPI now includes event edit/delete endpoints (`PATCH /api/events/{eventId}`, `DELETE /api/events/{eventId}`) but frontend wiring is still pending.
+- Added `src/queries/useEventMutations.ts` for event update/delete API wiring (UI hookup pending).
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).
