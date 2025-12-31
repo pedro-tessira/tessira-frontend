@@ -1,4 +1,4 @@
-import { TimelineEvent, COMPANY_ROW_ID } from '@/lib/types';
+import { EventTypeDto, TimelineEvent, COMPANY_ROW_ID } from '@/lib/types';
 import { DayColumn } from '@/lib/dateUtils';
 import { TimelineHeader } from './TimelineHeader';
 import { TimelineRow } from './TimelineRow';
@@ -7,6 +7,7 @@ import { RowLayoutInfo } from '@/hooks/useRowHeights';
 interface TimelineProps {
   rowIds: string[];
   events: TimelineEvent[];
+  eventTypes: EventTypeDto[];
   columns: DayColumn[];
   colWidth: number;
   rangeStart: Date;
@@ -20,6 +21,7 @@ interface TimelineProps {
 export function Timeline({
   rowIds,
   events,
+  eventTypes,
   columns,
   colWidth,
   expandedRows,
@@ -69,6 +71,7 @@ export function Timeline({
               key={rowId}
               employeeId={rowId}
               events={rowEvents}
+              eventTypes={eventTypes}
               columns={columns}
               colWidth={colWidth}
               layoutInfo={layoutInfo}

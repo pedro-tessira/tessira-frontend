@@ -110,7 +110,7 @@
 - Share UI entry points: `src/pages/SharePage.tsx` (public view), `src/queries/useShare.ts` (public fetch with from/to), `src/queries/useShares.ts` (per-team share list).
 - OpenAPI now includes event edit/delete endpoints (`PATCH /api/events/{eventId}`, `DELETE /api/events/{eventId}`) but frontend wiring is still pending.
 - Added `src/queries/useEventMutations.ts` for event update/delete API wiring (UI hookup pending).
-- Added `src/components/EditEventModal.tsx` for event editing (wiring pending).
+- Added `src/components/EditEventModal.tsx` and wired `src/components/EventChip.tsx` to edit/delete endpoints.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).

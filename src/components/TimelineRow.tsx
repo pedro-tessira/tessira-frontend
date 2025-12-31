@@ -1,4 +1,4 @@
-import { TimelineEvent } from '@/lib/types';
+import { EventTypeDto, TimelineEvent } from '@/lib/types';
 import { DayColumn } from '@/lib/dateUtils';
 import { EventChip } from './EventChip';
 import { MoreChip } from './MoreChip';
@@ -7,6 +7,7 @@ import { PositionedEvent, RowLayoutInfo } from '@/hooks/useRowHeights';
 interface TimelineRowProps {
   employeeId: string;
   events: TimelineEvent[];
+  eventTypes: EventTypeDto[];
   columns: DayColumn[];
   colWidth: number;
   layoutInfo: RowLayoutInfo;
@@ -23,6 +24,7 @@ export function TimelineRow({
   columns,
   colWidth,
   layoutInfo,
+  eventTypes,
   isExpanded,
   onToggleExpand,
 }: TimelineRowProps) {
@@ -72,6 +74,7 @@ export function TimelineRow({
         <EventChip
           key={pe.event.id}
           event={pe.event}
+          eventTypes={eventTypes}
           style={{
             left: pe.left + 2,
             width: pe.width,

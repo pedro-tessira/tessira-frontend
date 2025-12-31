@@ -348,6 +348,7 @@ export default function SharePage() {
             <Timeline
               rowIds={companyLane ? allRowIds : allRowIds.filter(id => id !== COMPANY_ROW_ID)}
               events={timelineEvents}
+              eventTypes={[]}
               columns={columns}
               colWidth={COL_WIDTH}
               rangeStart={rangeStart}

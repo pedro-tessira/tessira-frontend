@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Building2, Lock, Pencil, Trash2, User, Users } from 'lucide-react';
-import { TimelineEvent } from '@/lib/types';
+import { EventTypeDto, TimelineEvent } from '@/lib/types';
 import { formatDateRange } from '@/lib/dateUtils';
 import { getEventColorClass } from '@/lib/eventColors';
 import {
@@ -8,14 +9,31 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
+import { useDeleteEvent, useUpdateEvent } from '@/queries/useEventMutations';
+import { EditEventModal } from '@/components/EditEventModal';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface EventChipProps {
   event: TimelineEvent;
+  eventTypes: EventTypeDto[];
   style: React.CSSProperties;
 }
 
-export function EventChip({ event, style }: EventChipProps) {
+export function EventChip({ event, eventTypes, style }: EventChipProps) {
   const { toast } = useToast();
+  const [showEdit, setShowEdit] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const updateEvent = useUpdateEvent();
+  const deleteEvent = useDeleteEvent();
   const isCompanyRow = event.employeeId === null;
   const scopeIcon =
     event.scope === 'GLOBAL' ? Building2 : event.scope === 'TEAM' ? Users : User;
@@ -64,9 +82,7 @@ export function EventChip({ event, style }: EventChipProps) {
               {event.canEdit && (
                 <button
                   type="button"
-                  onClick={() =>
-                    toast({ title: 'Not implemented yet', description: 'Edit events is not available yet.' })
-                  }
+                  onClick={() => setShowEdit(true)}
                   className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                 >
                   <Pencil className="w-3.5 h-3.5" />
@@ -76,9 +92,7 @@ export function EventChip({ event, style }: EventChipProps) {
               {event.canDelete && (
                 <button
                   type="button"
-                  onClick={() =>
-                    toast({ title: 'Not implemented yet', description: 'Delete events is not available yet.' })
-                  }
+                  onClick={() => setShowDeleteConfirm(true)}
                   className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -90,5 +104,66 @@ export function EventChip({ event, style }: EventChipProps) {
         </div>
       </TooltipContent>
     </Tooltip>
+    <EditEventModal
+      open={showEdit}
+      onOpenChange={setShowEdit}
+      event={event}
+      eventTypes={eventTypes}
+      onSubmit={(payload) => {
+        updateEvent.mutate(
+          { eventId: event.id, payload },
+          {
+            onSuccess: () => {
+              toast({
+                title: 'Event updated',
+                description: 'Event updated successfully.',
+              });
+            },
+            onError: (error: { message?: string }) => {
+              toast({
+                title: 'Event update failed',
+                description: error?.message ?? 'Unable to update event.',
+                variant: 'destructive',
+              });
+            },
+          }
+        );
+      }}
+    />
+    <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete event</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to delete this event? This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => {
+              deleteEvent.mutate(event.id, {
+                onSuccess: () => {
+                  toast({
+                    title: 'Event deleted',
+                    description: 'Event deleted successfully.',
+                  });
+                },
+                onError: (error: { message?: string }) => {
+                  toast({
+                    title: 'Delete failed',
+                    description: error?.message ?? 'Unable to delete event.',
+                    variant: 'destructive',
+                  });
+                },
+              });
+            }}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

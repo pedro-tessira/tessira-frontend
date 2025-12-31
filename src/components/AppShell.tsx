@@ -797,6 +797,7 @@ export function AppShell() {
             <Timeline
               rowIds={allRowIds}
               events={timelineEvents}
+              eventTypes={eventTypes}
               columns={columns}
               colWidth={COL_WIDTH}
               rangeStart={rangeStart}
