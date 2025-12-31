@@ -72,8 +72,8 @@ export function EditEventModal({ open, onOpenChange, event, eventTypes, onSubmit
             <label className="text-sm font-medium text-foreground">Event Type</label>
             <select
               value={eventTypeId}
-              onChange={(e) => setEventTypeId(e.target.value)}
-              className="px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+              disabled
+              className="px-3 py-2 bg-muted border border-border rounded-lg text-sm text-muted-foreground cursor-not-allowed"
             >
               {selectableEventTypes.map((eventType) => (
                 <option key={eventType.id} value={eventType.id}>
