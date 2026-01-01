@@ -15,6 +15,7 @@ import AdminHrisPage from "./pages/admin/HrisPage";
 import AdminUsersPage from "./pages/admin/UsersPage";
 import AdminEventTypesPage from "./pages/admin/EventTypesPage";
 import AdminAuditPage from "./pages/admin/AuditPage";
+import { AdminRoute } from "./components/AdminRoute";
 
 const queryClient = new QueryClient();
 
@@ -29,7 +30,14 @@ const App = () => (
           <Route path="/help" element={<HelpPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/share/:token" element={<SharePage />} />
-          <Route path="/admin" element={<AdminLayout />}>
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminLayout />
+              </AdminRoute>
+            }
+          >
             <Route index element={<AdminIndexPage />} />
             <Route path="auth" element={<AdminAuthPage />} />
             <Route path="hris" element={<AdminHrisPage />} />
