@@ -118,6 +118,7 @@
 - Added `src/components/layout/AdminLayout.tsx` for the new admin shell and sidebar.
 - Added `src/pages/ProfilePage.tsx` for the new profile UI (read-only data from `useMe`).
 - Added `src/pages/HelpPage.tsx` with the new help/support layout.
+- Added admin pages under `src/pages/admin/` (index redirect, auth, HRIS, users, event types, audit).
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).
