@@ -119,6 +119,7 @@
 - Added `src/pages/ProfilePage.tsx` for the new profile UI (read-only data from `useMe`).
 - Added `src/pages/HelpPage.tsx` with the new help/support layout.
 - Added admin pages under `src/pages/admin/` (index redirect, auth, HRIS, users, event types, audit).
+- Swapped `src/components/AppShell.tsx` to use `MainLayout` + `AppHeader` instead of `HeaderBar`.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).

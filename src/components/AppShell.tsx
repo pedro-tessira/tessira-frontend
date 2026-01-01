@@ -11,7 +11,7 @@ import {
   TeamEmployeeDto,
 } from '@/lib/types';
 import { generateDayColumns } from '@/lib/dateUtils';
-import { HeaderBar } from './HeaderBar';
+import { MainLayout } from './layout/MainLayout';
 import { LegendChips } from './LegendChips';
 import { Timeline } from './Timeline';
 import { EmployeeRow } from './EmployeeRow';
@@ -686,23 +686,22 @@ export function AppShell() {
   }, [rangeStart]);
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
-      <HeaderBar
-        teams={teams}
-        employees={allEmployees}
-        events={timelineEvents}
-        eventTypes={eventTypes}
-        selectedTeamId={selectedTeamId}
-        onTeamChange={setSelectedTeamId}
-        onAddEmployee={handleAddEmployee}
-        onRemoveEmployee={handleRemoveEmployee}
-        onUpdateEmployee={handleUpdateEmployee}
-        onAddTeam={handleAddTeam}
-        onUpdateTeam={handleUpdateTeam}
-        onRemoveTeam={handleRemoveTeam}
-        onLogout={handleLogout}
-      />
-
+    <MainLayout
+      fullWidth
+      teams={teams}
+      employees={allEmployees}
+      events={timelineEvents}
+      eventTypes={eventTypes}
+      selectedTeamId={selectedTeamId}
+      onTeamChange={setSelectedTeamId}
+      onAddEmployee={handleAddEmployee}
+      onRemoveEmployee={handleRemoveEmployee}
+      onUpdateEmployee={handleUpdateEmployee}
+      onAddTeam={handleAddTeam}
+      onUpdateTeam={handleUpdateTeam}
+      onRemoveTeam={handleRemoveTeam}
+      onLogout={handleLogout}
+    >
       <LegendChips
         activeFilters={activeFilters}
         onToggleFilter={toggleFilter}
@@ -822,6 +821,6 @@ export function AppShell() {
           )}
         </div>
       </div>
-    </div>
+    </MainLayout>
   );
 }
