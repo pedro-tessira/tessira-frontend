@@ -117,6 +117,7 @@
 - Added `src/components/layout/MainLayout.tsx` to host the new `AppHeader` + page container wrapper.
 - Added `src/components/layout/AdminLayout.tsx` for the new admin shell and sidebar.
 - Added `src/pages/ProfilePage.tsx` for the new profile UI (read-only data from `useMe`).
+- Added `src/pages/HelpPage.tsx` with the new help/support layout.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).
