@@ -115,6 +115,7 @@
 - Renamed event type labels from Company to Global in `src/components/ManageEventTypesModal.tsx`.
 - Disabled editing event type in `src/components/EditEventModal.tsx` (read-only select).
 - Added `src/components/layout/MainLayout.tsx` to host the new `AppHeader` + page container wrapper.
+- Added `src/components/layout/AdminLayout.tsx` for the new admin shell and sidebar.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).
