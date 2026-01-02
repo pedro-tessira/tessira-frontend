@@ -26,6 +26,25 @@ const providerOptions: { value: SsoProviderType; label: string }[] = [
   { value: "SAML2", label: "Custom SAML 2.0" },
 ];
 
+const providerReferences: Record<SsoProviderType, string> = {
+  ENTRA_ID: "https://learn.microsoft.com/en-us/entra/identity-platform/v2-protocols-oidc",
+  OKTA: "https://developer.okta.com/docs/guides/implement-oauth-for-okta/main/",
+  GOOGLE_WORKSPACE: "https://developers.google.com/identity/openid-connect/openid-connect",
+  SAML2: "https://en.wikipedia.org/wiki/SAML_2.0",
+};
+
+const providerProtocols: Record<SsoProviderType, string> = {
+  ENTRA_ID: "OIDC",
+  OKTA: "OIDC",
+  GOOGLE_WORKSPACE: "OIDC",
+  SAML2: "SAML2",
+};
+
+const protocolRequiredKeys: Record<string, string[]> = {
+  OIDC: ["clientId", "clientSecret", "issuerUrl", "redirectUri"],
+  SAML2: ["metadataUrl (or metadataXml)", "spEntityId", "acsUrl"],
+};
+
 const emptyFormState = {
   provider: "ENTRA_ID" as SsoProviderType,
   displayName: "Azure Entra ID",
@@ -74,6 +93,8 @@ export default function AdminAuthPage() {
   const [settingsEntries, setSettingsEntries] = useState<
     { id: string; key: string; value: string }[]
   >([]);
+
+  const activeProtocol = activeProvider?.protocol ?? providerProtocols[formData.provider];
 
   useEffect(() => {
     const entries = Object.entries(formData.settings ?? {}).map(([key, value]) => ({
@@ -175,6 +196,8 @@ export default function AdminAuthPage() {
   const isSaving = createProvider.isPending || updateProvider.isPending;
   const isTesting = testProvider.isPending;
   const canTest = Boolean(activeProvider?.id);
+  const requiredKeys = protocolRequiredKeys[activeProtocol] ?? [];
+  const providerReference = providerReferences[formData.provider];
 
   if (isLoading) {
     return (
@@ -325,6 +348,34 @@ export default function AdminAuthPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
+          <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-medium text-foreground">Protocol:</span>
+              <Badge variant="outline">{activeProtocol}</Badge>
+            </div>
+            {requiredKeys.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-medium text-foreground">Required keys:</span>
+                {requiredKeys.map((key) => (
+                  <Badge key={key} variant="secondary">
+                    {key}
+                  </Badge>
+                ))}
+              </div>
+            )}
+            <div>
+              <span className="font-medium text-foreground">Provider reference:</span>{" "}
+              <a
+                href={providerReference}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary hover:underline"
+              >
+                {providerReference}
+              </a>
+            </div>
+            <div>Additional keys are allowed in settings for provider-specific needs.</div>
+          </div>
           <div className="grid gap-3">
             {settingsEntries.map((entry) => (
               <div key={entry.id} className="grid grid-cols-[1fr_1fr_auto] gap-3 items-center">
