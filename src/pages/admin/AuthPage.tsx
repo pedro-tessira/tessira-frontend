@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Save, TestTube, AlertTriangle, Check, Loader2 } from "lucide-react";
+import { Save, TestTube, AlertTriangle, Check, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
   SsoProviderDto,
@@ -61,6 +62,7 @@ export default function AdminAuthPage() {
   const [testResult, setTestResult] = useState<"success" | "error" | null>(null);
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
   const [formData, setFormData] = useState(emptyFormState);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const isNewProvider = selectedProviderId === null;
   const activeProvider = useMemo<SsoProviderDto | null>(() => {
@@ -237,75 +239,26 @@ export default function AdminAuthPage() {
     );
   }
 
-  return (
-    <div className="space-y-6 max-w-5xl">
+  const renderForm = (title: string) => (
+    <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Authentication & SSO</h1>
-          <p className="text-muted-foreground mt-1">
-            Configure single sign-on and authentication settings for your organization.
+          <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+          <p className="text-sm text-muted-foreground">
+            Configure single sign-on and authentication settings for this provider.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={handleTest} disabled={!canTest || isTesting} className="gap-2">
             {isTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <TestTube className="w-4 h-4" />}
-            Test Configuration
+            Test
           </Button>
           <Button onClick={handleSave} disabled={isSaving} className="gap-2">
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Save Changes
+            Save
           </Button>
         </div>
       </div>
-
-      <Card>
-        <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">
-          <div>
-            <CardTitle className="text-lg">SSO Configurations</CardTitle>
-            <CardDescription>Select a provider to edit or create a new one.</CardDescription>
-          </div>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setSelectedProviderId(null);
-              setFormData(emptyFormState);
-            }}
-          >
-            New provider
-          </Button>
-        </CardHeader>
-        <CardContent className="grid gap-3">
-          {providers.length === 0 ? (
-            <div className="text-sm text-muted-foreground">No providers configured yet.</div>
-          ) : (
-            providers.map((provider) => (
-              <button
-                key={provider.id}
-                className={`w-full text-left rounded-lg border px-4 py-3 transition-colors ${
-                  provider.id === selectedProviderId
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:bg-muted"
-                }`}
-                onClick={() => setSelectedProviderId(provider.id)}
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <div className="font-medium text-foreground">
-                      {provider.displayName || providerLabels[provider.provider] || provider.provider}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {providerLabels[provider.provider] ?? provider.provider} • {provider.protocol}
-                    </div>
-                  </div>
-                  <Badge variant="secondary" className={provider.enabled ? "bg-green-50 text-green-700" : ""}>
-                    {provider.enabled ? "Enabled" : "Disabled"}
-                  </Badge>
-                </div>
-              </button>
-            ))
-          )}
-        </CardContent>
-      </Card>
 
       <Alert className="border-amber-200 bg-amber-50">
         <AlertTriangle className="h-4 w-4 text-amber-600" />
@@ -371,7 +324,7 @@ export default function AdminAuthPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2 col-span-2">
+            <div className="space-y-2">
               <Label htmlFor="displayName">Display Name</Label>
               <Input
                 id="displayName"
@@ -598,6 +551,89 @@ export default function AdminAuthPage() {
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6 max-w-5xl">
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Authentication & SSO</h1>
+          <p className="text-muted-foreground mt-1">
+            Configure single sign-on and authentication settings for your organization.
+          </p>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">
+          <div>
+            <CardTitle className="text-lg">SSO Configurations</CardTitle>
+            <CardDescription>Select a provider to edit or create a new one.</CardDescription>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setSelectedProviderId(null);
+              setFormData(emptyFormState);
+              setIsCreateOpen(true);
+            }}
+            className="gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            New provider
+          </Button>
+        </CardHeader>
+        <CardContent className="grid gap-3">
+          {providers.length === 0 ? (
+            <div className="text-sm text-muted-foreground">No providers configured yet.</div>
+          ) : (
+            providers.map((provider) => (
+              <div key={provider.id} className="rounded-lg border border-border">
+                <button
+                  className={`w-full text-left px-4 py-3 transition-colors ${
+                    provider.id === selectedProviderId
+                      ? "bg-primary/5"
+                      : "hover:bg-muted"
+                  }`}
+                  onClick={() => setSelectedProviderId(provider.id)}
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <div className="font-medium text-foreground">
+                        {provider.displayName || providerLabels[provider.provider] || provider.provider}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {providerLabels[provider.provider] ?? provider.provider} • {provider.protocol}
+                      </div>
+                    </div>
+                    <Badge variant="secondary" className={provider.enabled ? "bg-green-50 text-green-700" : ""}>
+                      {provider.enabled ? "Enabled" : "Disabled"}
+                    </Badge>
+                  </div>
+                </button>
+                {provider.id === selectedProviderId && (
+                  <div className="border-t border-border p-4 bg-background">
+                    {renderForm("Edit configuration")}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Create SSO provider</DialogTitle>
+            <DialogDescription>
+              Add a new SSO configuration and save it to enable authentication.
+            </DialogDescription>
+          </DialogHeader>
+          {renderForm("New provider")}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

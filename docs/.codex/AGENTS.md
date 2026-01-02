@@ -139,6 +139,7 @@
 - Fixed new-provider flow to allow protocol selection without reverting to the first provider.
 - Updated SSO provider types to match new OpenAPI enums and added `/api/admin/sso-providers/types` usage for protocol/required settings.
 - Restructured Admin SSO UI to show a list of configs with edit selection and a New provider action.
+- Changed SSO admin UX: configs list expands inline for edits; new provider opens in a modal.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).
