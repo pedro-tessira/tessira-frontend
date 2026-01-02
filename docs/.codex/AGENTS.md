@@ -146,6 +146,7 @@
 - Required SAML keys now treat `metadataUrl|metadataXml` as alternative options instead of a literal key.
 - Global Require SSO moved to `GET/PATCH /api/admin/auth-settings`; provider modals no longer show Require SSO.
 - SAML required-key chips now show `metadataUrl or metadataXml` in the modal guidance.
+- Added success toast for Require SSO updates.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).

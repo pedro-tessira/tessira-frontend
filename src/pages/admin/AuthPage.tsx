@@ -569,6 +569,12 @@ export default function AdminAuthPage() {
                 updateAuthSettings.mutate(
                   { requireSso: checked },
                   {
+                    onSuccess: () => {
+                      toast({
+                        title: "Auth settings updated",
+                        description: `Require SSO is now ${checked ? "enabled" : "disabled"}.`,
+                      });
+                    },
                     onError: (error: { message?: string }) => {
                       toast({
                         title: "Update failed",
