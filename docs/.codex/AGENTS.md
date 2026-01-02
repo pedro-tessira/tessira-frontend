@@ -123,6 +123,7 @@
 - Added routes for help/profile/admin pages in `src/App.tsx` and wired admin child routes.
 - Added `src/components/AdminRoute.tsx` to gate `/admin/*` routes to ADMIN only.
 - Added `src/queries/useSsoProviders.ts` for admin SSO provider list/create/update/delete/test.
+- Wired `src/pages/admin/AuthPage.tsx` to the admin SSO provider endpoints.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).
