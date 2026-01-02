@@ -63,6 +63,7 @@ export default function AdminAuthPage() {
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
   const [formData, setFormData] = useState(emptyFormState);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   const isNewProvider = selectedProviderId === null;
   const activeProvider = useMemo<SsoProviderDto | null>(() => {
@@ -596,7 +597,11 @@ export default function AdminAuthPage() {
                       ? "bg-primary/5"
                       : "hover:bg-muted"
                   }`}
-                  onClick={() => setSelectedProviderId(provider.id)}
+                  onClick={() => {
+                    setSelectedProviderId(provider.id);
+                    setIsCreateOpen(false);
+                    setIsEditOpen(true);
+                  }}
                 >
                   <div className="flex items-center justify-between gap-4">
                     <div>
@@ -612,19 +617,23 @@ export default function AdminAuthPage() {
                     </Badge>
                   </div>
                 </button>
-                {provider.id === selectedProviderId && (
-                  <div className="border-t border-border p-4 bg-background">
-                    {renderForm("Edit configuration")}
-                  </div>
-                )}
               </div>
             ))
           )}
         </CardContent>
       </Card>
 
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="max-w-4xl">
+      <Dialog
+        open={isCreateOpen}
+        onOpenChange={(open) => {
+          setIsCreateOpen(open);
+          if (!open) {
+            setFormData(emptyFormState);
+            setSelectedProviderId(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create SSO provider</DialogTitle>
             <DialogDescription>
@@ -632,6 +641,26 @@ export default function AdminAuthPage() {
             </DialogDescription>
           </DialogHeader>
           {renderForm("New provider")}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isEditOpen}
+        onOpenChange={(open) => {
+          setIsEditOpen(open);
+          if (!open) {
+            setSelectedProviderId(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit SSO provider</DialogTitle>
+            <DialogDescription>
+              Update the selected SSO configuration.
+            </DialogDescription>
+          </DialogHeader>
+          {renderForm("Edit configuration")}
         </DialogContent>
       </Dialog>
     </div>
