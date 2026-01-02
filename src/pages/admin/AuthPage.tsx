@@ -43,7 +43,7 @@ const providerReferences: Record<SsoProviderType, string> = {
 const emptyFormState = {
   provider: "ENTRA" as SsoProviderType,
   protocol: "OIDC",
-  displayName: "Azure Entra ID",
+  displayName: "",
   allowedDomains: [] as string[],
   requireSso: false,
   autoProvision: true,

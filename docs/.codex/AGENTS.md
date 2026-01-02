@@ -142,6 +142,7 @@
 - Changed SSO admin UX: configs list expands inline for edits; new provider opens in a modal.
 - Updated SSO admin UX: both edit and create use modals, with max-height scrolling to avoid cutoff.
 - Adjusted SSO modals: single header (no nested title), red delete action with warning copy, and new display name placeholder.
+- New SSO form starts with empty display name (placeholder only).
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).
