@@ -238,7 +238,7 @@ export default function AdminAuthPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-5xl">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">Authentication & SSO</h1>
@@ -257,6 +257,55 @@ export default function AdminAuthPage() {
           </Button>
         </div>
       </div>
+
+      <Card>
+        <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">
+          <div>
+            <CardTitle className="text-lg">SSO Configurations</CardTitle>
+            <CardDescription>Select a provider to edit or create a new one.</CardDescription>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setSelectedProviderId(null);
+              setFormData(emptyFormState);
+            }}
+          >
+            New provider
+          </Button>
+        </CardHeader>
+        <CardContent className="grid gap-3">
+          {providers.length === 0 ? (
+            <div className="text-sm text-muted-foreground">No providers configured yet.</div>
+          ) : (
+            providers.map((provider) => (
+              <button
+                key={provider.id}
+                className={`w-full text-left rounded-lg border px-4 py-3 transition-colors ${
+                  provider.id === selectedProviderId
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:bg-muted"
+                }`}
+                onClick={() => setSelectedProviderId(provider.id)}
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <div className="font-medium text-foreground">
+                      {provider.displayName || providerLabels[provider.provider] || provider.provider}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {providerLabels[provider.provider] ?? provider.provider} • {provider.protocol}
+                    </div>
+                  </div>
+                  <Badge variant="secondary" className={provider.enabled ? "bg-green-50 text-green-700" : ""}>
+                    {provider.enabled ? "Enabled" : "Disabled"}
+                  </Badge>
+                </div>
+              </button>
+            ))
+          )}
+        </CardContent>
+      </Card>
 
       <Alert className="border-amber-200 bg-amber-50">
         <AlertTriangle className="h-4 w-4 text-amber-600" />
@@ -308,6 +357,7 @@ export default function AdminAuthPage() {
                     protocol: typeMatch?.protocol ?? prev.protocol,
                   }));
                 }}
+                disabled={!isNewProvider}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue />
@@ -316,32 +366,6 @@ export default function AdminAuthPage() {
                   {providerOptions.map((provider) => (
                     <SelectItem key={provider} value={provider}>
                       {providerLabels[provider] ?? provider}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Active Providers</Label>
-              <Select
-                value={selectedProviderId ?? "new"}
-                onValueChange={(value) => {
-                  if (value === "new") {
-                    setSelectedProviderId(null);
-                    setFormData(emptyFormState);
-                    return;
-                  }
-                  setSelectedProviderId(value);
-                }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="new">New provider</SelectItem>
-                  {providers.map((provider) => (
-                    <SelectItem key={provider.id} value={provider.id}>
-                      {provider.displayName || provider.provider}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -358,7 +382,7 @@ export default function AdminAuthPage() {
                 }
               />
             </div>
-            {isNewProvider && (
+            {isNewProvider ? (
               <div className="space-y-2">
                 <Label>Protocol</Label>
                 <Select
@@ -386,6 +410,11 @@ export default function AdminAuthPage() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>Protocol</Label>
+                <Input value={activeProtocol} readOnly />
               </div>
             )}
             <div className="space-y-2">
