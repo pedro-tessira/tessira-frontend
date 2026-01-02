@@ -240,25 +240,17 @@ export default function AdminAuthPage() {
     );
   }
 
-  const renderForm = (title: string) => (
+  const renderForm = () => (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-          <p className="text-sm text-muted-foreground">
-            Configure single sign-on and authentication settings for this provider.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleTest} disabled={!canTest || isTesting} className="gap-2">
-            {isTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <TestTube className="w-4 h-4" />}
-            Test
-          </Button>
-          <Button onClick={handleSave} disabled={isSaving} className="gap-2">
-            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Save
-          </Button>
-        </div>
+      <div className="flex items-center justify-end gap-2">
+        <Button variant="outline" onClick={handleTest} disabled={!canTest || isTesting} className="gap-2">
+          {isTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <TestTube className="w-4 h-4" />}
+          Test
+        </Button>
+        <Button onClick={handleSave} disabled={isSaving} className="gap-2">
+          {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          Save
+        </Button>
       </div>
 
       <Alert className="border-amber-200 bg-amber-50">
@@ -329,7 +321,7 @@ export default function AdminAuthPage() {
               <Label htmlFor="displayName">Display Name</Label>
               <Input
                 id="displayName"
-                placeholder="SSO Provider"
+                placeholder="SSO Provider Display Name"
                 value={formData.displayName}
                 onChange={(event) =>
                   setFormData((prev) => ({ ...prev, displayName: event.target.value }))
@@ -518,20 +510,20 @@ export default function AdminAuthPage() {
               onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, autoProvision: checked }))}
             />
           </div>
-          {activeProvider && (
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Remove provider</Label>
-                <p className="text-sm text-muted-foreground">
-                  Deletes this provider configuration.
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                onClick={() =>
-                  deleteProvider.mutate(activeProvider.id, {
-                    onSuccess: () => {
-                      toast({
+            {activeProvider && (
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Remove provider</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Deleting this configuration may lead to issues accessing Horizon.
+                  </p>
+                </div>
+                <Button
+                  variant="destructive"
+                  onClick={() =>
+                    deleteProvider.mutate(activeProvider.id, {
+                      onSuccess: () => {
+                        toast({
                         title: "Provider removed",
                         description: "SSO provider configuration deleted.",
                       });
@@ -640,7 +632,7 @@ export default function AdminAuthPage() {
               Add a new SSO configuration and save it to enable authentication.
             </DialogDescription>
           </DialogHeader>
-          {renderForm("New provider")}
+          {renderForm()}
         </DialogContent>
       </Dialog>
 
@@ -660,7 +652,7 @@ export default function AdminAuthPage() {
               Update the selected SSO configuration.
             </DialogDescription>
           </DialogHeader>
-          {renderForm("Edit configuration")}
+          {renderForm()}
         </DialogContent>
       </Dialog>
     </div>
