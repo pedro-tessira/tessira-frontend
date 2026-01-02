@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useAuthSettings, useUpdateAuthSettings } from "@/queries/useAuthSettings";
 import {
   SsoProviderDto,
   SsoProviderType,
@@ -45,7 +46,6 @@ const emptyFormState = {
   protocol: "OIDC",
   displayName: "",
   allowedDomains: [] as string[],
-  requireSso: false,
   autoProvision: true,
   enabled: true,
   settings: {} as Record<string, string>,
@@ -55,6 +55,8 @@ export default function AdminAuthPage() {
   const { toast } = useToast();
   const { data: providers = [], isLoading } = useSsoProviders();
   const { data: providerTypes = [], isLoading: isTypesLoading } = useSsoProviderTypes();
+  const { data: authSettings } = useAuthSettings();
+  const updateAuthSettings = useUpdateAuthSettings();
   const createProvider = useCreateSsoProvider();
   const updateProvider = useUpdateSsoProvider();
   const deleteProvider = useDeleteSsoProvider();
@@ -112,7 +114,6 @@ export default function AdminAuthPage() {
       protocol: provider.protocol ?? providerTypes.find((type) => type.provider === provider.provider)?.protocol ?? "OIDC",
       displayName: provider.displayName,
       allowedDomains: provider.allowedEmailDomains ?? [],
-      requireSso: provider.requiredSso,
       autoProvision: provider.autoProvision,
       enabled: provider.enabled,
       settings: provider.settings ?? {},
@@ -145,7 +146,6 @@ export default function AdminAuthPage() {
     const payload = {
       displayName: formData.displayName.trim() || "SSO Provider",
       enabled: formData.enabled,
-      requiredSso: formData.requireSso,
       autoProvision: formData.autoProvision,
       allowedEmailDomains: formData.allowedDomains,
       settings: settingsPayload,
@@ -409,7 +409,7 @@ export default function AdminAuthPage() {
                 <span className="font-medium text-foreground">Required keys:</span>
                 {requiredKeys.map((key) => (
                   <Badge key={key} variant="secondary">
-                    {key}
+                    {key.includes("|") ? key.split("|").join(" or ") : key}
                   </Badge>
                 ))}
               </div>
@@ -419,7 +419,7 @@ export default function AdminAuthPage() {
                 <span className="font-medium text-foreground">Missing required keys:</span>
                 {missingRequiredKeys.map((key) => (
                   <Badge key={key} variant="secondary" className="bg-amber-50 text-amber-700">
-                    {key}
+                    {key.includes("|") ? key.split("|").join(" or ") : key}
                   </Badge>
                 ))}
               </div>
@@ -492,18 +492,6 @@ export default function AdminAuthPage() {
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Require SSO</Label>
-              <p className="text-sm text-muted-foreground">
-                When enabled, users must authenticate via SSO. Manual logins will be disabled.
-              </p>
-            </div>
-            <Switch
-              checked={formData.requireSso}
-              onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, requireSso: checked }))}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
               <Label>Auto-provision users on first login</Label>
               <p className="text-sm text-muted-foreground">
                 Automatically create user accounts when someone signs in via SSO for the first time.
@@ -514,20 +502,20 @@ export default function AdminAuthPage() {
               onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, autoProvision: checked }))}
             />
           </div>
-            {activeProvider && (
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Remove provider</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Deleting this configuration may lead to issues accessing Horizon.
-                  </p>
-                </div>
-                <Button
-                  variant="destructive"
-                  onClick={() =>
-                    deleteProvider.mutate(activeProvider.id, {
-                      onSuccess: () => {
-                        toast({
+          {activeProvider && (
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Remove provider</Label>
+                <p className="text-sm text-muted-foreground">
+                  Deleting this configuration may lead to issues accessing Horizon.
+                </p>
+              </div>
+              <Button
+                variant="destructive"
+                onClick={() =>
+                  deleteProvider.mutate(activeProvider.id, {
+                    onSuccess: () => {
+                      toast({
                         title: "Provider removed",
                         description: "SSO provider configuration deleted.",
                       });
@@ -561,6 +549,40 @@ export default function AdminAuthPage() {
           </p>
         </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Global Authentication</CardTitle>
+          <CardDescription>Apply organization-wide SSO requirements.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Require SSO</Label>
+              <p className="text-sm text-muted-foreground">
+                When enabled, users must authenticate via SSO. Manual logins will be disabled.
+              </p>
+            </div>
+            <Switch
+              checked={authSettings?.requireSso ?? false}
+              onCheckedChange={(checked) => {
+                updateAuthSettings.mutate(
+                  { requireSso: checked },
+                  {
+                    onError: (error: { message?: string }) => {
+                      toast({
+                        title: "Update failed",
+                        description: error?.message ?? "Unable to update auth settings.",
+                        variant: "destructive",
+                      });
+                    },
+                  }
+                );
+              }}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">

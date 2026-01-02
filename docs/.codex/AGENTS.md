@@ -144,6 +144,8 @@
 - Adjusted SSO modals: single header (no nested title), red delete action with warning copy, and new display name placeholder.
 - New SSO form starts with empty display name (placeholder only).
 - Required SAML keys now treat `metadataUrl|metadataXml` as alternative options instead of a literal key.
+- Global Require SSO moved to `GET/PATCH /api/admin/auth-settings`; provider modals no longer show Require SSO.
+- SAML required-key chips now show `metadataUrl or metadataXml` in the modal guidance.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).

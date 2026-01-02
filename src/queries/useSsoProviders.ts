@@ -21,7 +21,6 @@ export interface CreateSsoProviderRequest {
   provider: SsoProviderType;
   displayName: string;
   enabled: boolean;
-  requiredSso: boolean;
   autoProvision: boolean;
   allowedEmailDomains: string[];
   settings: Record<string, string>;
@@ -30,7 +29,6 @@ export interface CreateSsoProviderRequest {
 export interface UpdateSsoProviderRequest {
   displayName?: string;
   enabled?: boolean;
-  requiredSso?: boolean;
   autoProvision?: boolean;
   allowedEmailDomains?: string[];
   settings?: Record<string, string>;
