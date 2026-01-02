@@ -6,6 +6,7 @@ export type SsoProviderType = "ENTRA_ID" | "OKTA" | "GOOGLE_WORKSPACE" | "SAML2"
 export interface SsoProviderDto {
   id: string;
   provider: SsoProviderType;
+  protocol?: string;
   displayName: string;
   enabled: boolean;
   requiredSso: boolean;
