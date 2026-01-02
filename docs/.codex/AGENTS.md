@@ -122,6 +122,7 @@
 - Swapped `src/components/AppShell.tsx` to use `MainLayout` + `AppHeader` instead of `HeaderBar`.
 - Added routes for help/profile/admin pages in `src/App.tsx` and wired admin child routes.
 - Added `src/components/AdminRoute.tsx` to gate `/admin/*` routes to ADMIN only.
+- Added `src/queries/useSsoProviders.ts` for admin SSO provider list/create/update/delete/test.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).
