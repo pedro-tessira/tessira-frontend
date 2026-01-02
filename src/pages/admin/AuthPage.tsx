@@ -29,13 +29,11 @@ const providerOptions: { value: SsoProviderType; label: string }[] = [
 const emptyFormState = {
   provider: "ENTRA_ID" as SsoProviderType,
   displayName: "Azure Entra ID",
-  tenantId: "",
-  issuerUrl: "",
-  clientId: "",
   allowedDomains: [] as string[],
   requireSso: false,
   autoProvision: true,
   enabled: true,
+  settings: {} as Record<string, string>,
 };
 
 export default function AdminAuthPage() {
@@ -65,28 +63,42 @@ export default function AdminAuthPage() {
     setFormData({
       provider: provider.provider,
       displayName: provider.displayName,
-      tenantId: provider.settings?.tenantId ?? "",
-      issuerUrl: provider.settings?.issuerUrl ?? "",
-      clientId: provider.settings?.clientId ?? "",
       allowedDomains: provider.allowedEmailDomains ?? [],
       requireSso: provider.requiredSso,
       autoProvision: provider.autoProvision,
       enabled: provider.enabled,
+      settings: provider.settings ?? {},
     });
   }, [activeProvider, providers]);
 
+  const [settingsEntries, setSettingsEntries] = useState<
+    { id: string; key: string; value: string }[]
+  >([]);
+
+  useEffect(() => {
+    const entries = Object.entries(formData.settings ?? {}).map(([key, value]) => ({
+      id: crypto.randomUUID(),
+      key,
+      value,
+    }));
+    setSettingsEntries(entries.length ? entries : [{ id: crypto.randomUUID(), key: "", value: "" }]);
+  }, [formData.settings]);
+
   const handleSave = async () => {
+    const settingsPayload = settingsEntries.reduce<Record<string, string>>((acc, entry) => {
+      const trimmedKey = entry.key.trim();
+      if (!trimmedKey) return acc;
+      acc[trimmedKey] = entry.value.trim();
+      return acc;
+    }, {});
+
     const payload = {
       displayName: formData.displayName.trim() || "SSO Provider",
       enabled: formData.enabled,
       requiredSso: formData.requireSso,
       autoProvision: formData.autoProvision,
       allowedEmailDomains: formData.allowedDomains,
-      settings: {
-        tenantId: formData.tenantId.trim(),
-        issuerUrl: formData.issuerUrl.trim(),
-        clientId: formData.clientId.trim(),
-      },
+      settings: settingsPayload,
     };
 
     try {
@@ -141,6 +153,23 @@ export default function AdminAuthPage() {
       allowedDomains: [...prev.allowedDomains, value],
     }));
     input.value = "";
+  };
+
+  const updateSetting = (id: string, key: string, value: string) => {
+    setSettingsEntries((prev) =>
+      prev.map((entry) => (entry.id === id ? { ...entry, key, value } : entry))
+    );
+  };
+
+  const addSettingRow = () => {
+    setSettingsEntries((prev) => [...prev, { id: crypto.randomUUID(), key: "", value: "" }]);
+  };
+
+  const removeSettingRow = (id: string) => {
+    setSettingsEntries((prev) => {
+      const next = prev.filter((entry) => entry.id !== id);
+      return next.length ? next : [{ id: crypto.randomUUID(), key: "", value: "" }];
+    });
   };
 
   const isSaving = createProvider.isPending || updateProvider.isPending;
@@ -292,39 +321,32 @@ export default function AdminAuthPage() {
         <CardHeader>
           <CardTitle className="text-lg">Connection Settings</CardTitle>
           <CardDescription>
-            Enter the credentials and endpoints for your identity provider.
+            Add provider-specific configuration keys and values.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="tenantId">Tenant ID</Label>
-              <Input
-                id="tenantId"
-                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                value={formData.tenantId}
-                onChange={(event) => setFormData((prev) => ({ ...prev, tenantId: event.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="clientId">Client ID (Application ID)</Label>
-              <Input
-                id="clientId"
-                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                value={formData.clientId}
-                onChange={(event) => setFormData((prev) => ({ ...prev, clientId: event.target.value }))}
-              />
-            </div>
+        <CardContent className="space-y-3">
+          <div className="grid gap-3">
+            {settingsEntries.map((entry) => (
+              <div key={entry.id} className="grid grid-cols-[1fr_1fr_auto] gap-3 items-center">
+                <Input
+                  placeholder="key"
+                  value={entry.key}
+                  onChange={(event) => updateSetting(entry.id, event.target.value, entry.value)}
+                />
+                <Input
+                  placeholder="value"
+                  value={entry.value}
+                  onChange={(event) => updateSetting(entry.id, entry.key, event.target.value)}
+                />
+                <Button variant="outline" size="sm" onClick={() => removeSettingRow(entry.id)}>
+                  Remove
+                </Button>
+              </div>
+            ))}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="issuerUrl">Issuer URL</Label>
-            <Input
-              id="issuerUrl"
-              placeholder="https://login.microsoftonline.com/{tenant-id}/v2.0"
-              value={formData.issuerUrl}
-              onChange={(event) => setFormData((prev) => ({ ...prev, issuerUrl: event.target.value }))}
-            />
-          </div>
+          <Button variant="outline" size="sm" onClick={addSettingRow}>
+            Add setting
+          </Button>
         </CardContent>
       </Card>
 

@@ -124,6 +124,7 @@
 - Added `src/components/AdminRoute.tsx` to gate `/admin/*` routes to ADMIN only.
 - Added `src/queries/useSsoProviders.ts` for admin SSO provider list/create/update/delete/test.
 - Wired `src/pages/admin/AuthPage.tsx` to the admin SSO provider endpoints.
+- Swapped SSO connection settings to a key/value editor for flexible provider-specific config.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).
