@@ -143,6 +143,7 @@
 - Updated SSO admin UX: both edit and create use modals, with max-height scrolling to avoid cutoff.
 - Adjusted SSO modals: single header (no nested title), red delete action with warning copy, and new display name placeholder.
 - New SSO form starts with empty display name (placeholder only).
+- Required SAML keys now treat `metadataUrl|metadataXml` as alternative options instead of a literal key.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).

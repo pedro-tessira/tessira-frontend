@@ -227,6 +227,10 @@ export default function AdminAuthPage() {
   const canTest = Boolean(activeProvider?.id);
   const requiredKeys = activeProviderType?.requiredSettings ?? [];
   const missingRequiredKeys = requiredKeys.filter((requiredKey) => {
+    if (requiredKey.includes("|")) {
+      const options = requiredKey.split("|").map((key) => key.trim());
+      return !settingsEntries.some((entry) => options.includes(entry.key.trim()));
+    }
     const primaryKey = requiredKey.split(" ")[0] ?? requiredKey;
     return !settingsEntries.some((entry) => entry.key.trim() === primaryKey);
   });
