@@ -47,6 +47,7 @@ const protocolRequiredKeys: Record<string, string[]> = {
 
 const emptyFormState = {
   provider: "ENTRA_ID" as SsoProviderType,
+  protocol: "OIDC",
   displayName: "Azure Entra ID",
   allowedDomains: [] as string[],
   requireSso: false,
@@ -66,10 +67,11 @@ export default function AdminAuthPage() {
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
   const [formData, setFormData] = useState(emptyFormState);
 
+  const isNewProvider = selectedProviderId === null;
   const activeProvider = useMemo<SsoProviderDto | null>(() => {
-    if (!providers.length) return null;
-    return providers.find((provider) => provider.id === selectedProviderId) ?? providers[0];
-  }, [providers, selectedProviderId]);
+    if (!providers.length || isNewProvider) return null;
+    return providers.find((provider) => provider.id === selectedProviderId) ?? null;
+  }, [providers, selectedProviderId, isNewProvider]);
 
   useEffect(() => {
     if (!providers.length) {
@@ -77,10 +79,14 @@ export default function AdminAuthPage() {
       setFormData(emptyFormState);
       return;
     }
+    if (isNewProvider) {
+      return;
+    }
     const provider = activeProvider ?? providers[0];
     setSelectedProviderId(provider.id);
     setFormData({
       provider: provider.provider,
+      protocol: provider.protocol ?? providerProtocols[provider.provider],
       displayName: provider.displayName,
       allowedDomains: provider.allowedEmailDomains ?? [],
       requireSso: provider.requiredSso,
@@ -94,7 +100,7 @@ export default function AdminAuthPage() {
     { id: string; key: string; value: string }[]
   >([]);
 
-  const activeProtocol = activeProvider?.protocol ?? providerProtocols[formData.provider];
+  const activeProtocol = activeProvider?.protocol ?? formData.protocol;
 
   useEffect(() => {
     const entries = Object.entries(formData.settings ?? {}).map(([key, value]) => ({
@@ -273,10 +279,14 @@ export default function AdminAuthPage() {
               <Label>Provider</Label>
               <Select
                 value={formData.provider}
-                onValueChange={(value) =>
-                  setFormData((prev) => ({ ...prev, provider: value as SsoProviderType }))
-                }
-                disabled={Boolean(activeProvider)}
+                onValueChange={(value) => {
+                  const provider = value as SsoProviderType;
+                  setFormData((prev) => ({
+                    ...prev,
+                    provider,
+                    protocol: providerProtocols[provider],
+                  }));
+                }}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue />
@@ -294,7 +304,14 @@ export default function AdminAuthPage() {
               <Label>Active Providers</Label>
               <Select
                 value={selectedProviderId ?? "new"}
-                onValueChange={(value) => setSelectedProviderId(value === "new" ? null : value)}
+                onValueChange={(value) => {
+                  if (value === "new") {
+                    setSelectedProviderId(null);
+                    setFormData(emptyFormState);
+                    return;
+                  }
+                  setSelectedProviderId(value);
+                }}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue />
@@ -320,6 +337,23 @@ export default function AdminAuthPage() {
                 }
               />
             </div>
+            {isNewProvider && (
+              <div className="space-y-2">
+                <Label>Protocol</Label>
+                <Select
+                  value={formData.protocol}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, protocol: value }))}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="OIDC">OIDC</SelectItem>
+                    <SelectItem value="SAML2">SAML2</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Enabled</Label>
               <div className="flex items-center gap-3 rounded-lg border border-border px-4 py-2">
