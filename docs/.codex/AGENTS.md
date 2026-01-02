@@ -127,6 +127,7 @@
 - Swapped SSO connection settings to a key/value editor for flexible provider-specific config.
 - `SsoProviderDto` now includes the `protocol` field from OpenAPI.
 - Added SSO provider guidance (protocol, required keys, reference link) in `src/pages/admin/AuthPage.tsx`.
+- Added missing required-key warning chips for SSO settings.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).

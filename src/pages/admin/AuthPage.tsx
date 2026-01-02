@@ -197,6 +197,10 @@ export default function AdminAuthPage() {
   const isTesting = testProvider.isPending;
   const canTest = Boolean(activeProvider?.id);
   const requiredKeys = protocolRequiredKeys[activeProtocol] ?? [];
+  const missingRequiredKeys = requiredKeys.filter((requiredKey) => {
+    const primaryKey = requiredKey.split(" ")[0] ?? requiredKey;
+    return !settingsEntries.some((entry) => entry.key.trim() === primaryKey);
+  });
   const providerReference = providerReferences[formData.provider];
 
   if (isLoading) {
@@ -358,6 +362,16 @@ export default function AdminAuthPage() {
                 <span className="font-medium text-foreground">Required keys:</span>
                 {requiredKeys.map((key) => (
                   <Badge key={key} variant="secondary">
+                    {key}
+                  </Badge>
+                ))}
+              </div>
+            )}
+            {missingRequiredKeys.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 text-amber-700">
+                <span className="font-medium text-foreground">Missing required keys:</span>
+                {missingRequiredKeys.map((key) => (
+                  <Badge key={key} variant="secondary" className="bg-amber-50 text-amber-700">
                     {key}
                   </Badge>
                 ))}
