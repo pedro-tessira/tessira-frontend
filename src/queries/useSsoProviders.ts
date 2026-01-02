@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 
-export type SsoProviderType = "ENTRA_ID" | "OKTA" | "GOOGLE_WORKSPACE" | "SAML2";
+export type SsoProviderType = "ENTRA" | "OKTA" | "GOOGLE" | "ADFS" | "SAML_GENERIC" | "OIDC_GENERIC";
 
 export interface SsoProviderDto {
   id: string;
@@ -42,10 +42,23 @@ export interface ConnectionTestResult {
   message: string;
 }
 
+export interface SsoProviderTypeDto {
+  provider: SsoProviderType;
+  protocol: string;
+  requiredSettings: string[];
+}
+
 export const useSsoProviders = () => {
   return useQuery({
     queryKey: ["ssoProviders"],
     queryFn: () => apiFetch<SsoProviderDto[]>("/api/admin/sso-providers"),
+  });
+};
+
+export const useSsoProviderTypes = () => {
+  return useQuery({
+    queryKey: ["ssoProviderTypes"],
+    queryFn: () => apiFetch<SsoProviderTypeDto[]>("/api/admin/sso-providers/types"),
   });
 };
 

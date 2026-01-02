@@ -12,41 +12,35 @@ import { useToast } from "@/hooks/use-toast";
 import {
   SsoProviderDto,
   SsoProviderType,
+  SsoProviderTypeDto,
   useCreateSsoProvider,
   useDeleteSsoProvider,
   useSsoProviders,
+  useSsoProviderTypes,
   useTestSsoProvider,
   useUpdateSsoProvider,
 } from "@/queries/useSsoProviders";
 
-const providerOptions: { value: SsoProviderType; label: string }[] = [
-  { value: "ENTRA_ID", label: "Azure Entra ID (Azure AD)" },
-  { value: "OKTA", label: "Okta" },
-  { value: "GOOGLE_WORKSPACE", label: "Google Workspace" },
-  { value: "SAML2", label: "Custom SAML 2.0" },
-];
+const providerLabels: Record<SsoProviderType, string> = {
+  ENTRA: "Azure Entra ID (OIDC)",
+  OKTA: "Okta (OIDC)",
+  GOOGLE: "Google Workspace (OIDC)",
+  ADFS: "ADFS (OIDC)",
+  SAML_GENERIC: "Custom SAML 2.0",
+  OIDC_GENERIC: "Custom OIDC",
+};
 
 const providerReferences: Record<SsoProviderType, string> = {
-  ENTRA_ID: "https://learn.microsoft.com/en-us/entra/identity-platform/v2-protocols-oidc",
+  ENTRA: "https://learn.microsoft.com/en-us/entra/identity-platform/v2-protocols-oidc",
   OKTA: "https://developer.okta.com/docs/guides/implement-oauth-for-okta/main/",
-  GOOGLE_WORKSPACE: "https://developers.google.com/identity/openid-connect/openid-connect",
-  SAML2: "https://en.wikipedia.org/wiki/SAML_2.0",
-};
-
-const providerProtocols: Record<SsoProviderType, string> = {
-  ENTRA_ID: "OIDC",
-  OKTA: "OIDC",
-  GOOGLE_WORKSPACE: "OIDC",
-  SAML2: "SAML2",
-};
-
-const protocolRequiredKeys: Record<string, string[]> = {
-  OIDC: ["clientId", "clientSecret", "issuerUrl", "redirectUri"],
-  SAML2: ["metadataUrl (or metadataXml)", "spEntityId", "acsUrl"],
+  GOOGLE: "https://developers.google.com/identity/openid-connect/openid-connect",
+  ADFS: "https://learn.microsoft.com/en-us/windows-server/identity/ad-fs/overview/ad-fs-overview",
+  SAML_GENERIC: "https://en.wikipedia.org/wiki/SAML_2.0",
+  OIDC_GENERIC: "https://openid.net/developers/specs/",
 };
 
 const emptyFormState = {
-  provider: "ENTRA_ID" as SsoProviderType,
+  provider: "ENTRA" as SsoProviderType,
   protocol: "OIDC",
   displayName: "Azure Entra ID",
   allowedDomains: [] as string[],
@@ -59,6 +53,7 @@ const emptyFormState = {
 export default function AdminAuthPage() {
   const { toast } = useToast();
   const { data: providers = [], isLoading } = useSsoProviders();
+  const { data: providerTypes = [], isLoading: isTypesLoading } = useSsoProviderTypes();
   const createProvider = useCreateSsoProvider();
   const updateProvider = useUpdateSsoProvider();
   const deleteProvider = useDeleteSsoProvider();
@@ -73,6 +68,31 @@ export default function AdminAuthPage() {
     return providers.find((provider) => provider.id === selectedProviderId) ?? null;
   }, [providers, selectedProviderId, isNewProvider]);
 
+  const activeProviderType = useMemo<SsoProviderTypeDto | null>(() => {
+    if (isNewProvider) {
+      return providerTypes.find((type) => type.provider === formData.provider) ?? null;
+    }
+    if (!activeProvider) return null;
+    return providerTypes.find((type) => type.provider === activeProvider.provider) ?? null;
+  }, [activeProvider, formData.provider, isNewProvider, providerTypes]);
+
+  const availableProtocols = useMemo(() => {
+    const protocols = new Set(providerTypes.map((type) => type.protocol).filter(Boolean));
+    if (protocols.size === 0) {
+      return ["OIDC", "SAML2"];
+    }
+    return Array.from(protocols);
+  }, [providerTypes]);
+
+  const providerOptions = useMemo(() => {
+    if (!providerTypes.length) {
+      return Object.keys(providerLabels) as SsoProviderType[];
+    }
+    return providerTypes
+      .filter((type) => !isNewProvider || type.protocol === formData.protocol)
+      .map((type) => type.provider);
+  }, [formData.protocol, isNewProvider, providerTypes]);
+
   useEffect(() => {
     if (!providers.length) {
       setSelectedProviderId(null);
@@ -86,7 +106,7 @@ export default function AdminAuthPage() {
     setSelectedProviderId(provider.id);
     setFormData({
       provider: provider.provider,
-      protocol: provider.protocol ?? providerProtocols[provider.provider],
+      protocol: provider.protocol ?? providerTypes.find((type) => type.provider === provider.provider)?.protocol ?? "OIDC",
       displayName: provider.displayName,
       allowedDomains: provider.allowedEmailDomains ?? [],
       requireSso: provider.requiredSso,
@@ -94,13 +114,13 @@ export default function AdminAuthPage() {
       enabled: provider.enabled,
       settings: provider.settings ?? {},
     });
-  }, [activeProvider, providers]);
+  }, [activeProvider, providerTypes, providers, isNewProvider]);
 
   const [settingsEntries, setSettingsEntries] = useState<
     { id: string; key: string; value: string }[]
   >([]);
 
-  const activeProtocol = activeProvider?.protocol ?? formData.protocol;
+  const activeProtocol = activeProviderType?.protocol ?? activeProvider?.protocol ?? formData.protocol;
 
   useEffect(() => {
     const entries = Object.entries(formData.settings ?? {}).map(([key, value]) => ({
@@ -202,14 +222,14 @@ export default function AdminAuthPage() {
   const isSaving = createProvider.isPending || updateProvider.isPending;
   const isTesting = testProvider.isPending;
   const canTest = Boolean(activeProvider?.id);
-  const requiredKeys = protocolRequiredKeys[activeProtocol] ?? [];
+  const requiredKeys = activeProviderType?.requiredSettings ?? [];
   const missingRequiredKeys = requiredKeys.filter((requiredKey) => {
     const primaryKey = requiredKey.split(" ")[0] ?? requiredKey;
     return !settingsEntries.some((entry) => entry.key.trim() === primaryKey);
   });
   const providerReference = providerReferences[formData.provider];
 
-  if (isLoading) {
+  if (isLoading || isTypesLoading) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center text-sm text-muted-foreground">
         Loading SSO providers...
@@ -281,10 +301,11 @@ export default function AdminAuthPage() {
                 value={formData.provider}
                 onValueChange={(value) => {
                   const provider = value as SsoProviderType;
+                  const typeMatch = providerTypes.find((type) => type.provider === provider);
                   setFormData((prev) => ({
                     ...prev,
                     provider,
-                    protocol: providerProtocols[provider],
+                    protocol: typeMatch?.protocol ?? prev.protocol,
                   }));
                 }}
               >
@@ -292,9 +313,9 @@ export default function AdminAuthPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {providerOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                  {providerOptions.map((provider) => (
+                    <SelectItem key={provider} value={provider}>
+                      {providerLabels[provider] ?? provider}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -342,14 +363,27 @@ export default function AdminAuthPage() {
                 <Label>Protocol</Label>
                 <Select
                   value={formData.protocol}
-                  onValueChange={(value) => setFormData((prev) => ({ ...prev, protocol: value }))}
+                  onValueChange={(value) => {
+                    const nextProtocol = value;
+                    const matchingProvider = providerTypes.find(
+                      (type) => type.protocol === nextProtocol
+                    );
+                    setFormData((prev) => ({
+                      ...prev,
+                      protocol: nextProtocol,
+                      provider: matchingProvider?.provider ?? prev.provider,
+                    }));
+                  }}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="OIDC">OIDC</SelectItem>
-                    <SelectItem value="SAML2">SAML2</SelectItem>
+                    {availableProtocols.map((protocol) => (
+                      <SelectItem key={protocol} value={protocol}>
+                        {protocol}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
