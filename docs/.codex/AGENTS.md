@@ -1,5 +1,13 @@
 # Repository Guidelines
 
+## Session Handoff (Frontend)
+- Start here: `docs/.codex/AGENTS.md` for full project rules + recent context.
+- Mandatory workflow: update `docs/.codex/AGENTS.md` and commit after every change.
+- Latest work: admin UI scaffolding + AppHeader/MainLayout, Share UX, event edit/delete, global rename, SSO admin wiring.
+- SSO admin status: `/admin/auth` wired to `/api/admin/sso-providers` (list/create/update/delete/test); settings now key/value editor with protocol guidance + missing required key warnings; new-provider flow has protocol selector.
+- Admin gating: `/admin/*` routes are protected by `src/components/AdminRoute.tsx` (ADMIN only).
+- Public share: `src/pages/SharePage.tsx` uses `/api/share/{token}?from&to`, read-only timeline, infinite scroll; share modal lists per-team links from `/api/shares`.
+
 ## Project Structure & Module Organization
 - `src/` contains the React app. Key areas: `src/pages/`, `src/components/`, `src/hooks/`, `src/queries/`, `src/lib/`, `src/data/`.
 - `public/` holds static assets served as-is.
