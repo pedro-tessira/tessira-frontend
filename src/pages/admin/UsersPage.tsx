@@ -90,6 +90,7 @@ export default function AdminUsersPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editUser, setEditUser] = useState<typeof mockUsers[number] | null>(null);
+  const [editAuthMethods, setEditAuthMethods] = useState<string[]>([]);
 
   const filteredUsers = mockUsers.filter((user) => {
     const matchesSearch =
@@ -111,6 +112,7 @@ export default function AdminUsersPage() {
 
   const handleOpenEdit = (user: typeof mockUsers[number]) => {
     setEditUser(user);
+    setEditAuthMethods([user.authMethod]);
     setIsEditOpen(true);
   };
 
@@ -354,6 +356,7 @@ export default function AdminUsersPage() {
           setIsEditOpen(open);
           if (!open) {
             setEditUser(null);
+            setEditAuthMethods([]);
           }
         }}
       >
@@ -403,16 +406,25 @@ export default function AdminUsersPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Auth Method</Label>
-                  <Select defaultValue={editUser.authMethod}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="SSO">SSO</SelectItem>
-                      <SelectItem value="Manual">Manual</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label>Auth Methods</Label>
+                  <div className="space-y-2 rounded-lg border border-border p-3">
+                    {["SSO", "Manual"].map((method) => (
+                      <label key={method} className="flex items-center gap-2 text-sm text-foreground">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-border"
+                          checked={editAuthMethods.includes(method)}
+                          onChange={(event) => {
+                            const checked = event.target.checked;
+                            setEditAuthMethods((prev) =>
+                              checked ? [...prev, method] : prev.filter((item) => item !== method)
+                            );
+                          }}
+                        />
+                        {method}
+                      </label>
+                    ))}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Linked Employee</Label>
