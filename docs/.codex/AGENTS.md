@@ -148,6 +148,7 @@
 - SAML required-key chips now show `metadataUrl or metadataXml` in the modal guidance.
 - Added success toast for Require SSO updates.
 - Login screen now shows both SSO and email/password options (SSO buttons are placeholders pending endpoints).
+- Added edit-user modal stub in `src/pages/admin/UsersPage.tsx` (opens from row action; no backend wiring yet).
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).
