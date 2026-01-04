@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Search, MoreHorizontal, User as UserIcon, Users as UsersIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useSsoProviders } from "@/queries/useSsoProviders";
+import {
+  useAdminEmployees,
+  useCreateEmployee,
+  useDeactivateEmployee,
+  useUpdateEmployee,
+  useUpdateUserEmployeeLink,
+} from "@/queries/useAdminEmployees";
 
 const mockUsers = [
   {
@@ -74,59 +81,6 @@ const mockUsers = [
   },
 ];
 
-const mockEmployees = [
-  {
-    id: "emp-1",
-    name: "John Doe",
-    email: "john.doe@company.com",
-    team: "Engineering",
-    department: "Product",
-    source: "HRIS",
-    status: "Active",
-    linkedUser: "John Doe",
-  },
-  {
-    id: "emp-2",
-    name: "Jane Smith",
-    email: "jane.smith@company.com",
-    team: "Engineering",
-    department: "Product",
-    source: "HRIS",
-    status: "Active",
-    linkedUser: "Jane Smith",
-  },
-  {
-    id: "emp-3",
-    name: "Bob Wilson",
-    email: "bob.wilson@company.com",
-    team: "Design",
-    department: "Product",
-    source: "Manual",
-    status: "Active",
-    linkedUser: "Bob Wilson",
-  },
-  {
-    id: "emp-4",
-    name: "Alice Brown",
-    email: "alice.brown@company.com",
-    team: "Marketing",
-    department: "Growth",
-    source: "HRIS",
-    status: "Active",
-    linkedUser: "Alice Brown",
-  },
-  {
-    id: "emp-5",
-    name: "Charlie Davis",
-    email: "charlie.davis@company.com",
-    team: "Engineering",
-    department: "Product",
-    source: "HRIS",
-    status: "Inactive",
-    linkedUser: null,
-  },
-];
-
 const getInitials = (name: string) => {
   return name
     .split(" ")
@@ -139,6 +93,10 @@ const getInitials = (name: string) => {
 export default function AdminUsersPage() {
   const { toast } = useToast();
   const { data: ssoProviders = [] } = useSsoProviders();
+  const createEmployee = useCreateEmployee();
+  const updateEmployee = useUpdateEmployee();
+  const deactivateEmployee = useDeactivateEmployee();
+  const updateUserEmployeeLink = useUpdateUserEmployeeLink();
   const [activeTab, setActiveTab] = useState("users");
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
@@ -153,6 +111,15 @@ export default function AdminUsersPage() {
   const [employeeSource, setEmployeeSource] = useState("all");
   const [employeeStatus, setEmployeeStatus] = useState("all");
   const [isEmployeeCreateOpen, setIsEmployeeCreateOpen] = useState(false);
+  const [employeeName, setEmployeeName] = useState("");
+  const [employeeEmail, setEmployeeEmail] = useState("");
+  const [isEmployeeEditOpen, setIsEmployeeEditOpen] = useState(false);
+  const [editEmployeeId, setEditEmployeeId] = useState<string | null>(null);
+  const [editEmployeeName, setEditEmployeeName] = useState("");
+  const [editEmployeeEmail, setEditEmployeeEmail] = useState("");
+  const [linkEmployeeId, setLinkEmployeeId] = useState("unlinked");
+
+  const { data: adminEmployees = [] } = useAdminEmployees(employeeSearch);
 
   const filteredUsers = mockUsers.filter((user) => {
     const matchesSearch =
@@ -164,14 +131,14 @@ export default function AdminUsersPage() {
     return matchesSearch && matchesRole && matchesAuth && matchesStatus;
   });
 
-  const filteredEmployees = mockEmployees.filter((employee) => {
-    const matchesSearch =
-      employee.name.toLowerCase().includes(employeeSearch.toLowerCase()) ||
-      employee.email.toLowerCase().includes(employeeSearch.toLowerCase());
-    const matchesTeam = employeeTeam === "all" || employee.team === employeeTeam;
-    const matchesSource = employeeSource === "all" || employee.source === employeeSource;
-    const matchesStatus = employeeStatus === "all" || employee.status === employeeStatus;
-    return matchesSearch && matchesTeam && matchesSource && matchesStatus;
+  const filteredEmployees = adminEmployees.filter((employee) => {
+    const matchesSource =
+      employeeSource === "all" ||
+      (employeeSource === "HRIS" && employee.source === "INTERNAL_WORKDAY") ||
+      (employeeSource === "Manual" && employee.source === "EXTERNAL_MANUAL");
+    const matchesStatus = employeeStatus === "all" || employeeStatus === "Active";
+    const matchesTeam = employeeTeam === "all";
+    return matchesSource && matchesStatus && matchesTeam;
   });
 
   const handleCreateUser = () => {
@@ -183,25 +150,118 @@ export default function AdminUsersPage() {
   };
 
   const handleCreateEmployee = () => {
-    setIsEmployeeCreateOpen(false);
-    toast({
-      title: "Employee created",
-      description: "Manual employee record created successfully.",
-    });
+    if (!employeeName.trim() || !employeeEmail.trim()) {
+      toast({
+        title: "Missing details",
+        description: "Provide both name and email.",
+        variant: "destructive",
+      });
+      return;
+    }
+    createEmployee.mutate(
+      {
+        fullName: employeeName.trim(),
+        email: employeeEmail.trim(),
+        active: true,
+      },
+      {
+        onSuccess: () => {
+          setIsEmployeeCreateOpen(false);
+          setEmployeeName("");
+          setEmployeeEmail("");
+          toast({
+            title: "Employee created",
+            description: "Manual employee record created successfully.",
+          });
+        },
+        onError: (error: { message?: string }) => {
+          toast({
+            title: "Create failed",
+            description: error?.message ?? "Unable to create employee.",
+            variant: "destructive",
+          });
+        },
+      }
+    );
+  };
+
+  const handleOpenEmployeeEdit = (employeeId: string, name: string, email: string) => {
+    setEditEmployeeId(employeeId);
+    setEditEmployeeName(name);
+    setEditEmployeeEmail(email);
+    setIsEmployeeEditOpen(true);
+  };
+
+  const handleSaveEmployeeEdit = () => {
+    if (!editEmployeeId) return;
+    updateEmployee.mutate(
+      {
+        employeeId: editEmployeeId,
+        payload: {
+          fullName: editEmployeeName.trim(),
+          email: editEmployeeEmail.trim(),
+        },
+      },
+      {
+        onSuccess: () => {
+          setIsEmployeeEditOpen(false);
+          toast({
+            title: "Employee updated",
+            description: "Employee details have been saved.",
+          });
+        },
+        onError: (error: { message?: string }) => {
+          toast({
+            title: "Update failed",
+            description: error?.message ?? "Unable to update employee.",
+            variant: "destructive",
+          });
+        },
+      }
+    );
   };
 
   const handleOpenEdit = (user: typeof mockUsers[number]) => {
     setEditUser(user);
     setEditAuthMethods([user.authMethod]);
+    const matchedEmployee = adminEmployees.find(
+      (employee) => employee.displayName === user.linkedEmployee
+    );
+    setLinkEmployeeId(matchedEmployee?.id ?? "unlinked");
     setIsEditOpen(true);
   };
 
+  useEffect(() => {
+    if (!editUser || linkEmployeeId !== "unlinked") return;
+    const matchedEmployee = adminEmployees.find(
+      (employee) => employee.displayName === editUser.linkedEmployee
+    );
+    if (matchedEmployee) {
+      setLinkEmployeeId(matchedEmployee.id);
+    }
+  }, [adminEmployees, editUser, linkEmployeeId]);
+
   const handleSaveEdit = () => {
-    setIsEditOpen(false);
-    toast({
-      title: "User updated",
-      description: "User details have been saved.",
-    });
+    if (!editUser) return;
+    updateUserEmployeeLink.mutate(
+      { userId: editUser.id, employeeId: linkEmployeeId === "unlinked" ? null : linkEmployeeId },
+      {
+        onSuccess: () => {
+          setIsEditOpen(false);
+          toast({
+            title: "User updated",
+            description: "User details have been saved.",
+          });
+        },
+        onError: (error: { message?: string }) => {
+          toast({
+            title: "Update failed",
+            description: error?.message ?? "Unable to update user.",
+            variant: "destructive",
+          });
+        },
+      }
+    );
   };
 
   return (
@@ -448,8 +508,6 @@ export default function AdminUsersPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Employee</TableHead>
-                    <TableHead>Team</TableHead>
-                    <TableHead>Department</TableHead>
                     <TableHead>Source</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Linked User</TableHead>
@@ -459,7 +517,7 @@ export default function AdminUsersPage() {
                 <TableBody>
                   {filteredEmployees.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="h-32 text-center">
+                      <TableCell colSpan={5} className="h-32 text-center">
                         <div className="flex flex-col items-center gap-2 text-muted-foreground">
                           <UserIcon className="w-8 h-8" />
                           <p>No employees found</p>
@@ -471,34 +529,54 @@ export default function AdminUsersPage() {
                       <TableRow key={employee.id}>
                         <TableCell>
                           <div>
-                            <p className="font-medium">{employee.name}</p>
+                            <p className="font-medium">{employee.displayName}</p>
                             <p className="text-sm text-muted-foreground">{employee.email}</p>
                           </div>
                         </TableCell>
-                        <TableCell>{employee.team}</TableCell>
-                        <TableCell>{employee.department}</TableCell>
                         <TableCell>
-                          <Badge variant="outline">{employee.source}</Badge>
+                          <Badge variant="outline">
+                            {employee.source === "INTERNAL_WORKDAY" ? "HRIS" : "Manual"}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           <Badge
                             variant="secondary"
-                            className={employee.status === "Active" ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}
+                            className="bg-green-50 text-green-700"
                           >
-                            {employee.status}
+                            Active
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {employee.linkedUser ? (
-                            employee.linkedUser
-                          ) : (
-                            <span className="text-sm text-muted-foreground italic">Not linked</span>
-                          )}
+                          <span className="text-sm text-muted-foreground italic">Not linked</span>
                         </TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleOpenEmployeeEdit(
+                                    employee.id,
+                                    employee.displayName,
+                                    employee.email
+                                  )
+                                }
+                              >
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => deactivateEmployee.mutate(employee.id)}
+                              >
+                                Deactivate
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))
@@ -570,7 +648,16 @@ export default function AdminUsersPage() {
         </SheetContent>
       </Sheet>
 
-      <Dialog open={isEmployeeCreateOpen} onOpenChange={setIsEmployeeCreateOpen}>
+      <Dialog
+        open={isEmployeeCreateOpen}
+        onOpenChange={(open) => {
+          setIsEmployeeCreateOpen(open);
+          if (!open) {
+            setEmployeeName("");
+            setEmployeeEmail("");
+          }
+        }}
+      >
         <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle>Create Employee</DialogTitle>
@@ -581,11 +668,22 @@ export default function AdminUsersPage() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="employee-name">Full Name</Label>
-              <Input id="employee-name" placeholder="Jane Doe" />
+              <Input
+                id="employee-name"
+                placeholder="Jane Doe"
+                value={employeeName}
+                onChange={(event) => setEmployeeName(event.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="employee-email">Email</Label>
-              <Input id="employee-email" type="email" placeholder="jane.doe@company.com" />
+              <Input
+                id="employee-email"
+                type="email"
+                placeholder="jane.doe@company.com"
+                value={employeeEmail}
+                onChange={(event) => setEmployeeEmail(event.target.value)}
+              />
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setIsEmployeeCreateOpen(false)}>
@@ -598,12 +696,55 @@ export default function AdminUsersPage() {
       </Dialog>
 
       <Dialog
+        open={isEmployeeEditOpen}
+        onOpenChange={(open) => {
+          setIsEmployeeEditOpen(open);
+          if (!open) {
+            setEditEmployeeId(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Edit Employee</DialogTitle>
+            <DialogDescription>Update employee details.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-employee-name">Full Name</Label>
+              <Input
+                id="edit-employee-name"
+                value={editEmployeeName}
+                onChange={(event) => setEditEmployeeName(event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-employee-email">Email</Label>
+              <Input
+                id="edit-employee-email"
+                type="email"
+                value={editEmployeeEmail}
+                onChange={(event) => setEditEmployeeEmail(event.target.value)}
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setIsEmployeeEditOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveEmployeeEdit}>Save Changes</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
         open={isEditOpen}
         onOpenChange={(open) => {
           setIsEditOpen(open);
           if (!open) {
             setEditUser(null);
             setEditAuthMethods([]);
+            setLinkEmployeeId("unlinked");
           }
         }}
       >
@@ -692,13 +833,17 @@ export default function AdminUsersPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Linked Employee</Label>
-                  <Select defaultValue={editUser.linkedEmployee ? "linked" : "unlinked"}>
+                  <Select value={linkEmployeeId} onValueChange={setLinkEmployeeId}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="linked">Keep linked</SelectItem>
                       <SelectItem value="unlinked">Unlinked</SelectItem>
+                      {adminEmployees.map((employee) => (
+                        <SelectItem key={employee.id} value={employee.id}>
+                          {employee.displayName} ({employee.email})
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

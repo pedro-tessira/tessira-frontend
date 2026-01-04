@@ -156,6 +156,7 @@
 - Added `src/queries/useAdminEmployees.ts` for employee CRUD and user-employee linking.
 - Added `src/queries/usePublicSsoProviders.ts` for login SSO provider list.
 - Login now uses `/api/auth/login` and lists public SSO providers from `/api/auth/sso-providers`.
+- Users & Access Employees tab now uses `/api/employees` CRUD endpoints; user edit links employees via `/api/admin/users/{userId}/employee`.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).
