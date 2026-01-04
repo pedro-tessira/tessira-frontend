@@ -154,6 +154,7 @@
 - Removed standalone Admin Employees page; employee management now lives under Users & Access.
 - Users & Access now has Users/Employees tabs with an employee list + create modal (UI stub).
 - Added `src/queries/useAdminEmployees.ts` for employee CRUD and user-employee linking.
+- Added `src/queries/usePublicSsoProviders.ts` for login SSO provider list.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).
