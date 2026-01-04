@@ -159,6 +159,7 @@
 - Users & Access Employees tab now uses `/api/employees` CRUD endpoints; user edit links employees via `/api/admin/users/{userId}/employee`.
 - Users & Access now uses `/api/admin/users` list/update and provides activate/deactivate buttons for users and employees.
 - Dev login now treats `admin@local` as passwordless and omits the password field on submit.
+- Fixed Users & Access page by initializing state before hook usage to avoid blank render.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).

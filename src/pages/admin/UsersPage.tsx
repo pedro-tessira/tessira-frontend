@@ -40,11 +40,6 @@ const getInitials = (name: string) => {
 export default function AdminUsersPage() {
   const { toast } = useToast();
   const { data: ssoProviders = [] } = useSsoProviders();
-  const { data: adminUsers = [] } = useAdminUsers(searchQuery);
-  const updateUser = useUpdateUser();
-  const createEmployee = useCreateEmployee();
-  const updateEmployee = useUpdateEmployee();
-  const deactivateEmployee = useDeactivateEmployee();
   const [activeTab, setActiveTab] = useState("users");
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
@@ -71,6 +66,11 @@ export default function AdminUsersPage() {
   const [editEmployeeEmail, setEditEmployeeEmail] = useState("");
   const [linkEmployeeId, setLinkEmployeeId] = useState("unlinked");
 
+  const { data: adminUsers = [] } = useAdminUsers(searchQuery);
+  const updateUser = useUpdateUser();
+  const createEmployee = useCreateEmployee();
+  const updateEmployee = useUpdateEmployee();
+  const deactivateEmployee = useDeactivateEmployee();
   const { data: adminEmployees = [] } = useAdminEmployees(employeeSearch);
 
   const filteredUsers = adminUsers.filter((user) => {
