@@ -151,6 +151,7 @@
 - Added edit-user modal stub in `src/pages/admin/UsersPage.tsx` (opens from row action; no backend wiring yet).
 - Edit-user modal now supports multiple auth methods via checkboxes.
 - Edit-user modal shows a stub list of allowed SSO providers when SSO is selected.
+- Added Admin Employees page and route (`/admin/employees`) for manual employee creation (UI stub).
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).
