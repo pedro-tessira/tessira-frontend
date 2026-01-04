@@ -23,6 +23,7 @@ const Index = () => {
   const [loginError, setLoginError] = useState<string | null>(null);
   const { isLoading: isMeLoading } = useMe({ enabled: !!token });
   const { data: ssoProviders = [] } = usePublicSsoProviders();
+  const isDevLogin = email.trim().endsWith('@local');
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -30,9 +31,13 @@ const Index = () => {
     setIsLoggingIn(true);
     setLoginError(null);
     try {
+      const body: { email: string; password?: string } = { email: email.trim() };
+      if (!isDevLogin) {
+        body.password = password;
+      }
       const response = await apiFetch<PasswordLoginResponse>('/api/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify(body),
       });
       setToken(response.token);
       setTokenState(response.token);
@@ -98,15 +103,17 @@ const Index = () => {
                   className="px-3 py-2 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-foreground">Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={event => setPassword(event.target.value)}
-                  className="px-3 py-2 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                />
-              </div>
+              {!isDevLogin && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-foreground">Password</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={event => setPassword(event.target.value)}
+                    className="px-3 py-2 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  />
+                </div>
+              )}
               {loginError && (
                 <div className="text-xs text-destructive">{loginError}</div>
               )}
