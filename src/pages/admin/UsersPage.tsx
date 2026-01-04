@@ -25,61 +25,8 @@ import {
   useCreateEmployee,
   useDeactivateEmployee,
   useUpdateEmployee,
-  useUpdateUserEmployeeLink,
 } from "@/queries/useAdminEmployees";
-
-const mockUsers = [
-  {
-    id: "1",
-    name: "John Doe",
-    email: "john.doe@company.com",
-    authMethod: "SSO",
-    role: "ADMIN",
-    status: "Active",
-    linkedEmployee: "John Doe",
-    lastLogin: "2024-12-31 09:15",
-  },
-  {
-    id: "2",
-    name: "Jane Smith",
-    email: "jane.smith@company.com",
-    authMethod: "SSO",
-    role: "TEAM_OWNER",
-    status: "Active",
-    linkedEmployee: "Jane Smith",
-    lastLogin: "2024-12-31 08:45",
-  },
-  {
-    id: "3",
-    name: "Bob Wilson",
-    email: "bob.wilson@company.com",
-    authMethod: "Manual",
-    role: "USER",
-    status: "Active",
-    linkedEmployee: "Bob Wilson",
-    lastLogin: "2024-12-30 16:20",
-  },
-  {
-    id: "4",
-    name: "Alice Brown",
-    email: "alice.brown@company.com",
-    authMethod: "SSO",
-    role: "USER",
-    status: "Active",
-    linkedEmployee: "Alice Brown",
-    lastLogin: "2024-12-30 14:00",
-  },
-  {
-    id: "5",
-    name: "Charlie Davis",
-    email: "charlie.davis@company.com",
-    authMethod: "Manual",
-    role: "USER",
-    status: "Disabled",
-    linkedEmployee: null,
-    lastLogin: "2024-12-15 10:30",
-  },
-];
+import { useAdminUsers, useUpdateUser } from "@/queries/useAdminUsers";
 
 const getInitials = (name: string) => {
   return name
@@ -93,10 +40,11 @@ const getInitials = (name: string) => {
 export default function AdminUsersPage() {
   const { toast } = useToast();
   const { data: ssoProviders = [] } = useSsoProviders();
+  const { data: adminUsers = [] } = useAdminUsers(searchQuery);
+  const updateUser = useUpdateUser();
   const createEmployee = useCreateEmployee();
   const updateEmployee = useUpdateEmployee();
   const deactivateEmployee = useDeactivateEmployee();
-  const updateUserEmployeeLink = useUpdateUserEmployeeLink();
   const [activeTab, setActiveTab] = useState("users");
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
@@ -104,7 +52,11 @@ export default function AdminUsersPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [editUser, setEditUser] = useState<typeof mockUsers[number] | null>(null);
+  const [editUserId, setEditUserId] = useState<string | null>(null);
+  const [editUserName, setEditUserName] = useState("");
+  const [editUserEmail, setEditUserEmail] = useState("");
+  const [editUserRole, setEditUserRole] = useState("USER");
+  const [editUserActive, setEditUserActive] = useState(true);
   const [editAuthMethods, setEditAuthMethods] = useState<string[]>([]);
   const [employeeSearch, setEmployeeSearch] = useState("");
   const [employeeTeam, setEmployeeTeam] = useState("all");
@@ -121,14 +73,15 @@ export default function AdminUsersPage() {
 
   const { data: adminEmployees = [] } = useAdminEmployees(employeeSearch);
 
-  const filteredUsers = mockUsers.filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredUsers = adminUsers.filter((user) => {
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
-    const matchesAuth = authFilter === "all" || user.authMethod === authFilter;
-    const matchesStatus = statusFilter === "all" || user.status === statusFilter;
-    return matchesSearch && matchesRole && matchesAuth && matchesStatus;
+    const matchesAuth = authFilter === "all";
+    const isActive = user.active ?? true;
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "Active" && isActive) ||
+      (statusFilter === "Disabled" && !isActive);
+    return matchesRole && matchesAuth && matchesStatus;
   });
 
   const filteredEmployees = adminEmployees.filter((employee) => {
@@ -221,12 +174,16 @@ export default function AdminUsersPage() {
     );
   };
 
-  const handleOpenEdit = (user: typeof mockUsers[number]) => {
-    setEditUser(user);
-    setEditAuthMethods([user.authMethod]);
-    const matchedEmployee = adminEmployees.find(
-      (employee) => employee.displayName === user.linkedEmployee
-    );
+  const handleOpenEdit = (userId: string) => {
+    const user = adminUsers.find((entry) => entry.id === userId);
+    if (!user) return;
+    setEditUserId(user.id);
+    setEditUserName(user.displayName ?? "");
+    setEditUserEmail(user.email ?? "");
+    setEditUserRole(user.role ?? "USER");
+    setEditUserActive(user.active ?? true);
+    setEditAuthMethods([]);
+    const matchedEmployee = adminEmployees.find((employee) => employee.id === user.employeeId);
     setLinkEmployeeId(matchedEmployee?.id ?? "unlinked");
     setIsEditOpen(true);
   };
@@ -242,9 +199,18 @@ export default function AdminUsersPage() {
   }, [adminEmployees, editUser, linkEmployeeId]);
 
   const handleSaveEdit = () => {
-    if (!editUser) return;
-    updateUserEmployeeLink.mutate(
-      { userId: editUser.id, employeeId: linkEmployeeId === "unlinked" ? null : linkEmployeeId },
+    if (!editUserId) return;
+    updateUser.mutate(
+      {
+        userId: editUserId,
+        payload: {
+          displayName: editUserName.trim(),
+          email: editUserEmail.trim(),
+          role: editUserRole as "ADMIN" | "USER",
+          active: editUserActive,
+          employeeId: linkEmployeeId === "unlinked" ? null : linkEmployeeId,
+        },
+      },
       {
         onSuccess: () => {
           setIsEditOpen(false);
@@ -383,12 +349,7 @@ export default function AdminUsersPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge
-                            variant="outline"
-                            className={user.authMethod === "SSO" ? "border-primary/30 text-primary" : ""}
-                          >
-                            {user.authMethod}
-                          </Badge>
+                          <Badge variant="outline">—</Badge>
                         </TableCell>
                         <TableCell>
                           <Badge
@@ -409,34 +370,47 @@ export default function AdminUsersPage() {
                             variant="secondary"
                             className={user.status === "Active" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}
                           >
-                            {user.status}
+                            {user.active ?? true ? "Active" : "Disabled"}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {user.linkedEmployee ? (
-                            <span className="text-sm">{user.linkedEmployee}</span>
+                          {user.employeeId ? (
+                            <span className="text-sm">{user.employeeId}</span>
                           ) : (
                             <span className="text-sm text-muted-foreground italic">Not linked</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{user.lastLogin}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">—</TableCell>
                         <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreHorizontal className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleOpenEdit(user)}>
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>{user.status === "Active" ? "Disable" : "Enable"}</DropdownMenuItem>
-                              {user.authMethod === "Manual" && <DropdownMenuItem>Reset Password</DropdownMenuItem>}
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem>Force Relink Employee</DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                updateUser.mutate({
+                                  userId: user.id,
+                                  payload: { active: !(user.active ?? true) },
+                                })
+                              }
+                            >
+                              {(user.active ?? true) ? "Deactivate" : "Activate"}
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleOpenEdit(user.id)}>
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>Reset Password</DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem>Force Relink Employee</DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -541,42 +515,57 @@ export default function AdminUsersPage() {
                         <TableCell>
                           <Badge
                             variant="secondary"
-                            className="bg-green-50 text-green-700"
+                            className={(employee.active ?? true) ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}
                           >
-                            Active
+                            {(employee.active ?? true) ? "Active" : "Inactive"}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <span className="text-sm text-muted-foreground italic">Not linked</span>
+                          {employee.userId ? (
+                            <span className="text-sm">{employee.userId}</span>
+                          ) : (
+                            <span className="text-sm text-muted-foreground italic">Not linked</span>
+                          )}
                         </TableCell>
                         <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreHorizontal className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleOpenEmployeeEdit(
-                                    employee.id,
-                                    employee.displayName,
-                                    employee.email
-                                  )
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                if (employee.active ?? true) {
+                                  deactivateEmployee.mutate(employee.id);
+                                } else {
+                                  updateEmployee.mutate({
+                                    employeeId: employee.id,
+                                    payload: { active: true },
+                                  });
                                 }
-                              >
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() => deactivateEmployee.mutate(employee.id)}
-                              >
-                                Deactivate
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                              }}
+                            >
+                              {(employee.active ?? true) ? "Deactivate" : "Activate"}
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleOpenEmployeeEdit(
+                                      employee.id,
+                                      employee.displayName,
+                                      employee.email
+                                    )
+                                  }
+                                >
+                                  Edit
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -742,7 +731,11 @@ export default function AdminUsersPage() {
         onOpenChange={(open) => {
           setIsEditOpen(open);
           if (!open) {
-            setEditUser(null);
+            setEditUserId(null);
+            setEditUserName("");
+            setEditUserEmail("");
+            setEditUserRole("USER");
+            setEditUserActive(true);
             setEditAuthMethods([]);
             setLinkEmployeeId("unlinked");
           }
@@ -753,35 +746,46 @@ export default function AdminUsersPage() {
             <DialogTitle>Edit User</DialogTitle>
             <DialogDescription>Update user details and permissions.</DialogDescription>
           </DialogHeader>
-          {editUser && (
+          {editUserId && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-name">Full Name</Label>
-                  <Input id="edit-name" defaultValue={editUser.name} />
+                  <Input
+                    id="edit-name"
+                    value={editUserName}
+                    onChange={(event) => setEditUserName(event.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-email">Email</Label>
-                  <Input id="edit-email" type="email" defaultValue={editUser.email} />
+                  <Input
+                    id="edit-email"
+                    type="email"
+                    value={editUserEmail}
+                    onChange={(event) => setEditUserEmail(event.target.value)}
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Role</Label>
-                  <Select defaultValue={editUser.role}>
+                  <Select value={editUserRole} onValueChange={setEditUserRole}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ADMIN">Admin</SelectItem>
-                      <SelectItem value="TEAM_OWNER">Team Owner</SelectItem>
                       <SelectItem value="USER">User</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Status</Label>
-                  <Select defaultValue={editUser.status}>
+                  <Select
+                    value={editUserActive ? "Active" : "Disabled"}
+                    onValueChange={(value) => setEditUserActive(value === "Active")}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>

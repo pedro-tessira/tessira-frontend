@@ -1,0 +1,54 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api";
+
+export interface AdminUserDto {
+  id: string;
+  email: string;
+  displayName: string;
+  role: string;
+  employeeId?: string | null;
+  active?: boolean;
+}
+
+export interface UpdateUserRequest {
+  email?: string;
+  displayName?: string;
+  role?: "ADMIN" | "USER";
+  active?: boolean;
+  employeeId?: string | null;
+}
+
+export const useAdminUsers = (search: string) => {
+  return useQuery({
+    queryKey: ["adminUsers", search],
+    queryFn: () =>
+      apiFetch<AdminUserDto[]>(`/api/admin/users?search=${encodeURIComponent(search)}`),
+  });
+};
+
+export const useUpdateUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, payload }: { userId: string; payload: UpdateUserRequest }) =>
+      apiFetch<AdminUserDto>(`/api/admin/users/${userId}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
+    },
+  });
+};
+
+export const useDeactivateUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) =>
+      apiFetch<void>(`/api/admin/users/${userId}`, {
+        method: "DELETE",
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
+    },
+  });
+};
