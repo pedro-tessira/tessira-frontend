@@ -150,6 +150,7 @@
 - Login screen now shows both SSO and email/password options (SSO buttons are placeholders pending endpoints).
 - Added edit-user modal stub in `src/pages/admin/UsersPage.tsx` (opens from row action; no backend wiring yet).
 - Edit-user modal now supports multiple auth methods via checkboxes.
+- Edit-user modal shows a stub list of allowed SSO providers when SSO is selected.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).

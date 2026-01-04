@@ -18,6 +18,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useSsoProviders } from "@/queries/useSsoProviders";
 
 const mockUsers = [
   {
@@ -83,6 +84,7 @@ const getInitials = (name: string) => {
 
 export default function AdminUsersPage() {
   const { toast } = useToast();
+  const { data: ssoProviders = [] } = useSsoProviders();
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [authFilter, setAuthFilter] = useState<string>("all");
@@ -425,6 +427,23 @@ export default function AdminUsersPage() {
                       </label>
                     ))}
                   </div>
+                  {editAuthMethods.includes("SSO") && (
+                    <div className="mt-3 space-y-2 rounded-lg border border-border p-3">
+                      <Label>Allowed SSO Providers</Label>
+                      <div className="space-y-2">
+                        {ssoProviders.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">No SSO providers configured.</p>
+                        ) : (
+                          ssoProviders.map((provider) => (
+                            <label key={provider.id} className="flex items-center gap-2 text-sm text-foreground">
+                              <input type="checkbox" className="h-4 w-4 rounded border-border" />
+                              {provider.displayName || provider.provider}
+                            </label>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Linked Employee</Label>
