@@ -161,6 +161,7 @@
 - Dev login now treats `admin@local` as passwordless and omits the password field on submit.
 - Fixed Users & Access page by initializing state before hook usage to avoid blank render.
 - Removed stale edit-user effect that referenced an undefined variable and caused Users page crash.
+- Made user initials helper tolerate missing names to prevent crashes in Users & Access.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).

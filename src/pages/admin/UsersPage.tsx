@@ -28,8 +28,10 @@ import {
 } from "@/queries/useAdminEmployees";
 import { useAdminUsers, useUpdateUser } from "@/queries/useAdminUsers";
 
-const getInitials = (name: string) => {
+const getInitials = (name?: string | null) => {
+  if (!name?.trim()) return "--";
   return name
+    .trim()
     .split(" ")
     .map((segment) => segment[0])
     .join("")
