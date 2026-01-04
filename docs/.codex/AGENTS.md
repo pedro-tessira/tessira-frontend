@@ -152,6 +152,7 @@
 - Edit-user modal now supports multiple auth methods via checkboxes.
 - Edit-user modal shows a stub list of allowed SSO providers when SSO is selected.
 - Removed standalone Admin Employees page; employee management now lives under Users & Access.
+- Users & Access now has Users/Employees tabs with an employee list + create modal (UI stub).
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).
