@@ -160,6 +160,7 @@
 - Users & Access now uses `/api/admin/users` list/update and provides activate/deactivate buttons for users and employees.
 - Dev login now treats `admin@local` as passwordless and omits the password field on submit.
 - Fixed Users & Access page by initializing state before hook usage to avoid blank render.
+- Removed stale edit-user effect that referenced an undefined variable and caused Users page crash.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).

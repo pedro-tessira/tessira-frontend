@@ -188,16 +188,6 @@ export default function AdminUsersPage() {
     setIsEditOpen(true);
   };
 
-  useEffect(() => {
-    if (!editUser || linkEmployeeId !== "unlinked") return;
-    const matchedEmployee = adminEmployees.find(
-      (employee) => employee.displayName === editUser.linkedEmployee
-    );
-    if (matchedEmployee) {
-      setLinkEmployeeId(matchedEmployee.id);
-    }
-  }, [adminEmployees, editUser, linkEmployeeId]);
-
   const handleSaveEdit = () => {
     if (!editUserId) return;
     updateUser.mutate(
