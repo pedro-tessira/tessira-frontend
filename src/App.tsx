@@ -13,7 +13,6 @@ import AdminIndexPage from "./pages/admin";
 import AdminAuthPage from "./pages/admin/AuthPage";
 import AdminHrisPage from "./pages/admin/HrisPage";
 import AdminUsersPage from "./pages/admin/UsersPage";
-import AdminEmployeesPage from "./pages/admin/EmployeesPage";
 import AdminEventTypesPage from "./pages/admin/EventTypesPage";
 import AdminAuditPage from "./pages/admin/AuditPage";
 import { AdminRoute } from "./components/AdminRoute";
@@ -43,7 +42,6 @@ const App = () => (
             <Route path="auth" element={<AdminAuthPage />} />
             <Route path="hris" element={<AdminHrisPage />} />
             <Route path="users" element={<AdminUsersPage />} />
-            <Route path="employees" element={<AdminEmployeesPage />} />
             <Route path="event-types" element={<AdminEventTypesPage />} />
             <Route path="audit" element={<AdminAuditPage />} />
           </Route>

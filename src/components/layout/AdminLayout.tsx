@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { KeyRound, Users, Building2, Tags, Activity, IdCard, ChevronRight } from "lucide-react";
+import { KeyRound, Users, Building2, Tags, Activity, ChevronRight } from "lucide-react";
 import { AppHeader } from "./AppHeader";
 
 const adminNavItems = [
@@ -21,12 +21,6 @@ const adminNavItems = [
     href: "/admin/users",
     icon: Users,
     description: "Manage users and permissions",
-  },
-  {
-    label: "Employees",
-    href: "/admin/employees",
-    icon: IdCard,
-    description: "Manage employee records and HRIS links",
   },
   {
     label: "Event Types & Sync",
