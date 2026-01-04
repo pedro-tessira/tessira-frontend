@@ -4,8 +4,13 @@ import { apiFetch } from '@/lib/api';
 import { getToken, setToken } from '@/lib/auth';
 import { useMe } from '@/queries/useMe';
 import { useQueryClient } from '@tanstack/react-query';
+import { usePublicSsoProviders } from '@/queries/usePublicSsoProviders';
 
 interface DevLoginResponse {
+  token: string;
+}
+
+interface PasswordLoginResponse {
   token: string;
 }
 
@@ -17,6 +22,7 @@ const Index = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const { isLoading: isMeLoading } = useMe({ enabled: !!token });
+  const { data: ssoProviders = [] } = usePublicSsoProviders();
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -24,9 +30,9 @@ const Index = () => {
     setIsLoggingIn(true);
     setLoginError(null);
     try {
-      const response = await apiFetch<DevLoginResponse>('/api/auth/dev-login', {
+      const response = await apiFetch<PasswordLoginResponse>('/api/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
       setToken(response.token);
       setTokenState(response.token);
@@ -58,15 +64,21 @@ const Index = () => {
                 Sign in with SSO
               </div>
               <div className="grid gap-2">
-                <button
-                  type="button"
-                  className="w-full px-4 py-2 bg-background border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors"
-                >
-                  Continue with SSO
-                </button>
-                <div className="text-xs text-muted-foreground">
-                  Available providers will appear here.
-                </div>
+                {ssoProviders.length === 0 ? (
+                  <div className="text-xs text-muted-foreground">
+                    No SSO providers are available.
+                  </div>
+                ) : (
+                  ssoProviders.map((provider) => (
+                    <button
+                      key={provider.id}
+                      type="button"
+                      className="w-full px-4 py-2 bg-background border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                    >
+                      Continue with {provider.displayName || provider.provider}
+                    </button>
+                  ))
+                )}
               </div>
             </div>
 
