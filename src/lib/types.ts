@@ -125,6 +125,24 @@ export interface EventDto {
   isAggregated?: boolean;
 }
 
+export interface EventAuditDto {
+  id: string;
+  scope: EventScope;
+  teamId?: string | null;
+  employeeId?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  title?: string | null;
+  source?: string | null;
+  deletedAt?: string | null;
+  eventType?: {
+    id: string;
+    code?: string | null;
+    name?: string | null;
+    scope: EventScope;
+  } | null;
+}
+
 export interface TimelineResponseDto {
   team: TeamDto;
   range: { from: string; to: string };
