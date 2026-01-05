@@ -164,6 +164,7 @@
 - Made user initials helper tolerate missing names to prevent crashes in Users & Access.
 - Updated Users & Access to use nested employee.user data, show last login fields, and wire reset password endpoint.
 - Wired Admin Audit page to `/api/audit/events` and replaced mock logs with live audit data.
+- Added bulk event creation for TEAM scope, sending `/api/events/bulk` with all team employees.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).

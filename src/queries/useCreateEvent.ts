@@ -12,12 +12,38 @@ export interface CreateEventPayload {
   title: string;
 }
 
+export interface BulkCreateEventPayload {
+  scope: EventScope;
+  eventTypeId: string;
+  employeeIds: string[];
+  teamId: string;
+  startDate: string;
+  endDate: string;
+  title: string;
+}
+
 export const useCreateEvent = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (payload: CreateEventPayload) =>
       apiFetch("/api/events", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timeline"] });
+      queryClient.invalidateQueries({ queryKey: ["employee-events"] });
+    },
+  });
+};
+
+export const useCreateBulkEvent = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: BulkCreateEventPayload) =>
+      apiFetch("/api/events/bulk", {
         method: "POST",
         body: JSON.stringify(payload),
       }),

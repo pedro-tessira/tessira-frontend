@@ -27,7 +27,7 @@ import { employeesQueryOptions, useEmployees } from '@/queries/useEmployees';
 import { useEventTypes } from '@/queries/useEventTypes';
 import { useTimeline } from '@/queries/useTimeline';
 import { employeeEventsQueryOptions } from '@/queries/useEmployeeEvents';
-import { useCreateEvent } from '@/queries/useCreateEvent';
+import { useCreateBulkEvent, useCreateEvent } from '@/queries/useCreateEvent';
 import { useCreateTeam, useDeleteTeam, useUpdateTeam } from '@/queries/useTeamMutations';
 import { useCreateEventType, useDeleteEventType, useUpdateEventType } from '@/queries/useEventTypeMutations';
 import { useCreateTeamMember, useDeleteTeamMember, useUpdateTeamMember } from '@/queries/useTeamMemberMutations';
@@ -271,6 +271,7 @@ export function AppShell() {
   }, [hasScrolledToToday, rangeStart, columns.length]);
 
   const createEventMutation = useCreateEvent();
+  const createBulkEventMutation = useCreateBulkEvent();
   const createTeamMutation = useCreateTeam();
   const updateTeamMutation = useUpdateTeam();
   const deleteTeamMutation = useDeleteTeam();
@@ -290,6 +291,36 @@ export function AppShell() {
     scope: EventScope;
     employeeId?: string | null;
   }) => {
+    if (payload.scope === 'TEAM' && teamEmployees.length > 0 && selectedTeamId) {
+      createBulkEventMutation.mutate(
+        {
+          scope: payload.scope,
+          eventTypeId: payload.eventTypeId,
+          employeeIds: teamEmployees.map(employee => employee.id),
+          teamId: selectedTeamId,
+          startDate: payload.startDate,
+          endDate: payload.endDate,
+          title: payload.title,
+        },
+        {
+          onSuccess: () => {
+            toast({
+              title: 'Event added',
+              description: `"${payload.title}" has been added successfully.`,
+            });
+          },
+          onError: (error: { message?: string }) => {
+            toast({
+              title: 'Event failed',
+              description: error?.message ?? 'Unable to create event.',
+              variant: 'destructive',
+            });
+          },
+        }
+      );
+      return;
+    }
+
     createEventMutation.mutate(
       {
         title: payload.title,
