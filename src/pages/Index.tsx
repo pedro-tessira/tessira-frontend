@@ -34,10 +34,13 @@ const Index = () => {
       const body: { email: string; password?: string } = { email: email.trim() };
       if (!isDevLogin) {
         body.password = password;
+      } else {
+        body.password = "";
       }
       const response = await apiFetch<PasswordLoginResponse>('/api/auth/login', {
         method: 'POST',
         body: JSON.stringify(body),
+        skipAuthRedirect: true,
       });
       setToken(response.token);
       setTokenState(response.token);

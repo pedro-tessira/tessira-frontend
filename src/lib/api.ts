@@ -14,10 +14,14 @@ const buildUrl = (path: string): string => {
   return `${baseUrl}${path}`;
 };
 
-export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+export async function apiFetch<T>(
+  path: string,
+  options: RequestInit & { skipAuthRedirect?: boolean } = {}
+): Promise<T> {
+  const { skipAuthRedirect, ...requestOptions } = options;
   const token = getToken();
-  const headers = new Headers(options.headers);
-  if (!headers.has("Content-Type") && options.body) {
+  const headers = new Headers(requestOptions.headers);
+  if (!headers.has("Content-Type") && requestOptions.body) {
     headers.set("Content-Type", "application/json");
   }
   if (token) {
@@ -25,11 +29,11 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
   }
 
   const response = await fetch(buildUrl(path), {
-    ...options,
+    ...requestOptions,
     headers,
   });
 
-  if (response.status === 401 || response.status === 403) {
+  if (!skipAuthRedirect && (response.status === 401 || response.status === 403)) {
     clearToken();
     window.location.assign("/");
   }
