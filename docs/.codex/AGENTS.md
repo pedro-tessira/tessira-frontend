@@ -167,6 +167,7 @@
 - Added bulk event creation for TEAM scope, sending `/api/events/bulk` with all team employees.
 - apiFetch now supports `skipAuthRedirect` to avoid hard redirects on login failures; login sends empty password for `admin@local`.
 - Login now uses `POST /api/auth/sessions` for user+password auth.
+- `useMe` now calls `GET /api/auth/me`.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).

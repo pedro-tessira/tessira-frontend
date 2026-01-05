@@ -7,7 +7,7 @@ export const meQueryKey = ["me"];
 export const useMe = (options?: UseQueryOptions<MeDto>) => {
   return useQuery<MeDto>({
     queryKey: meQueryKey,
-    queryFn: () => apiFetch<MeDto>("/api/me"),
+    queryFn: () => apiFetch<MeDto>("/api/auth/me"),
     ...options,
   });
 };
