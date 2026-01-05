@@ -37,7 +37,7 @@ const Index = () => {
       } else {
         body.password = "";
       }
-      const response = await apiFetch<PasswordLoginResponse>('/api/auth/login', {
+      const response = await apiFetch<PasswordLoginResponse>('/api/auth/sessions', {
         method: 'POST',
         body: JSON.stringify(body),
         skipAuthRedirect: true,
