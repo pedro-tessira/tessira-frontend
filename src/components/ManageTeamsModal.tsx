@@ -72,13 +72,16 @@ export function ManageTeamsModal({
     const employee = employees.find(emp => emp.id === e.employeeId);
     return employee?.teamId === managingTeamId;
   });
-  const getInitials = (name: string) =>
-    name
+  const getInitials = (name?: string | null) => {
+    if (!name?.trim()) return "--";
+    return name
+      .trim()
       .split(' ')
       .map(part => part[0])
       .join('')
       .toUpperCase()
       .slice(0, 2);
+  };
 
   // Reset state when modal opens
   useEffect(() => {

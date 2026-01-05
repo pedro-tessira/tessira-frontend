@@ -27,12 +27,15 @@ function getAvatarColor(id: string): string {
 }
 
 export function EmployeeRow({ employee, isSelected, onClick, height, hasOverflow, isExpanded }: EmployeeRowProps) {
-  const initials = employee.displayName
-    .split(' ')
-    .map(part => part[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+  const initials = employee.displayName?.trim()
+    ? employee.displayName
+        .trim()
+        .split(' ')
+        .map(part => part[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    : "--";
 
   return (
     <button

@@ -169,6 +169,7 @@
 - Login now uses `POST /api/auth/sessions` for user+password auth.
 - `useMe` now calls `GET /api/auth/me`.
 - `useMe` now falls back to `GET /api/me` if `/api/auth/me` is missing, while preserving auth redirects.
+- Guarded initials rendering in `src/components/ManageTeamsModal.tsx` and `src/components/EmployeeRow.tsx` to handle missing names.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).
