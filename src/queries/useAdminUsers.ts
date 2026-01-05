@@ -7,7 +7,14 @@ export interface AdminUserDto {
   displayName: string;
   role: string;
   employeeId?: string | null;
+  employee?: {
+    id: string;
+    displayName: string;
+    email: string;
+  } | null;
   active?: boolean;
+  lastLoginAt?: string | null;
+  lastLoginMethod?: string | null;
 }
 
 export interface UpdateUserRequest {
@@ -46,6 +53,20 @@ export const useDeactivateUser = () => {
     mutationFn: (userId: string) =>
       apiFetch<void>(`/api/admin/users/${userId}`, {
         method: "DELETE",
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
+    },
+  });
+};
+
+export const useResetUserPassword = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, password }: { userId: string; password: string }) =>
+      apiFetch<void>(`/api/admin/users/${userId}/credentials/password`, {
+        method: "POST",
+        body: JSON.stringify({ password }),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminUsers"] });

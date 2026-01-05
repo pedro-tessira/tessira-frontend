@@ -26,7 +26,7 @@ import {
   useDeactivateEmployee,
   useUpdateEmployee,
 } from "@/queries/useAdminEmployees";
-import { useAdminUsers, useUpdateUser } from "@/queries/useAdminUsers";
+import { useAdminUsers, useResetUserPassword, useUpdateUser } from "@/queries/useAdminUsers";
 
 const getInitials = (name?: string | null) => {
   if (!name?.trim()) return "--";
@@ -67,9 +67,13 @@ export default function AdminUsersPage() {
   const [editEmployeeName, setEditEmployeeName] = useState("");
   const [editEmployeeEmail, setEditEmployeeEmail] = useState("");
   const [linkEmployeeId, setLinkEmployeeId] = useState("unlinked");
+  const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
+  const [resetUserId, setResetUserId] = useState<string | null>(null);
+  const [resetPassword, setResetPassword] = useState("");
 
   const { data: adminUsers = [] } = useAdminUsers(searchQuery);
   const updateUser = useUpdateUser();
+  const resetUserPassword = useResetUserPassword();
   const createEmployee = useCreateEmployee();
   const updateEmployee = useUpdateEmployee();
   const deactivateEmployee = useDeactivateEmployee();
@@ -222,6 +226,42 @@ export default function AdminUsersPage() {
     );
   };
 
+  const handleOpenResetPassword = (userId: string) => {
+    setResetUserId(userId);
+    setResetPassword("");
+    setIsResetPasswordOpen(true);
+  };
+
+  const handleResetPassword = () => {
+    if (!resetUserId || !resetPassword.trim()) {
+      toast({
+        title: "Password required",
+        description: "Enter a temporary password to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+    resetUserPassword.mutate(
+      { userId: resetUserId, password: resetPassword.trim() },
+      {
+        onSuccess: () => {
+          setIsResetPasswordOpen(false);
+          toast({
+            title: "Password reset",
+            description: "The temporary password has been updated.",
+          });
+        },
+        onError: (error: { message?: string }) => {
+          toast({
+            title: "Reset failed",
+            description: error?.message ?? "Unable to reset the password.",
+            variant: "destructive",
+          });
+        },
+      }
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
@@ -331,17 +371,17 @@ export default function AdminUsersPage() {
                           <div className="flex items-center gap-3">
                             <Avatar className="w-8 h-8">
                               <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                                {getInitials(user.name)}
+                                {getInitials(user.displayName)}
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <p className="font-medium">{user.name}</p>
+                              <p className="font-medium">{user.displayName}</p>
                               <p className="text-sm text-muted-foreground">{user.email}</p>
                             </div>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">—</Badge>
+                          <Badge variant="outline">{user.lastLoginMethod ?? "—"}</Badge>
                         </TableCell>
                         <TableCell>
                           <Badge
@@ -360,19 +400,23 @@ export default function AdminUsersPage() {
                         <TableCell>
                           <Badge
                             variant="secondary"
-                            className={user.status === "Active" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}
+                            className={(user.active ?? true) ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}
                           >
                             {user.active ?? true ? "Active" : "Disabled"}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {user.employeeId ? (
-                            <span className="text-sm">{user.employeeId}</span>
+                          {user.employee ? (
+                            <span className="text-sm">{user.employee.displayName}</span>
                           ) : (
                             <span className="text-sm text-muted-foreground italic">Not linked</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">—</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {user.lastLoginAt
+                            ? new Date(user.lastLoginAt).toLocaleString()
+                            : "—"}
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-end gap-2">
                             <Button
@@ -397,7 +441,9 @@ export default function AdminUsersPage() {
                                 <DropdownMenuItem onClick={() => handleOpenEdit(user.id)}>
                                   Edit
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>Reset Password</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleOpenResetPassword(user.id)}>
+                                  Reset Password
+                                </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem>Force Relink Employee</DropdownMenuItem>
                               </DropdownMenuContent>
@@ -513,8 +559,8 @@ export default function AdminUsersPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {employee.userId ? (
-                            <span className="text-sm">{employee.userId}</span>
+                          {employee.user ? (
+                            <span className="text-sm">{employee.user.displayName}</span>
                           ) : (
                             <span className="text-sm text-muted-foreground italic">Not linked</span>
                           )}
@@ -852,6 +898,35 @@ export default function AdminUsersPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isResetPasswordOpen} onOpenChange={setIsResetPasswordOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription>Set a new temporary password for this user.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="reset-password">Temporary Password</Label>
+              <Input
+                id="reset-password"
+                type="password"
+                value={resetPassword}
+                onChange={(event) => setResetPassword(event.target.value)}
+                placeholder="••••••••"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setIsResetPasswordOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleResetPassword} disabled={resetUserPassword.isPending}>
+                {resetUserPassword.isPending ? "Saving..." : "Update Password"}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

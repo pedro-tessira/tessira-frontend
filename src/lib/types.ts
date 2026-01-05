@@ -51,9 +51,15 @@ export interface EmployeeSearchDto {
   email: string;
   source?: "INTERNAL_WORKDAY" | "EXTERNAL_MANUAL";
   active?: boolean;
-  userId?: string | null;
-  userActive?: boolean | null;
-  userRole?: string | null;
+  user?: UserSummary | null;
+}
+
+export interface UserSummary {
+  id: string;
+  email: string;
+  displayName: string;
+  role: string;
+  active?: boolean;
 }
 
 export interface EventTypeConfig {
