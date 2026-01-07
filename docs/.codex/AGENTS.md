@@ -173,6 +173,7 @@
 - Updated team members mapping to use `employeeFullName` from `TeamMembershipResponse`.
 - Updated timeline endpoints to `/api/timelines` and `/api/timelines/employee-events`.
 - Added fullName fallbacks for employee display names across timeline, admin, and team management UI.
+- Edit event no longer sends `eventTypeId` since the type is read-only in the UI (avoids scope mismatch errors).
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).

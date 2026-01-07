@@ -39,12 +39,11 @@ export function EditEventModal({ open, onOpenChange, event, eventTypes, onSubmit
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!eventTypeId || !title.trim()) return;
+    if (!title.trim()) return;
     onSubmit({
       title: title.trim(),
       startDate,
       endDate,
-      eventTypeId,
     });
     onOpenChange(false);
   };
