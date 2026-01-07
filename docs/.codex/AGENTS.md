@@ -170,6 +170,7 @@
 - `useMe` now calls `GET /api/auth/me`.
 - Removed `/api/me` fallback; `useMe` now only calls `GET /api/auth/me`.
 - Guarded initials rendering in `src/components/ManageTeamsModal.tsx` and `src/components/EmployeeRow.tsx` to handle missing names.
+- Updated team members mapping to use `employeeFullName` from `TeamMembershipResponse`.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).

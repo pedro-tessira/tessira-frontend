@@ -38,7 +38,7 @@ export interface TeamMembershipDto {
   id: string;
   teamId: string;
   employeeId: string;
-  employeeDisplayName: string;
+  employeeFullName: string;
   employeeEmail: string;
   roleInTeam: TeamRole;
   startDate?: string;

@@ -15,7 +15,7 @@ export const employeesQueryKey = (teamId: string, search: string) => ["employees
 
 const mapMembershipToEmployee = (teamId: string) => (member: TeamMembershipDto): TeamEmployeeDto => ({
   id: member.employeeId,
-  displayName: member.employeeDisplayName,
+  displayName: member.employeeFullName,
   email: member.employeeEmail,
   teamId,
   membershipId: member.id,
