@@ -168,7 +168,7 @@
 - apiFetch now supports `skipAuthRedirect` to avoid hard redirects on login failures; login sends empty password for `admin@local`.
 - Login now uses `POST /api/auth/sessions` for user+password auth.
 - `useMe` now calls `GET /api/auth/me`.
-- `useMe` now falls back to `GET /api/me` if `/api/auth/me` is missing, while preserving auth redirects.
+- Removed `/api/me` fallback; `useMe` now only calls `GET /api/auth/me`.
 - Guarded initials rendering in `src/components/ManageTeamsModal.tsx` and `src/components/EmployeeRow.tsx` to handle missing names.
 
 ## Workflow Note
