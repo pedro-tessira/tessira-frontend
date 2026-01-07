@@ -22,7 +22,7 @@ const buildTimelineUrl = (params: TimelineParams) => {
   if (params.eventTypeIds) {
     query.set("eventTypeIds", params.eventTypeIds.join(","));
   }
-  return `/api/timeline?${query.toString()}`;
+  return `/api/timelines?${query.toString()}`;
 };
 
 export const timelineQueryKey = (params: TimelineParams) => [

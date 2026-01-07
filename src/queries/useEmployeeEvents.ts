@@ -20,7 +20,7 @@ const buildEmployeeEventsUrl = (params: EmployeeEventsParams) => {
   if (params.eventTypeIds) {
     query.set("eventTypeIds", params.eventTypeIds.join(","));
   }
-  return `/api/timeline/employee-events?${query.toString()}`;
+  return `/api/timelines/employee-events?${query.toString()}`;
 };
 
 export const employeeEventsQueryKey = (params: EmployeeEventsParams) => [
