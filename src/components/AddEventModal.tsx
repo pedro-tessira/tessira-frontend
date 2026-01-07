@@ -32,10 +32,7 @@ export function AddEventModal({ open, onOpenChange, employees, eventTypes, onSub
   const [startDate, setStartDate] = useState(today);
   const [endDate, setEndDate] = useState(today);
 
-  const selectableEventTypes = useMemo(
-    () => eventTypes.filter(eventType => eventType.source !== 'WORKDAY'),
-    [eventTypes]
-  );
+  const selectableEventTypes = useMemo(() => eventTypes, [eventTypes]);
 
   useEffect(() => {
     if (!selectedEventTypeId && selectableEventTypes.length > 0) {
