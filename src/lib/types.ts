@@ -17,6 +17,7 @@ export interface EventTypeDto {
 export interface EmployeeDto {
   id: string;
   displayName: string;
+  fullName?: string;
   email: string;
 }
 
@@ -47,7 +48,8 @@ export interface TeamMembershipDto {
 
 export interface EmployeeSearchDto {
   id: string;
-  displayName: string;
+  displayName?: string;
+  fullName?: string;
   email: string;
   source?: "INTERNAL_WORKDAY" | "EXTERNAL_MANUAL";
   active?: boolean;

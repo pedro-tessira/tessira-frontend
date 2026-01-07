@@ -94,7 +94,7 @@ export default function SharedView() {
       const employeeId = expandedEmployeeIds[index];
       if (!employeeId) return;
       const events = query.data?.events ?? [];
-      const employeeName = query.data?.employee.displayName;
+      const employeeName = query.data?.employee.fullName ?? query.data?.employee.displayName;
       map.set(
         employeeId,
         events.map(event => ({
@@ -122,7 +122,7 @@ export default function SharedView() {
         ...event,
         eventTypeId: event.eventTypeId ?? event.eventType?.id ?? null,
         employeeId: row.employee.id,
-        employeeName: row.employee.displayName,
+        employeeName: row.employee.fullName ?? row.employee.displayName,
       }));
     });
     return [...companyEvents, ...rowEvents];

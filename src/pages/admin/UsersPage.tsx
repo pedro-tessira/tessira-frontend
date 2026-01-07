@@ -40,6 +40,8 @@ const getInitials = (name?: string | null) => {
 };
 
 export default function AdminUsersPage() {
+  const getEmployeeName = (employee?: { displayName?: string; fullName?: string } | null) =>
+    employee?.displayName ?? employee?.fullName ?? "Unknown";
   const { toast } = useToast();
   const { data: ssoProviders = [] } = useSsoProviders();
   const [activeTab, setActiveTab] = useState("users");
@@ -407,7 +409,7 @@ export default function AdminUsersPage() {
                         </TableCell>
                         <TableCell>
                           {user.employee ? (
-                            <span className="text-sm">{user.employee.displayName}</span>
+                            <span className="text-sm">{getEmployeeName(user.employee)}</span>
                           ) : (
                             <span className="text-sm text-muted-foreground italic">Not linked</span>
                           )}
@@ -541,7 +543,7 @@ export default function AdminUsersPage() {
                       <TableRow key={employee.id}>
                         <TableCell>
                           <div>
-                            <p className="font-medium">{employee.displayName}</p>
+                            <p className="font-medium">{getEmployeeName(employee)}</p>
                             <p className="text-sm text-muted-foreground">{employee.email}</p>
                           </div>
                         </TableCell>
@@ -560,7 +562,7 @@ export default function AdminUsersPage() {
                         </TableCell>
                         <TableCell>
                           {employee.user ? (
-                            <span className="text-sm">{employee.user.displayName}</span>
+                            <span className="text-sm">{employee.user.displayName ?? "Unknown"}</span>
                           ) : (
                             <span className="text-sm text-muted-foreground italic">Not linked</span>
                           )}
@@ -594,7 +596,7 @@ export default function AdminUsersPage() {
                                   onClick={() =>
                                     handleOpenEmployeeEdit(
                                       employee.id,
-                                      employee.displayName,
+                                      getEmployeeName(employee),
                                       employee.email
                                     )
                                   }
@@ -883,7 +885,7 @@ export default function AdminUsersPage() {
                       <SelectItem value="unlinked">Unlinked</SelectItem>
                       {adminEmployees.map((employee) => (
                         <SelectItem key={employee.id} value={employee.id}>
-                          {employee.displayName} ({employee.email})
+                          {getEmployeeName(employee)} ({employee.email})
                         </SelectItem>
                       ))}
                     </SelectContent>

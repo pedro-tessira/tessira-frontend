@@ -142,7 +142,7 @@ export function AppShell() {
       const employeeId = expandedEmployeeIds[index];
       if (!employeeId) return;
       const events = query.data?.events ?? [];
-      const employeeName = query.data?.employee.displayName;
+      const employeeName = query.data?.employee.fullName ?? query.data?.employee.displayName;
       map.set(
         employeeId,
         events.map(event => ({
@@ -170,7 +170,7 @@ export function AppShell() {
         ...event,
         eventTypeId: event.eventTypeId ?? event.eventType?.id ?? null,
         employeeId: row.employee.id,
-        employeeName: row.employee.displayName,
+        employeeName: row.employee.fullName ?? row.employee.displayName,
       }));
     });
     return [...companyEvents, ...rowEvents];
@@ -387,7 +387,7 @@ export function AppShell() {
       if (teamEmployees.some(member => member.id === employee.id)) {
         toast({
           title: 'Already a member',
-          description: `${employee.displayName} is already in this team.`,
+          description: `${employee.displayName ?? employee.fullName ?? "Employee"} is already in this team.`,
         });
         return;
       }
@@ -397,7 +397,7 @@ export function AppShell() {
           onSuccess: () => {
             toast({
               title: 'Member added',
-              description: `${employee.displayName} was added to the team.`,
+              description: `${employee.displayName ?? employee.fullName ?? "Employee"} was added to the team.`,
             });
           },
           onError: (error: { message?: string }) => {

@@ -172,6 +172,7 @@
 - Guarded initials rendering in `src/components/ManageTeamsModal.tsx` and `src/components/EmployeeRow.tsx` to handle missing names.
 - Updated team members mapping to use `employeeFullName` from `TeamMembershipResponse`.
 - Updated timeline endpoints to `/api/timelines` and `/api/timelines/employee-events`.
+- Added fullName fallbacks for employee display names across timeline, admin, and team management UI.
 
 ## Workflow Note
 - Commit every change immediately after it is made (no batching).

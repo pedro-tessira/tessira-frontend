@@ -72,6 +72,9 @@ export function ManageTeamsModal({
     const employee = employees.find(emp => emp.id === e.employeeId);
     return employee?.teamId === managingTeamId;
   });
+  const getEmployeeName = (employee?: { displayName?: string; fullName?: string } | null) =>
+    employee?.displayName ?? employee?.fullName ?? "Unknown";
+
   const getInitials = (name?: string | null) => {
     if (!name?.trim()) return "--";
     return name
@@ -151,7 +154,7 @@ export function ManageTeamsModal({
 
   const handleStartMemberEdit = (employee: TeamEmployeeDto) => {
     setEditingMemberId(employee.id);
-    setEditingMemberName(employee.displayName);
+    setEditingMemberName(getEmployeeName(employee));
   };
 
   const handleSaveMemberEdit = () => {
@@ -167,7 +170,7 @@ export function ManageTeamsModal({
 
   const handleToggleOwner = (employee: TeamEmployeeDto) => {
     if (!employee.membershipId) return;
-    onUpdateEmployee(managingTeamId, employee.membershipId, employee.displayName, !employee.isOwner);
+    onUpdateEmployee(managingTeamId, employee.membershipId, getEmployeeName(employee), !employee.isOwner);
   };
 
   const getTeamEventCount = () => {
@@ -210,7 +213,7 @@ export function ManageTeamsModal({
   };
 
   const handleSelectMember = (employee: EmployeeSearchDto) => {
-    const identifier = employee.email || employee.displayName;
+    const identifier = employee.email || getEmployeeName(employee);
     onAddEmployee(identifier, managingTeamId);
     setNewMemberName('');
     setMemberSearchResults([]);
@@ -370,7 +373,7 @@ export function ManageTeamsModal({
                               className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10 text-primary text-sm"
                             >
                               <Crown className="w-3 h-3" />
-                              {owner.displayName}
+                              {getEmployeeName(owner)}
                             </div>
                           ))}
                         </div>
@@ -469,7 +472,7 @@ export function ManageTeamsModal({
                                 index === highlightedMemberIndex ? 'bg-muted' : 'hover:bg-muted'
                               }`}
                             >
-                              <div className="font-medium text-foreground">{employee.displayName}</div>
+                              <div className="font-medium text-foreground">{getEmployeeName(employee)}</div>
                               <div className="text-xs text-muted-foreground">{employee.email}</div>
                             </button>
                           ))}
@@ -492,7 +495,7 @@ export function ManageTeamsModal({
                         className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
                       >
                         <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium">
-                          {getInitials(employee.displayName)}
+                          {getInitials(getEmployeeName(employee))}
                         </div>
 
                         {editingMemberId === employee.id ? (
@@ -528,7 +531,7 @@ export function ManageTeamsModal({
                         ) : (
                           <>
                             <div className="flex-1 flex items-center gap-2">
-                              <span className="text-sm text-foreground">{employee.displayName}</span>
+                              <span className="text-sm text-foreground">{getEmployeeName(employee)}</span>
                               {employee.isOwner && (
                                 <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-primary/10 text-primary">
                                   <Crown className="w-3 h-3" />

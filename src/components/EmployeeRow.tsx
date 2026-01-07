@@ -27,8 +27,9 @@ function getAvatarColor(id: string): string {
 }
 
 export function EmployeeRow({ employee, isSelected, onClick, height, hasOverflow, isExpanded }: EmployeeRowProps) {
-  const initials = employee.displayName?.trim()
-    ? employee.displayName
+  const displayName = employee.displayName ?? employee.fullName ?? "Unknown";
+  const initials = displayName.trim()
+    ? displayName
         .trim()
         .split(' ')
         .map(part => part[0])
@@ -53,7 +54,7 @@ export function EmployeeRow({ employee, isSelected, onClick, height, hasOverflow
         {initials}
       </div>
       <span className="text-sm font-medium text-foreground truncate flex-1">
-        {employee.displayName}
+        {displayName}
       </span>
       {hasOverflow && (
         <div className="text-muted-foreground">

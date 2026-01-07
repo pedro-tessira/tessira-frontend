@@ -70,7 +70,7 @@ export default function SharePage() {
         ...event,
         eventTypeId: event.eventTypeId ?? event.eventType?.id ?? null,
         employeeId: row.employee.id,
-        employeeName: row.employee.displayName,
+        employeeName: row.employee.fullName ?? row.employee.displayName,
         canEdit: false,
         canDelete: false,
       }))
