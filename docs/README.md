@@ -7,3 +7,7 @@ For backend services and API details, see:
 
 - Share links: `/share/:token` and `/shares/:token`.
 - Event titles are optional; when missing, the UI falls back to the event type name.
+
+## Backlog
+
+- Consider code-splitting to reduce Vite bundle size warnings.
