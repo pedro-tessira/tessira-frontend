@@ -42,7 +42,7 @@ const buildShareUrl = (params: ShareParams) => {
     from: params.from,
     to: params.to,
   });
-  return `/api/share/${params.token}?${query.toString()}`;
+  return `/api/shares/public/${params.token}?${query.toString()}`;
 };
 
 export const shareQueryKey = (params: ShareParams) => [

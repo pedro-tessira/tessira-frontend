@@ -16,10 +16,10 @@ const buildTimelineUrl = (params: TimelineParams) => {
     from: params.from,
     to: params.to,
   });
-  if (params.employeeIds) {
+  if (params.employeeIds && params.employeeIds.length > 0) {
     query.set("employeeIds", params.employeeIds.join(","));
   }
-  if (params.eventTypeIds) {
+  if (params.eventTypeIds && params.eventTypeIds.length > 0) {
     query.set("eventTypeIds", params.eventTypeIds.join(","));
   }
   return `/api/timelines?${query.toString()}`;

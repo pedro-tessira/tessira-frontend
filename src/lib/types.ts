@@ -1,13 +1,14 @@
-export type EventScope = "INDIVIDUAL" | "TEAM" | "GLOBAL";
+export type EventScope = "INDIVIDUAL" | "GLOBAL";
+export type EventTypeVisibilityScope = "GLOBAL" | "TEAM";
+export type EventTypeTimelineScope = "INDIVIDUAL" | "GLOBAL";
 export type EventSource = "WORKDAY" | "MANUAL";
-export type EventLevel = "individual" | "team" | "company";
 
 export interface EventTypeDto {
   id: string;
   code?: string;
   name: string;
-  scope: EventScope;
-  teamId?: string | null;
+  visibilityScope: EventTypeVisibilityScope;
+  timelineScope: EventTypeTimelineScope;
   teamIds?: string[] | null;
   source?: EventSource;
   color?: string | null;
@@ -70,9 +71,9 @@ export interface EventTypeConfig {
   label: string;
   color: string;
   source: EventSource;
-  level: EventLevel;
-  teamIds?: string[]; // For company level: specific teams this applies to (empty = global)
-  isGlobal?: boolean; // For company level: available to all teams (admin only)
+  visibilityScope: EventTypeVisibilityScope;
+  timelineScope: EventTypeTimelineScope;
+  teamIds?: string[];
 }
 
 export interface CreateShareRequest {
@@ -120,11 +121,18 @@ export interface EventDto {
   scope: EventScope;
   source?: EventSource;
   eventTypeId?: string | null;
-  eventType?: EventTypeDto | null;
+  eventType?: EventTypeSummary | null;
   isLocked: boolean;
   canEdit: boolean;
   canDelete: boolean;
   isAggregated?: boolean;
+}
+
+export interface EventTypeSummary {
+  id: string;
+  code?: string;
+  name?: string;
+  scope?: EventTypeTimelineScope;
 }
 
 export interface EventAuditDto {
@@ -141,7 +149,7 @@ export interface EventAuditDto {
     id: string;
     code?: string | null;
     name?: string | null;
-    scope: EventScope;
+    scope?: EventTypeTimelineScope;
   } | null;
 }
 

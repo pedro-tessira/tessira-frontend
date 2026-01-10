@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Pencil, Check, Lock, User, Users, Building2, Globe } from 'lucide-react';
+import { Plus, Trash2, Pencil, Lock, User, Users, Building2, Globe } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { TeamDto, TeamEmployeeDto, TimelineEvent, EventTypeConfig, EventLevel } from '@/lib/types';
+import { TeamDto, TeamEmployeeDto, TimelineEvent, EventTypeConfig, EventTypeTimelineScope, EventTypeVisibilityScope } from '@/lib/types';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,10 +32,14 @@ const colorOptions = [
   { value: '#6366f1', label: 'Indigo' },
 ];
 
-const levelLabels: Record<EventLevel, { label: string; icon: React.ReactNode; description: string }> = {
-  individual: { label: 'Individual', icon: <User className="w-3 h-3" />, description: 'User adds event for themselves' },
-  team: { label: 'Team', icon: <Users className="w-3 h-3" />, description: 'Shown on Global row for the team' },
-  company: { label: 'Global', icon: <Building2 className="w-3 h-3" />, description: 'Shared across multiple teams' },
+const timelineScopeLabels: Record<EventTypeTimelineScope, { label: string; icon: React.ReactNode; description: string }> = {
+  INDIVIDUAL: { label: 'Individual', icon: <User className="w-3 h-3" />, description: 'Visible on user timelines' },
+  GLOBAL: { label: 'Global', icon: <Globe className="w-3 h-3" />, description: 'Visible on the global lane' },
+};
+
+const visibilityScopeLabels: Record<EventTypeVisibilityScope, { label: string; icon: React.ReactNode; description: string }> = {
+  GLOBAL: { label: 'Global', icon: <Building2 className="w-3 h-3" />, description: 'Available to all teams (admin only)' },
+  TEAM: { label: 'Team', icon: <Users className="w-3 h-3" />, description: 'Available to selected teams' },
 };
 
 const deriveEventTypeCode = (label: string) => {
@@ -51,12 +55,12 @@ const isHexColor = (value: string) => /^#([0-9a-fA-F]{6})$/.test(value);
 interface ManageEventTypesModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialEventTypeId?: string | null;
   teams: TeamDto[];
   employees: TeamEmployeeDto[];
   events: TimelineEvent[];
   eventTypeConfigs: EventTypeConfig[];
   currentUserId?: string; // To determine owned teams
-  isAdmin?: boolean; // To show global option
   onAddEventType: (eventType: Omit<EventTypeConfig, 'id'>) => void;
   onUpdateEventType: (eventTypeId: string, updates: Partial<EventTypeConfig>) => void;
   onRemoveEventType: (eventTypeId: string) => void;
@@ -65,12 +69,12 @@ interface ManageEventTypesModalProps {
 export function ManageEventTypesModal({
   open,
   onOpenChange,
+  initialEventTypeId,
   teams,
   employees,
   events,
   eventTypeConfigs,
   currentUserId,
-  isAdmin = true, // Default to admin for now
   onAddEventType,
   onUpdateEventType,
   onRemoveEventType,
@@ -80,18 +84,18 @@ export function ManageEventTypesModal({
   const [editingEventTypeLabel, setEditingEventTypeLabel] = useState('');
   const [editingEventTypeCode, setEditingEventTypeCode] = useState('');
   const [editingEventTypeColor, setEditingEventTypeColor] = useState('');
-  const [editingEventTypeLevel, setEditingEventTypeLevel] = useState<EventLevel>('individual');
+  const [editingEventTypeTimelineScope, setEditingEventTypeTimelineScope] = useState<EventTypeTimelineScope>('INDIVIDUAL');
+  const [editingEventTypeVisibilityScope, setEditingEventTypeVisibilityScope] = useState<EventTypeVisibilityScope>('GLOBAL');
   const [editingEventTypeTeamIds, setEditingEventTypeTeamIds] = useState<string[]>([]);
-  const [editingEventTypeIsGlobal, setEditingEventTypeIsGlobal] = useState(false);
   const [editingCodeTouched, setEditingCodeTouched] = useState(false);
   
   const [isAddingEventType, setIsAddingEventType] = useState(false);
   const [newEventTypeLabel, setNewEventTypeLabel] = useState('');
   const [newEventTypeCode, setNewEventTypeCode] = useState('');
   const [newEventTypeColor, setNewEventTypeColor] = useState('#3b82f6');
-  const [newEventTypeLevel, setNewEventTypeLevel] = useState<EventLevel>('individual');
+  const [newEventTypeTimelineScope, setNewEventTypeTimelineScope] = useState<EventTypeTimelineScope>('INDIVIDUAL');
+  const [newEventTypeVisibilityScope, setNewEventTypeVisibilityScope] = useState<EventTypeVisibilityScope>('GLOBAL');
   const [newEventTypeTeamIds, setNewEventTypeTeamIds] = useState<string[]>([]);
-  const [newEventTypeIsGlobal, setNewEventTypeIsGlobal] = useState(false);
   const [newCodeTouched, setNewCodeTouched] = useState(false);
   
   const [deleteEventTypeConfirmOpen, setDeleteEventTypeConfirmOpen] = useState(false);
@@ -114,9 +118,9 @@ export function ManageEventTypesModal({
       setNewEventTypeLabel('');
       setNewEventTypeCode('');
       setNewEventTypeColor('#3b82f6');
-      setNewEventTypeLevel('individual');
+      setNewEventTypeTimelineScope('INDIVIDUAL');
+      setNewEventTypeVisibilityScope('GLOBAL');
       setNewEventTypeTeamIds([]);
-      setNewEventTypeIsGlobal(false);
       setNewCodeTouched(false);
     }
   }, [open]);
@@ -142,11 +146,20 @@ export function ManageEventTypesModal({
     setEditingEventTypeLabel(eventType.label);
     setEditingEventTypeCode(eventType.code);
     setEditingEventTypeColor(resolvedColor);
-    setEditingEventTypeLevel(eventType.level);
+    setEditingEventTypeTimelineScope(eventType.timelineScope);
+    setEditingEventTypeVisibilityScope(eventType.visibilityScope);
     setEditingEventTypeTeamIds(eventType.teamIds || []);
-    setEditingEventTypeIsGlobal(eventType.isGlobal || false);
     setEditingCodeTouched(false);
   };
+
+  useEffect(() => {
+    if (!open) return;
+    if (!initialEventTypeId) return;
+    const target = eventTypeConfigs.find(eventType => eventType.id === initialEventTypeId);
+    if (target) {
+      handleStartEventTypeEdit(target);
+    }
+  }, [eventTypeConfigs, initialEventTypeId, open]);
 
   const handleSaveEventTypeEdit = () => {
     if (editingEventTypeId && editingEventTypeLabel.trim()) {
@@ -154,9 +167,9 @@ export function ManageEventTypesModal({
         label: editingEventTypeLabel.trim(),
         code: editingEventTypeCode.trim() || deriveEventTypeCode(editingEventTypeLabel),
         color: editingEventTypeColor,
-        level: editingEventTypeLevel,
-        teamIds: editingEventTypeLevel === 'company' ? editingEventTypeTeamIds : undefined,
-        isGlobal: editingEventTypeLevel === 'company' ? editingEventTypeIsGlobal : undefined,
+        timelineScope: editingEventTypeTimelineScope,
+        visibilityScope: editingEventTypeVisibilityScope,
+        teamIds: editingEventTypeVisibilityScope === 'TEAM' ? editingEventTypeTeamIds : undefined,
       });
       setEditingEventTypeId(null);
     }
@@ -167,9 +180,9 @@ export function ManageEventTypesModal({
     setEditingEventTypeLabel('');
     setEditingEventTypeCode('');
     setEditingEventTypeColor('');
-    setEditingEventTypeLevel('individual');
+    setEditingEventTypeTimelineScope('INDIVIDUAL');
+    setEditingEventTypeVisibilityScope('GLOBAL');
     setEditingEventTypeTeamIds([]);
-    setEditingEventTypeIsGlobal(false);
     setEditingCodeTouched(false);
   };
 
@@ -180,16 +193,16 @@ export function ManageEventTypesModal({
         label: newEventTypeLabel.trim(),
         color: newEventTypeColor,
         source: 'MANUAL',
-        level: newEventTypeLevel,
-        teamIds: newEventTypeLevel === 'company' ? newEventTypeTeamIds : undefined,
-        isGlobal: newEventTypeLevel === 'company' ? newEventTypeIsGlobal : undefined,
+        timelineScope: newEventTypeTimelineScope,
+        visibilityScope: newEventTypeVisibilityScope,
+        teamIds: newEventTypeVisibilityScope === 'TEAM' ? newEventTypeTeamIds : undefined,
       });
       setNewEventTypeLabel('');
       setNewEventTypeCode('');
       setNewEventTypeColor('#3b82f6');
-      setNewEventTypeLevel('individual');
+      setNewEventTypeTimelineScope('INDIVIDUAL');
+      setNewEventTypeVisibilityScope('GLOBAL');
       setNewEventTypeTeamIds([]);
-      setNewEventTypeIsGlobal(false);
       setNewCodeTouched(false);
       setIsAddingEventType(false);
     }
@@ -221,48 +234,29 @@ export function ManageEventTypesModal({
 
   const renderTeamSelector = (
     selectedTeamIds: string[],
-    isGlobal: boolean,
-    onToggleTeam: (teamId: string) => void,
-    onToggleGlobal: (checked: boolean) => void
+    onToggleTeam: (teamId: string) => void
   ) => (
     <div className="space-y-3 p-3 rounded-lg bg-muted/30 border border-border">
       <div className="text-sm font-medium text-foreground">Team Availability</div>
-      
-      {isAdmin && (
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="global-checkbox"
-            checked={isGlobal}
-            onCheckedChange={(checked) => onToggleGlobal(checked === true)}
-          />
-          <Label htmlFor="global-checkbox" className="flex items-center gap-2 text-sm cursor-pointer">
-            <Globe className="w-4 h-4 text-primary" />
-            Global (available to all teams)
-          </Label>
-        </div>
-      )}
-      
-      {!isGlobal && (
-        <div className="space-y-2">
-          <div className="text-xs text-muted-foreground">Select specific teams:</div>
-          <div className="h-[180px] overflow-y-auto pr-2">
-            <div className="space-y-2">
-              {availableTeams.map((team) => (
-                <div key={team.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`team-${team.id}`}
-                    checked={selectedTeamIds.includes(team.id)}
-                    onCheckedChange={() => onToggleTeam(team.id)}
-                  />
-                  <Label htmlFor={`team-${team.id}`} className="text-sm cursor-pointer">
-                    {team.name}
-                  </Label>
-                </div>
-              ))}
-            </div>
+      <div className="space-y-2">
+        <div className="text-xs text-muted-foreground">Select specific teams:</div>
+        <div className="h-[180px] overflow-y-auto pr-2">
+          <div className="space-y-2">
+            {availableTeams.map((team) => (
+              <div key={team.id} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`team-${team.id}`}
+                  checked={selectedTeamIds.includes(team.id)}
+                  onCheckedChange={() => onToggleTeam(team.id)}
+                />
+                <Label htmlFor={`team-${team.id}`} className="text-sm cursor-pointer">
+                  {team.name}
+                </Label>
+              </div>
+            ))}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 
@@ -276,7 +270,7 @@ export function ManageEventTypesModal({
 
           <div className="flex items-center justify-between pb-2 shrink-0">
             <div className="text-sm text-muted-foreground">
-              Configure event types and their visibility levels.
+              Configure event types, visibility, and availability.
             </div>
             <Button
               size="sm"
@@ -334,15 +328,33 @@ export function ManageEventTypesModal({
                         ))}
                       </SelectContent>
                     </Select>
-                    <Select value={newEventTypeLevel} onValueChange={(v) => setNewEventTypeLevel(v as EventLevel)}>
-                      <SelectTrigger className="w-[140px]">
+                    <Select value={newEventTypeTimelineScope} onValueChange={(v) => setNewEventTypeTimelineScope(v as EventTypeTimelineScope)}>
+                      <SelectTrigger className="w-[150px]">
                         <div className="flex items-center gap-2">
-                          {levelLabels[newEventTypeLevel].icon}
-                          <span>{levelLabels[newEventTypeLevel].label}</span>
+                          {timelineScopeLabels[newEventTypeTimelineScope].icon}
+                          <span>{timelineScopeLabels[newEventTypeTimelineScope].label}</span>
                         </div>
                       </SelectTrigger>
                       <SelectContent>
-                        {Object.entries(levelLabels).map(([key, val]) => (
+                        {Object.entries(timelineScopeLabels).map(([key, val]) => (
+                          <SelectItem key={key} value={key}>
+                            <div className="flex items-center gap-2">
+                              {val.icon}
+                              <span>{val.label}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={newEventTypeVisibilityScope} onValueChange={(v) => setNewEventTypeVisibilityScope(v as EventTypeVisibilityScope)}>
+                      <SelectTrigger className="w-[150px]">
+                        <div className="flex items-center gap-2">
+                          {visibilityScopeLabels[newEventTypeVisibilityScope].icon}
+                          <span>{visibilityScopeLabels[newEventTypeVisibilityScope].label}</span>
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(visibilityScopeLabels).map(([key, val]) => (
                           <SelectItem key={key} value={key}>
                             <div className="flex items-center gap-2">
                               {val.icon}
@@ -354,11 +366,9 @@ export function ManageEventTypesModal({
                     </Select>
                   </div>
 
-                  {newEventTypeLevel === 'company' && renderTeamSelector(
+                  {newEventTypeVisibilityScope === 'TEAM' && renderTeamSelector(
                     newEventTypeTeamIds,
-                    newEventTypeIsGlobal,
-                    (teamId) => toggleTeamSelection(teamId, false),
-                    setNewEventTypeIsGlobal
+                    (teamId) => toggleTeamSelection(teamId, false)
                   )}
 
                   <div className="flex gap-2 justify-end">
@@ -376,6 +386,7 @@ export function ManageEventTypesModal({
               {eventTypeConfigs.map((eventType) => {
                 const count = events.filter(e => e.eventTypeId === eventType.id || e.eventType?.id === eventType.id).length;
                 const isLocked = eventType.source === 'WORKDAY';
+                const sourceLabel = eventType.source === 'WORKDAY' ? 'Workday' : 'Local';
                 const isEditing = editingEventTypeId === eventType.id;
 
                 if (isEditing) {
@@ -421,15 +432,33 @@ export function ManageEventTypesModal({
                           ))}
                         </SelectContent>
                       </Select>
-                        <Select value={editingEventTypeLevel} onValueChange={(v) => setEditingEventTypeLevel(v as EventLevel)}>
-                          <SelectTrigger className="w-[140px]">
+                        <Select value={editingEventTypeTimelineScope} onValueChange={(v) => setEditingEventTypeTimelineScope(v as EventTypeTimelineScope)}>
+                          <SelectTrigger className="w-[150px]">
                             <div className="flex items-center gap-2">
-                              {levelLabels[editingEventTypeLevel].icon}
-                              <span>{levelLabels[editingEventTypeLevel].label}</span>
+                              {timelineScopeLabels[editingEventTypeTimelineScope].icon}
+                              <span>{timelineScopeLabels[editingEventTypeTimelineScope].label}</span>
                             </div>
                           </SelectTrigger>
                           <SelectContent>
-                            {Object.entries(levelLabels).map(([key, val]) => (
+                            {Object.entries(timelineScopeLabels).map(([key, val]) => (
+                              <SelectItem key={key} value={key}>
+                                <div className="flex items-center gap-2">
+                                  {val.icon}
+                                  <span>{val.label}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Select value={editingEventTypeVisibilityScope} onValueChange={(v) => setEditingEventTypeVisibilityScope(v as EventTypeVisibilityScope)}>
+                          <SelectTrigger className="w-[150px]">
+                            <div className="flex items-center gap-2">
+                              {visibilityScopeLabels[editingEventTypeVisibilityScope].icon}
+                              <span>{visibilityScopeLabels[editingEventTypeVisibilityScope].label}</span>
+                            </div>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(visibilityScopeLabels).map(([key, val]) => (
                               <SelectItem key={key} value={key}>
                                 <div className="flex items-center gap-2">
                                   {val.icon}
@@ -441,11 +470,9 @@ export function ManageEventTypesModal({
                         </Select>
                       </div>
 
-                      {editingEventTypeLevel === 'company' && renderTeamSelector(
+                      {editingEventTypeVisibilityScope === 'TEAM' && renderTeamSelector(
                         editingEventTypeTeamIds,
-                        editingEventTypeIsGlobal,
-                        (teamId) => toggleTeamSelection(teamId, true),
-                        setEditingEventTypeIsGlobal
+                        (teamId) => toggleTeamSelection(teamId, true)
                       )}
 
                       <div className="flex gap-2 justify-end">
@@ -471,10 +498,7 @@ export function ManageEventTypesModal({
                     />
                     <div className="flex-1">
                       <span className="text-sm text-foreground">{eventType.label}</span>
-                      {eventType.level === 'company' && eventType.isGlobal && (
-                        <span className="ml-2 text-xs text-muted-foreground">(Global)</span>
-                      )}
-                      {eventType.level === 'company' && !eventType.isGlobal && eventType.teamIds && eventType.teamIds.length > 0 && (
+                      {eventType.visibilityScope === 'TEAM' && eventType.teamIds && eventType.teamIds.length > 0 && (
                         <span className="ml-2 text-xs text-muted-foreground">
                           ({eventType.teamIds.length} team{eventType.teamIds.length !== 1 ? 's' : ''})
                         </span>
@@ -484,12 +508,25 @@ export function ManageEventTypesModal({
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Badge variant="outline" className="flex items-center gap-1 text-xs">
-                            {levelLabels[eventType.level].icon}
-                            {levelLabels[eventType.level].label}
+                            {timelineScopeLabels[eventType.timelineScope].icon}
+                            {timelineScopeLabels[eventType.timelineScope].label}
                           </Badge>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>{levelLabels[eventType.level].description}</p>
+                          <p>{timelineScopeLabels[eventType.timelineScope].description}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                            {visibilityScopeLabels[eventType.visibilityScope].icon}
+                            {visibilityScopeLabels[eventType.visibilityScope].label}
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{visibilityScopeLabels[eventType.visibilityScope].description}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -501,7 +538,7 @@ export function ManageEventTypesModal({
                             <Lock className="w-4 h-4 text-muted-foreground" />
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>Managed by Workday</p>
+                            <p>Managed by {sourceLabel}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>

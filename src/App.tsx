@@ -30,6 +30,7 @@ const App = () => (
           <Route path="/help" element={<HelpPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/share/:token" element={<SharePage />} />
+          <Route path="/shares/:token" element={<SharePage />} />
           <Route
             path="/admin"
             element={

@@ -15,7 +15,7 @@ interface AddEventModalProps {
   employees: EmployeeDto[];
   eventTypes: EventTypeDto[];
   onSubmit: (event: {
-    title: string;
+    title?: string | null;
     startDate: string;
     endDate: string;
     eventTypeId: string;
@@ -47,7 +47,7 @@ export function AddEventModal({ open, onOpenChange, employees, eventTypes, onSub
   }, [employeeId, employees]);
 
   const selectedEventType = selectableEventTypes.find(eventType => eventType.id === selectedEventTypeId);
-  const eventScope = selectedEventType?.scope ?? 'INDIVIDUAL';
+  const eventScope = (selectedEventType?.timelineScope ?? 'INDIVIDUAL') as EventScope;
   const isEmployeeScoped = eventScope === 'INDIVIDUAL';
 
   const resetForm = () => {
@@ -60,13 +60,13 @@ export function AddEventModal({ open, onOpenChange, employees, eventTypes, onSub
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !startDate || !endDate || !selectedEventTypeId) return;
+    if (!startDate || !endDate || !selectedEventTypeId) return;
     
     onSubmit({
       employeeId: isEmployeeScoped ? employeeId : null,
       eventTypeId: selectedEventTypeId,
       scope: eventScope,
-      title: title.trim(),
+      title: title.trim() ? title.trim() : null,
       startDate,
       endDate,
     });
@@ -92,7 +92,6 @@ export function AddEventModal({ open, onOpenChange, employees, eventTypes, onSub
               onChange={e => setTitle(e.target.value)}
               placeholder="Event title..."
               className="px-3 py-2 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-              required
               autoFocus
             />
           </div>

@@ -17,7 +17,7 @@ const buildEmployeeEventsUrl = (params: EmployeeEventsParams) => {
     from: params.from,
     to: params.to,
   });
-  if (params.eventTypeIds) {
+  if (params.eventTypeIds && params.eventTypeIds.length > 0) {
     query.set("eventTypeIds", params.eventTypeIds.join(","));
   }
   return `/api/timelines/employee-events?${query.toString()}`;

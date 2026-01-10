@@ -7,8 +7,20 @@ import { Button } from "@/components/ui/button";
 import { useAuditEvents } from "@/queries/useAuditEvents";
 
 export default function AdminAuditPage() {
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const defaultFrom = useMemo(() => {
+    const toDate = new Date();
+    const fromDate = new Date();
+    fromDate.setDate(toDate.getDate() - 30);
+    return fromDate.toISOString().slice(0, 10);
+  }, []);
   const [query, setQuery] = useState("");
-  const { data: auditEvents = [], isLoading } = useAuditEvents();
+  const [fromDate, setFromDate] = useState(defaultFrom);
+  const [toDate, setToDate] = useState(today);
+  const { data: auditEvents = [], isLoading } = useAuditEvents({
+    from: fromDate,
+    to: toDate,
+  });
 
   const filteredLogs = useMemo(() => {
     const normalized = query.toLowerCase();
@@ -28,8 +40,6 @@ export default function AdminAuditPage() {
     switch (scope) {
       case "GLOBAL":
         return "bg-blue-50 text-blue-700";
-      case "TEAM":
-        return "bg-purple-50 text-purple-700";
       default:
         return "bg-green-50 text-green-700";
     }
@@ -52,14 +62,64 @@ export default function AdminAuditPage() {
 
       <Card>
         <CardContent className="pt-6">
-          <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search audit logs..."
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              className="pl-9"
-            />
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="relative max-w-sm w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search audit logs..."
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: "7d", days: 7 },
+                  { label: "30d", days: 30 },
+                  { label: "90d", days: 90 },
+                ].map((preset) => {
+                  const end = new Date();
+                  const start = new Date();
+                  start.setDate(end.getDate() - preset.days);
+                  const presetFrom = start.toISOString().slice(0, 10);
+                  const presetTo = end.toISOString().slice(0, 10);
+                  const isActive = fromDate === presetFrom && toDate === presetTo;
+                  return (
+                  <Button
+                    key={preset.label}
+                    type="button"
+                    variant={isActive ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setToDate(presetTo);
+                      setFromDate(presetFrom);
+                    }}
+                  >
+                    {preset.label}
+                  </Button>
+                  );
+                })}
+              </div>
+              <div className="grid gap-1">
+                <label className="text-xs text-muted-foreground">From</label>
+                <Input
+                  type="date"
+                  value={fromDate}
+                  max={toDate}
+                  onChange={(event) => setFromDate(event.target.value)}
+                />
+              </div>
+              <div className="grid gap-1">
+                <label className="text-xs text-muted-foreground">To</label>
+                <Input
+                  type="date"
+                  value={toDate}
+                  min={fromDate}
+                  onChange={(event) => setToDate(event.target.value)}
+                />
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

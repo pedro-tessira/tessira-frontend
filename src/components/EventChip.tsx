@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Building2, Lock, Pencil, Trash2, User, Users } from 'lucide-react';
+import { Building2, Lock, Pencil, Trash2, User } from 'lucide-react';
 import { EventTypeDto, TimelineEvent } from '@/lib/types';
 import { formatDateRange } from '@/lib/dateUtils';
 import { getEventColorClass } from '@/lib/eventColors';
@@ -35,8 +35,7 @@ export function EventChip({ event, eventTypes, style }: EventChipProps) {
   const updateEvent = useUpdateEvent();
   const deleteEvent = useDeleteEvent();
   const isCompanyRow = event.employeeId === null;
-  const scopeIcon =
-    event.scope === 'GLOBAL' ? Building2 : event.scope === 'TEAM' ? Users : User;
+  const scopeIcon = event.scope === 'GLOBAL' ? Building2 : User;
   const ScopeIcon = scopeIcon;
   const colorClass = getEventColorClass(event.eventType, event.eventTypeId);
 

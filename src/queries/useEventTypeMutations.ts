@@ -1,12 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { eventTypesQueryKey } from "@/queries/useEventTypes";
+import { EventTypeTimelineScope, EventTypeVisibilityScope } from "@/lib/types";
 
 type CreateEventTypeRequest = {
   name: string;
   code?: string;
-  scope: "INDIVIDUAL" | "TEAM" | "GLOBAL";
-  teamId?: string | null;
+  visibilityScope: EventTypeVisibilityScope;
+  timelineScope: EventTypeTimelineScope;
   teamIds?: string[] | null;
   color?: string | null;
   userCreatable?: boolean;
@@ -15,8 +16,8 @@ type CreateEventTypeRequest = {
 type UpdateEventTypeRequest = {
   name?: string;
   code?: string;
-  scope?: "INDIVIDUAL" | "TEAM" | "GLOBAL";
-  teamId?: string | null;
+  visibilityScope?: EventTypeVisibilityScope;
+  timelineScope?: EventTypeTimelineScope;
   teamIds?: string[] | null;
   color?: string | null;
   userCreatable?: boolean;

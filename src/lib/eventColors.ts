@@ -1,4 +1,4 @@
-import { EventTypeDto } from "@/lib/types";
+import { EventTypeDto, EventTypeSummary } from "@/lib/types";
 
 const PALETTE = [
   "bg-event-vacation-bg text-event-vacation border-event-vacation-border",
@@ -17,7 +17,10 @@ const hashString = (value: string): number => {
   return Math.abs(hash);
 };
 
-export const getEventColorClass = (eventType?: EventTypeDto | null, eventTypeId?: string | null): string => {
+export const getEventColorClass = (
+  eventType?: EventTypeDto | EventTypeSummary | null,
+  eventTypeId?: string | null
+): string => {
   const key = eventType?.code ?? eventType?.id ?? eventTypeId ?? "default";
   const index = hashString(key) % PALETTE.length;
   return PALETTE[index];

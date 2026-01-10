@@ -3,12 +3,12 @@ import { subMonths, addMonths, differenceInDays, format } from 'date-fns';
 import { useQueries } from '@tanstack/react-query';
 import {
   COMPANY_ROW_ID,
-  EventLevel,
   EventScope,
   EventTypeConfig,
   EventTypeDto,
   TimelineEvent,
   TeamEmployeeDto,
+  EventTypeVisibilityScope,
 } from '@/lib/types';
 import { generateDayColumns } from '@/lib/dateUtils';
 import { MainLayout } from './layout/MainLayout';
@@ -27,7 +27,7 @@ import { employeesQueryOptions, useEmployees } from '@/queries/useEmployees';
 import { useEventTypes } from '@/queries/useEventTypes';
 import { useTimeline } from '@/queries/useTimeline';
 import { employeeEventsQueryOptions } from '@/queries/useEmployeeEvents';
-import { useCreateBulkEvent, useCreateEvent } from '@/queries/useCreateEvent';
+import { useCreateEvent } from '@/queries/useCreateEvent';
 import { useCreateTeam, useDeleteTeam, useUpdateTeam } from '@/queries/useTeamMutations';
 import { useCreateEventType, useDeleteEventType, useUpdateEventType } from '@/queries/useEventTypeMutations';
 import { useCreateTeamMember, useDeleteTeamMember, useUpdateTeamMember } from '@/queries/useTeamMemberMutations';
@@ -40,11 +40,7 @@ const INITIAL_MONTHS_AFTER = 4;
 const LOAD_MORE_MONTHS = 3;
 const SCROLL_THRESHOLD = 500; // pixels from edge to trigger load
 
-const mapScopeToLevel = (scope: EventScope): EventLevel => {
-  if (scope === 'TEAM') return 'team';
-  if (scope === 'GLOBAL') return 'company';
-  return 'individual';
-};
+const defaultEventTypeSource = 'MANUAL';
 
 const getEventTypeLabel = (eventType: EventTypeDto) => {
   return eventType.name ?? eventType.code ?? 'Event type';
@@ -69,7 +65,7 @@ export function AppShell() {
   const [showAddEventForm, setShowAddEventForm] = useState(false);
   const [showManageEventTypes, setShowManageEventTypes] = useState(false);
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
-  const [isTodayVisible, setIsTodayVisible] = useState(true);
+  const [isTodayVisible, setIsTodayVisible] = useState(false);
 
   const [rangeStart, setRangeStart] = useState(() => new Date(TODAY.getFullYear(), TODAY.getMonth() - INITIAL_MONTHS_BEFORE, 1));
   const [rangeEnd, setRangeEnd] = useState(() => new Date(TODAY.getFullYear(), TODAY.getMonth() + INITIAL_MONTHS_AFTER + 1, 0));
@@ -162,6 +158,7 @@ export function AppShell() {
       ...event,
       eventTypeId: event.eventTypeId ?? event.eventType?.id ?? null,
       employeeId: null,
+      title: event.title?.trim() ? event.title : event.eventType?.name ?? event.eventType?.code ?? "Event",
     }));
     const rowEvents = timeline.rows.flatMap(row => {
       const expandedEvents = expandedEventsByEmployee.get(row.employee.id);
@@ -171,6 +168,7 @@ export function AppShell() {
         eventTypeId: event.eventTypeId ?? event.eventType?.id ?? null,
         employeeId: row.employee.id,
         employeeName: row.employee.fullName ?? row.employee.displayName,
+        title: event.title?.trim() ? event.title : event.eventType?.name ?? event.eventType?.code ?? "Event",
       }));
     });
     return [...companyEvents, ...rowEvents];
@@ -263,15 +261,25 @@ export function AppShell() {
 
   useEffect(() => {
     if (!hasScrolledToToday && timelineRef.current && columns.length > 0) {
-      const daysFromStart = differenceInDays(TODAY, rangeStart);
-      const scrollPosition = daysFromStart * COL_WIDTH - timelineRef.current.clientWidth / 2 + COL_WIDTH / 2;
-      timelineRef.current.scrollLeft = Math.max(0, scrollPosition);
-      setHasScrolledToToday(true);
+      const timelineEl = timelineRef.current;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (!timelineEl) return;
+          const daysFromStart = differenceInDays(TODAY, rangeStart);
+          const scrollPosition = daysFromStart * COL_WIDTH - timelineEl.clientWidth / 2 + COL_WIDTH / 2;
+          timelineEl.scrollLeft = Math.max(0, scrollPosition);
+          setHasScrolledToToday(true);
+          const todayLeft = daysFromStart * COL_WIDTH;
+          const todayRight = todayLeft + COL_WIDTH;
+          const viewportRight = timelineEl.scrollLeft + timelineEl.clientWidth;
+          const isVisible = todayRight > timelineEl.scrollLeft && todayLeft < viewportRight;
+          setIsTodayVisible(isVisible);
+        });
+      });
     }
   }, [hasScrolledToToday, rangeStart, columns.length]);
 
   const createEventMutation = useCreateEvent();
-  const createBulkEventMutation = useCreateBulkEvent();
   const createTeamMutation = useCreateTeam();
   const updateTeamMutation = useUpdateTeam();
   const deleteTeamMutation = useDeleteTeam();
@@ -284,58 +292,30 @@ export function AppShell() {
   const deleteEventTypeMutation = useDeleteEventType(selectedTeamId);
 
   const handleAddEvent = (payload: {
-    title: string;
+    title?: string | null;
     startDate: string;
     endDate: string;
     eventTypeId: string;
     scope: EventScope;
     employeeId?: string | null;
   }) => {
-    if (payload.scope === 'TEAM' && teamEmployees.length > 0 && selectedTeamId) {
-      createBulkEventMutation.mutate(
-        {
-          scope: payload.scope,
-          eventTypeId: payload.eventTypeId,
-          employeeIds: teamEmployees.map(employee => employee.id),
-          teamId: selectedTeamId,
-          startDate: payload.startDate,
-          endDate: payload.endDate,
-          title: payload.title,
-        },
-        {
-          onSuccess: () => {
-            toast({
-              title: 'Event added',
-              description: `"${payload.title}" has been added successfully.`,
-            });
-          },
-          onError: (error: { message?: string }) => {
-            toast({
-              title: 'Event failed',
-              description: error?.message ?? 'Unable to create event.',
-              variant: 'destructive',
-            });
-          },
-        }
-      );
-      return;
-    }
-
     createEventMutation.mutate(
       {
-        title: payload.title,
+        title: payload.title ?? null,
         startDate: payload.startDate,
         endDate: payload.endDate,
         eventTypeId: payload.eventTypeId,
         scope: payload.scope,
         employeeId: payload.employeeId ?? null,
-        teamId: payload.scope === 'TEAM' ? selectedTeamId : null,
+        teamId: payload.scope === 'GLOBAL' ? selectedTeamId : null,
       },
       {
         onSuccess: () => {
           toast({
             title: 'Event added',
-            description: `"${payload.title}" has been added successfully.`,
+            description: payload.title?.trim()
+              ? `"${payload.title}" has been added successfully.`
+              : "Event has been added successfully.",
           });
         },
         onError: (error: { message?: string }) => {
@@ -522,22 +502,8 @@ export function AppShell() {
     });
   };
 
-  const resolveEventTypeScope = (level: EventLevel): EventScope => {
-    if (level === 'team') return 'TEAM';
-    if (level === 'company') return 'GLOBAL';
-    return 'INDIVIDUAL';
-  };
-
-  const resolveEventTypeTeamId = (level: EventLevel, teamIds?: string[]) => {
-    if (level === 'team') {
-      return teamIds?.[0] ?? selectedTeamId ?? null;
-    }
-    return null;
-  };
-
-  const resolveEventTypeTeamIds = (level: EventLevel, teamIds?: string[], isGlobal?: boolean) => {
-    if (level !== 'company') return null;
-    if (isGlobal) return [];
+  const normalizeTeamIds = (visibilityScope: EventTypeVisibilityScope, teamIds?: string[]) => {
+    if (visibilityScope !== 'TEAM') return undefined;
     return teamIds ?? [];
   };
 
@@ -546,9 +512,9 @@ export function AppShell() {
       {
         name: eventType.label,
         code: eventType.code || deriveEventTypeCode(eventType.label),
-        scope: resolveEventTypeScope(eventType.level),
-        teamId: resolveEventTypeTeamId(eventType.level, eventType.teamIds),
-        teamIds: resolveEventTypeTeamIds(eventType.level, eventType.teamIds, eventType.isGlobal),
+        visibilityScope: eventType.visibilityScope,
+        timelineScope: eventType.timelineScope,
+        teamIds: normalizeTeamIds(eventType.visibilityScope, eventType.teamIds),
         color: eventType.color,
         userCreatable: true,
       },
@@ -580,9 +546,9 @@ export function AppShell() {
         payload: {
           name: merged.label,
           code: merged.code || deriveEventTypeCode(merged.label),
-          scope: resolveEventTypeScope(merged.level),
-          teamId: resolveEventTypeTeamId(merged.level, merged.teamIds),
-          teamIds: resolveEventTypeTeamIds(merged.level, merged.teamIds, merged.isGlobal),
+          visibilityScope: merged.visibilityScope,
+          timelineScope: merged.timelineScope,
+          teamIds: normalizeTeamIds(merged.visibilityScope, merged.teamIds),
           color: merged.color,
           userCreatable: true,
         },
@@ -629,10 +595,10 @@ export function AppShell() {
       code: eventType.code ?? deriveEventTypeCode(eventType.name ?? ''),
       label: getEventTypeLabel(eventType),
       color: eventType.color ?? getEventColorClass(eventType, eventType.id),
-      source: eventType.source ?? 'MANUAL',
-      level: mapScopeToLevel(eventType.scope),
-      teamIds: eventType.teamIds ?? (eventType.teamId ? [eventType.teamId] : undefined),
-      isGlobal: eventType.scope === 'GLOBAL' && !(eventType.teamIds?.length || eventType.teamId),
+      source: eventType.source ?? defaultEventTypeSource,
+      visibilityScope: eventType.visibilityScope,
+      timelineScope: eventType.timelineScope,
+      teamIds: eventType.visibilityScope === 'TEAM' ? eventType.teamIds ?? [] : undefined,
     }));
   }, [eventTypes]);
 
@@ -692,29 +658,43 @@ export function AppShell() {
   useEffect(() => {
     const timelineEl = timelineRef.current;
     if (!timelineEl) return;
+    let rafId = 0;
     const handleScroll = () => {
-      const daysFromStart = differenceInDays(TODAY, rangeStart);
-      const todayLeft = daysFromStart * COL_WIDTH;
-      const todayRight = todayLeft + COL_WIDTH;
-      const scrollLeft = timelineEl.scrollLeft;
-      const viewportRight = scrollLeft + timelineEl.clientWidth;
-      const isVisible = todayRight > scrollLeft && todayLeft < viewportRight;
-      setIsTodayVisible(isVisible);
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = 0;
+        const daysFromStart = differenceInDays(TODAY, rangeStart);
+        const todayLeft = daysFromStart * COL_WIDTH;
+        const todayRight = todayLeft + COL_WIDTH;
+        const scrollLeft = timelineEl.scrollLeft;
+        const viewportRight = scrollLeft + timelineEl.clientWidth;
+        const isVisible = todayRight > scrollLeft && todayLeft < viewportRight;
+        setIsTodayVisible(isVisible);
 
-      const scrollRight = timelineEl.scrollWidth - scrollLeft - timelineEl.clientWidth;
-      if (scrollRight < SCROLL_THRESHOLD) {
-        loadMoreFuture();
-      }
+        if (!hasScrolledToToday) {
+          return;
+        }
 
-      if (scrollLeft < SCROLL_THRESHOLD) {
-        loadMorePast();
-      }
+        const scrollRight = timelineEl.scrollWidth - scrollLeft - timelineEl.clientWidth;
+        if (scrollRight < SCROLL_THRESHOLD) {
+          loadMoreFuture();
+        }
+
+        if (scrollLeft < SCROLL_THRESHOLD) {
+          loadMorePast();
+        }
+      });
     };
     timelineEl.addEventListener('scroll', handleScroll);
     handleScroll();
 
-    return () => timelineEl.removeEventListener('scroll', handleScroll);
-  }, [rangeStart]);
+    return () => {
+      timelineEl.removeEventListener('scroll', handleScroll);
+      if (rafId) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
+  }, [hasScrolledToToday, rangeStart, columns.length]);
 
   return (
     <MainLayout
@@ -842,7 +822,7 @@ export function AppShell() {
           {!isTodayVisible && (
             <button
               onClick={scrollToToday}
-              className="absolute bottom-4 right-4 flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-full text-sm font-medium shadow-lg hover:bg-primary/90 transition-all animate-in fade-in slide-in-from-bottom-2 duration-200"
+              className="fixed bottom-4 right-4 z-30 flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-full text-sm font-medium shadow-lg hover:bg-primary/90 transition-all animate-in fade-in slide-in-from-bottom-2 duration-200 sm:bottom-6 sm:right-6"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />

@@ -35,7 +35,8 @@ export default function SharePage() {
     () => new Date(TODAY.getFullYear(), TODAY.getMonth() + INITIAL_MONTHS_AFTER + 1, 0)
   );
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
-  const [isTodayVisible, setIsTodayVisible] = useState(true);
+  const [isTodayVisible, setIsTodayVisible] = useState(false);
+  const lastAutoScrollKey = useRef<string | null>(null);
 
   const from = format(rangeStart, "yyyy-MM-dd");
   const to = format(rangeEnd, "yyyy-MM-dd");
@@ -64,6 +65,7 @@ export default function SharePage() {
       employeeId: null,
       canEdit: false,
       canDelete: false,
+      title: event.title?.trim() ? event.title : event.eventType?.name ?? event.eventType?.code ?? "Event",
     }));
     const rowEvents = rows.flatMap(row =>
       row.events.map(event => ({
@@ -73,6 +75,7 @@ export default function SharePage() {
         employeeName: row.employee.fullName ?? row.employee.displayName,
         canEdit: false,
         canDelete: false,
+        title: event.title?.trim() ? event.title : event.eventType?.name ?? event.eventType?.code ?? "Event",
       }))
     );
     return [...companyEvents, ...rowEvents];
@@ -147,12 +150,26 @@ export default function SharePage() {
 
   useEffect(() => {
     if (!hasScrolledToToday && timelineRef.current && columns.length > 0) {
-      const daysFromStart = differenceInDays(TODAY, rangeStart);
-      const scrollPosition = daysFromStart * COL_WIDTH - timelineRef.current.clientWidth / 2 + COL_WIDTH / 2;
-      timelineRef.current.scrollLeft = Math.max(0, scrollPosition);
-      setHasScrolledToToday(true);
+      const timelineEl = timelineRef.current;
+      const scrollKey = `${token ?? "share"}:${data?.generatedAt ?? "initial"}`;
+      if (lastAutoScrollKey.current === scrollKey) return;
+      lastAutoScrollKey.current = scrollKey;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (!timelineEl) return;
+          const daysFromStart = differenceInDays(TODAY, rangeStart);
+          const scrollPosition = daysFromStart * COL_WIDTH - timelineEl.clientWidth / 2 + COL_WIDTH / 2;
+          timelineEl.scrollLeft = Math.max(0, scrollPosition);
+          setHasScrolledToToday(true);
+          const todayLeft = daysFromStart * COL_WIDTH;
+          const todayRight = todayLeft + COL_WIDTH;
+          const viewportRight = timelineEl.scrollLeft + timelineEl.clientWidth;
+          const isVisible = todayRight > timelineEl.scrollLeft && todayLeft < viewportRight;
+          setIsTodayVisible(isVisible);
+        });
+      });
     }
-  }, [hasScrolledToToday, columns.length, rangeStart]);
+  }, [columns.length, data?.generatedAt, hasScrolledToToday, rangeStart, token]);
 
   useEffect(() => {
     const sidebar = sidebarRef.current;
@@ -185,24 +202,36 @@ export default function SharePage() {
     const timelineEl = timelineRef.current;
     if (!timelineEl) return;
 
+    let rafId = 0;
     const handleScroll = () => {
-      const daysFromStart = differenceInDays(TODAY, rangeStart);
-      const todayLeft = daysFromStart * COL_WIDTH;
-      const todayRight = todayLeft + COL_WIDTH;
-      const scrollLeft = timelineEl.scrollLeft;
-      const viewportRight = scrollLeft + timelineEl.clientWidth;
-      const isVisible = todayRight > scrollLeft && todayLeft < viewportRight;
-      setIsTodayVisible(isVisible);
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = 0;
+        const daysFromStart = differenceInDays(TODAY, rangeStart);
+        const todayLeft = daysFromStart * COL_WIDTH;
+        const todayRight = todayLeft + COL_WIDTH;
+        const scrollLeft = timelineEl.scrollLeft;
+        const viewportRight = scrollLeft + timelineEl.clientWidth;
+        const isVisible = todayRight > scrollLeft && todayLeft < viewportRight;
+        setIsTodayVisible(isVisible);
 
-      const scrollRight = timelineEl.scrollWidth - scrollLeft - timelineEl.clientWidth;
-      if (scrollRight < SCROLL_THRESHOLD) loadMoreFuture();
-      if (scrollLeft < SCROLL_THRESHOLD) loadMorePast();
+        if (!hasScrolledToToday) {
+          return;
+        }
+
+        const scrollRight = timelineEl.scrollWidth - scrollLeft - timelineEl.clientWidth;
+        if (scrollRight < SCROLL_THRESHOLD) loadMoreFuture();
+        if (scrollLeft < SCROLL_THRESHOLD) loadMorePast();
+      });
     };
 
     timelineEl.addEventListener("scroll", handleScroll);
     handleScroll();
-    return () => timelineEl.removeEventListener("scroll", handleScroll);
-  }, [rangeStart]);
+    return () => {
+      timelineEl.removeEventListener("scroll", handleScroll);
+      if (rafId) window.cancelAnimationFrame(rafId);
+    };
+  }, [hasScrolledToToday, rangeStart, columns.length]);
 
   const eventTypeChips = useMemo(() => {
     const map = new Map<string, { id: string; name: string; colorClass?: string; colorHex?: string }>();
@@ -255,38 +284,33 @@ export default function SharePage() {
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
-      <header className="h-16 bg-card border-b border-border flex items-center px-6 gap-6 shrink-0">
-        <div className="flex flex-col">
-          <h1 className="text-lg font-semibold text-foreground">
-            {shareTitle ? `${shareTitle}` : "Shared timeline"}
-          </h1>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Calendar className="w-4 h-4" />
-            <span>{data.team.name}</span>
+      <div className="h-12 bg-card border-b border-border flex items-center gap-3 px-6 shrink-0">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground shrink-0">
+          <Calendar className="w-4 h-4" />
+          <span>{shareTitle ? `${shareTitle} · ${data.team.name}` : data.team.name}</span>
+        </div>
+        <span className="text-sm text-muted-foreground">|</span>
+        <div className="flex-1 min-w-0 overflow-x-auto whitespace-nowrap scrollbar-thin">
+          <div className="inline-flex items-center gap-2">
+            {eventTypeChips.length === 0 ? (
+              <span className="text-xs text-muted-foreground">No events</span>
+            ) : (
+              eventTypeChips.map(eventType => (
+                <div
+                  key={eventType.id}
+                  className={`px-3 py-1 rounded-full text-xs font-medium ${eventType.colorClass ?? ""}`}
+                  style={eventType.colorHex ? { backgroundColor: eventType.colorHex, color: "white" } : undefined}
+                >
+                  {eventType.name}
+                </div>
+              ))
+            )}
           </div>
         </div>
-
-        <div className="flex items-center gap-2 ml-auto px-3 py-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-full text-sm font-medium">
+        <div className="flex items-center gap-2 ml-auto px-3 py-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-full text-sm font-medium shrink-0">
           <Eye className="w-4 h-4" />
           Read-only view
         </div>
-      </header>
-
-      <div className="h-12 bg-card border-b border-border flex items-center px-6 gap-3 shrink-0">
-        <span className="text-sm text-muted-foreground mr-2">Event types:</span>
-        {eventTypeChips.length === 0 ? (
-          <span className="text-sm text-muted-foreground">No events</span>
-        ) : (
-          eventTypeChips.map(eventType => (
-            <div
-              key={eventType.id}
-              className={`px-3 py-1 rounded-full text-xs font-medium ${eventType.colorClass ?? ""}`}
-              style={eventType.colorHex ? { backgroundColor: eventType.colorHex, color: "white" } : undefined}
-            >
-              {eventType.name}
-            </div>
-          ))
-        )}
       </div>
 
       <div className="flex-1 flex overflow-hidden">
@@ -363,7 +387,7 @@ export default function SharePage() {
           {!isTodayVisible && (
             <button
               onClick={scrollToToday}
-              className="absolute bottom-4 right-4 flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-full text-sm font-medium shadow-lg hover:bg-primary/90 transition-all animate-in fade-in slide-in-from-bottom-2 duration-200"
+              className="fixed bottom-4 right-4 z-30 flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-full text-sm font-medium shadow-lg hover:bg-primary/90 transition-all animate-in fade-in slide-in-from-bottom-2 duration-200 sm:bottom-6 sm:right-6"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />

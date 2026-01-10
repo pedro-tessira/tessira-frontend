@@ -1,11 +1,10 @@
-import { Building2, Plus, Settings2, User, Users } from 'lucide-react';
-import { EventScope, EventTypeDto } from '@/lib/types';
+import { Building2, Plus, Settings2, User } from 'lucide-react';
+import { EventTypeDto, EventTypeTimelineScope } from '@/lib/types';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { getEventColorClass } from '@/lib/eventColors';
 
-const getScopeIcon = (scope: EventScope) => {
+const getScopeIcon = (scope: EventTypeTimelineScope) => {
   if (scope === 'GLOBAL') return Building2;
-  if (scope === 'TEAM') return Users;
   return User;
 };
 
@@ -45,7 +44,7 @@ export function LegendChips({
       <div className="w-px h-6 bg-border" />
       
       {eventTypes.map(eventType => {
-        const Icon = getScopeIcon(eventType.scope);
+        const Icon = getScopeIcon(eventType.timelineScope);
         const isActive = activeFilters.has(eventType.id);
         return (
           <button

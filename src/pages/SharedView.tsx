@@ -1,8 +1,8 @@
 import { useParams, Navigate } from 'react-router-dom';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { subMonths, addMonths, differenceInDays, format } from 'date-fns';
-import { Eye, Calendar, Building2, Users, User } from 'lucide-react';
-import { COMPANY_ROW_ID, EventScope, TimelineEvent } from '@/lib/types';
+import { Eye, Calendar, Building2, User } from 'lucide-react';
+import { COMPANY_ROW_ID, EventTypeTimelineScope, TimelineEvent } from '@/lib/types';
 import { generateDayColumns } from '@/lib/dateUtils';
 import { getShareById } from '@/lib/shareUtils';
 import { Timeline } from '@/components/Timeline';
@@ -24,9 +24,8 @@ const INITIAL_MONTHS_AFTER = 4;
 const LOAD_MORE_MONTHS = 3;
 const SCROLL_THRESHOLD = 500;
 
-const getScopeIcon = (scope: EventScope) => {
+const getScopeIcon = (scope: EventTypeTimelineScope) => {
   if (scope === 'GLOBAL') return Building2;
-  if (scope === 'TEAM') return Users;
   return User;
 };
 
@@ -114,6 +113,7 @@ export default function SharedView() {
       ...event,
       eventTypeId: event.eventTypeId ?? event.eventType?.id ?? null,
       employeeId: null,
+      title: event.title?.trim() ? event.title : event.eventType?.name ?? event.eventType?.code ?? "Event",
     }));
     const rowEvents = timeline.rows.flatMap(row => {
       const expandedEvents = expandedEventsByEmployee.get(row.employee.id);
@@ -123,6 +123,7 @@ export default function SharedView() {
         eventTypeId: event.eventTypeId ?? event.eventType?.id ?? null,
         employeeId: row.employee.id,
         employeeName: row.employee.fullName ?? row.employee.displayName,
+        title: event.title?.trim() ? event.title : event.eventType?.name ?? event.eventType?.code ?? "Event",
       }));
     });
     return [...companyEvents, ...rowEvents];
@@ -275,7 +276,7 @@ export default function SharedView() {
       <div className="h-12 bg-card border-b border-border flex items-center px-6 gap-3 shrink-0">
         <span className="text-sm text-muted-foreground mr-2">Event types:</span>
         {eventTypes.map(eventType => {
-          const Icon = getScopeIcon(eventType.scope);
+          const Icon = getScopeIcon(eventType.timelineScope);
           return (
             <div
               key={eventType.id}

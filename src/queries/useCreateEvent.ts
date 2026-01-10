@@ -9,7 +9,7 @@ export interface CreateEventPayload {
   teamId?: string | null;
   startDate: string;
   endDate: string;
-  title: string;
+  title?: string | null;
 }
 
 export interface BulkCreateEventPayload {
@@ -19,7 +19,7 @@ export interface BulkCreateEventPayload {
   teamId: string;
   startDate: string;
   endDate: string;
-  title: string;
+  title?: string | null;
 }
 
 export const useCreateEvent = () => {
