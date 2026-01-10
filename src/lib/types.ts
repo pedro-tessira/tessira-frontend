@@ -111,6 +111,66 @@ export interface ShareSummary {
 export interface TeamDto {
   id: string;
   name: string;
+  countryIds?: string[] | null;
+}
+
+export interface CountryDto {
+  id: string;
+  code: string;
+  name: string;
+  isActive?: boolean;
+}
+
+export type HolidayRuleType = "FIXED" | "CALCULATED" | "AD_HOC";
+
+export type HolidayCalculationType =
+  | "EASTER"
+  | "GOOD_FRIDAY"
+  | "HOLY_SATURDAY"
+  | "EASTER_SUNDAY"
+  | "EASTER_MONDAY"
+  | "ASCENSION_DAY"
+  | "PENTECOST_SUNDAY"
+  | "PENTECOST_MONDAY"
+  | "CORPUS_CHRISTI"
+  | "ASH_WEDNESDAY"
+  | "SHROVE_TUESDAY"
+  | "CARNIVAL_MONDAY"
+  | "CARNIVAL_TUESDAY"
+  | "NTH_WEEKDAY_OF_MONTH"
+  | "LAST_WEEKDAY_OF_MONTH"
+  | "WEEKDAY_ON_OR_AFTER"
+  | "WEEKDAY_ON_OR_BEFORE";
+
+export interface HolidayRuleDto {
+  id: string;
+  countryId: string;
+  name: string;
+  type: HolidayRuleType;
+  fixedMonth?: number | null;
+  fixedDay?: number | null;
+  calculationType?: HolidayCalculationType | null;
+  calculationOffsetDays?: number | null;
+  calculationMonth?: number | null;
+  calculationDay?: number | null;
+  calculationWeekday?: number | null;
+  calculationWeekdayOrdinal?: number | null;
+  adHocDate?: string | null;
+}
+
+export interface HolidayInstanceDto {
+  id: string;
+  holidayRuleId: string;
+  countryId: string;
+  name: string;
+  type: HolidayRuleType;
+  date: string;
+}
+
+export interface HolidayCalculationDto {
+  code: HolidayCalculationType;
+  description: string;
+  supportsOffsetDays: boolean;
 }
 
 export interface EventDto {

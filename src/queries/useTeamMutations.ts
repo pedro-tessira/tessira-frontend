@@ -5,11 +5,13 @@ import { teamsQueryKey } from "@/queries/useTeams";
 type CreateTeamRequest = {
   name: string;
   code?: string;
+  countryIds?: string[] | null;
 };
 
 type UpdateTeamRequest = {
   name?: string;
   code?: string;
+  countryIds?: string[] | null;
 };
 
 export const useCreateTeam = () => {

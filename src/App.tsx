@@ -15,6 +15,7 @@ import AdminHrisPage from "./pages/admin/HrisPage";
 import AdminUsersPage from "./pages/admin/UsersPage";
 import AdminEventTypesPage from "./pages/admin/EventTypesPage";
 import AdminAuditPage from "./pages/admin/AuditPage";
+import AdminHolidaysPage from "./pages/admin/HolidaysPage";
 import { AdminRoute } from "./components/AdminRoute";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="hris" element={<AdminHrisPage />} />
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="event-types" element={<AdminEventTypesPage />} />
+            <Route path="holidays" element={<AdminHolidaysPage />} />
             <Route path="audit" element={<AdminAuditPage />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
