@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { KeyRound, Users, Building2, Tags, Activity, ChevronRight, CalendarDays } from "lucide-react";
+import { KeyRound, Users, Building2, Tags, Activity, ChevronRight } from "lucide-react";
 import { AppHeader } from "./AppHeader";
 
 const adminNavItems = [
@@ -27,12 +27,6 @@ const adminNavItems = [
     href: "/admin/event-types",
     icon: Tags,
     description: "Configure event types and sync settings",
-  },
-  {
-    label: "Holidays",
-    href: "/admin/holidays",
-    icon: CalendarDays,
-    description: "Manage countries and holiday rules",
   },
   {
     label: "Audit & Health",

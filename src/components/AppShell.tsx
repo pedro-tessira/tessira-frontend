@@ -444,9 +444,9 @@ export function AppShell() {
       }
     );
   };
-  const handleAddTeam = (name: string, countryIds: string[]) => {
+  const handleAddTeam = (name: string) => {
     createTeamMutation.mutate(
-      { name, countryIds },
+      { name },
       {
         onSuccess: () => {
           toast({
@@ -464,9 +464,9 @@ export function AppShell() {
       }
     );
   };
-  const handleUpdateTeam = (teamId: string, name: string, countryIds: string[]) => {
+  const handleUpdateTeam = (teamId: string, name: string) => {
     updateTeamMutation.mutate(
-      { teamId, payload: { name, countryIds } },
+      { teamId, payload: { name } },
       {
         onSuccess: () => {
           toast({

@@ -42,8 +42,8 @@ interface AppHeaderProps {
   onAddEmployee?: (name: string, teamId: string) => void;
   onRemoveEmployee?: (teamId: string, membershipId: string) => void;
   onUpdateEmployee?: (teamId: string, membershipId: string, name: string, isOwner?: boolean) => void;
-  onAddTeam?: (name: string, countryIds: string[]) => void;
-  onUpdateTeam?: (teamId: string, name: string, countryIds: string[]) => void;
+  onAddTeam?: (name: string) => void;
+  onUpdateTeam?: (teamId: string, name: string) => void;
   onRemoveTeam?: (teamId: string) => void;
   onLogout?: () => void;
 }

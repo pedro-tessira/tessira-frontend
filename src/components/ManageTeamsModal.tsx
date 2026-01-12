@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { CountryDto, EmployeeSearchDto, TeamDto, TeamEmployeeDto, TimelineEvent } from '@/lib/types';
+import { EmployeeSearchDto, TeamDto, TeamEmployeeDto, TimelineEvent } from '@/lib/types';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useEmployeeSearch } from '@/queries/useEmployeeSearch';
-import { useHolidayCountries } from '@/queries/useHolidays';
 
 interface ManageTeamsModalProps {
   open: boolean;
@@ -31,8 +30,8 @@ interface ManageTeamsModalProps {
   onAddEmployee: (name: string, teamId: string) => void;
   onRemoveEmployee: (teamId: string, membershipId: string) => void;
   onUpdateEmployee: (teamId: string, membershipId: string, name: string, isOwner?: boolean) => void;
-  onAddTeam: (name: string, countryIds: string[]) => void;
-  onUpdateTeam: (teamId: string, name: string, countryIds: string[]) => void;
+  onAddTeam: (name: string) => void;
+  onUpdateTeam: (teamId: string, name: string) => void;
   onRemoveTeam: (teamId: string) => void;
 }
 
@@ -53,10 +52,8 @@ export function ManageTeamsModal({
   const [managingTeamId, setManagingTeamId] = useState<string>(selectedTeamId);
   const [isAddingNewTeam, setIsAddingNewTeam] = useState(false);
   const [newTeamName, setNewTeamName] = useState('');
-  const [newTeamCountryIds, setNewTeamCountryIds] = useState<string[]>([]);
   const [newMemberName, setNewMemberName] = useState('');
   const [editingTeamName, setEditingTeamName] = useState('');
-  const [editingTeamCountryIds, setEditingTeamCountryIds] = useState<string[]>([]);
   const [isEditingTeamName, setIsEditingTeamName] = useState(false);
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [editingMemberName, setEditingMemberName] = useState('');
@@ -68,7 +65,6 @@ export function ManageTeamsModal({
   const searchTimeoutRef = useRef<number | null>(null);
   const searchRequestIdRef = useRef(0);
   const searchEmployees = useEmployeeSearch();
-  const { data: countries = [] } = useHolidayCountries(true);
 
   const managingTeam = teams.find(t => t.id === managingTeamId);
   const teamEmployees = employees.filter(e => e.teamId === managingTeamId);
@@ -96,7 +92,6 @@ export function ManageTeamsModal({
       setManagingTeamId(selectedTeamId);
       setIsAddingNewTeam(false);
       setNewTeamName('');
-      setNewTeamCountryIds([]);
       setIsEditingTeamName(false);
       setMemberSearchResults([]);
       setShowMemberSuggestions(false);
@@ -107,7 +102,6 @@ export function ManageTeamsModal({
   useEffect(() => {
     if (managingTeam) {
       setEditingTeamName(managingTeam.name);
-      setEditingTeamCountryIds(managingTeam.countryIds ?? []);
     }
   }, [managingTeam]);
 
@@ -125,57 +119,18 @@ export function ManageTeamsModal({
 
   const handleCreateTeam = () => {
     if (newTeamName.trim()) {
-      onAddTeam(newTeamName.trim(), newTeamCountryIds);
+      onAddTeam(newTeamName.trim());
       setNewTeamName('');
-      setNewTeamCountryIds([]);
       setIsAddingNewTeam(false);
     }
   };
 
   const handleSaveTeamName = () => {
     if (managingTeamId && editingTeamName.trim()) {
-      onUpdateTeam(managingTeamId, editingTeamName.trim(), editingTeamCountryIds);
+      onUpdateTeam(managingTeamId, editingTeamName.trim());
       setIsEditingTeamName(false);
     }
   };
-
-  const toggleCountrySelection = (
-    countryId: string,
-    selectedIds: string[],
-    setSelectedIds: React.Dispatch<React.SetStateAction<string[]>>
-  ) => {
-    setSelectedIds((prev) =>
-      prev.includes(countryId) ? prev.filter((id) => id !== countryId) : [...prev, countryId]
-    );
-  };
-
-  const renderCountrySelector = (
-    selectedIds: string[],
-    setSelectedIds: React.Dispatch<React.SetStateAction<string[]>>
-  ) => (
-    <div className="space-y-2">
-      <label className="text-sm font-medium text-foreground">Countries</label>
-      <div className="rounded-lg border border-border bg-muted/30 p-3">
-        {countries.length === 0 ? (
-          <div className="text-xs text-muted-foreground">No countries available.</div>
-        ) : (
-          <div className="grid gap-2 sm:grid-cols-2">
-            {countries.map((country: CountryDto) => (
-              <label key={country.id} className="flex items-center gap-2 text-sm">
-                <Checkbox
-                  checked={selectedIds.includes(country.id)}
-                  onCheckedChange={() => toggleCountrySelection(country.id, selectedIds, setSelectedIds)}
-                />
-                <span>
-                  {country.name} ({country.code})
-                </span>
-              </label>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
 
   const handleDeleteTeam = () => {
     if (managingTeamId && teams.length > 1) {
@@ -307,39 +262,34 @@ export function ManageTeamsModal({
 
           {/* New Team Input */}
           {isAddingNewTeam && (
-            <div className="space-y-3 p-3 rounded-lg bg-muted/50 border border-border">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Enter team name..."
-                  value={newTeamName}
-                  onChange={(e) => setNewTeamName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleCreateTeam();
-                    if (e.key === 'Escape') {
-                      setIsAddingNewTeam(false);
-                      setNewTeamName('');
-                      setNewTeamCountryIds([]);
-                    }
-                  }}
-                  autoFocus
-                  className="flex-1"
-                />
-                <Button size="sm" onClick={handleCreateTeam} disabled={!newTeamName.trim()}>
-                  Create
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
+            <div className="flex gap-2 p-3 rounded-lg bg-muted/50 border border-border">
+              <Input
+                placeholder="Enter team name..."
+                value={newTeamName}
+                onChange={(e) => setNewTeamName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleCreateTeam();
+                  if (e.key === 'Escape') {
                     setIsAddingNewTeam(false);
                     setNewTeamName('');
-                    setNewTeamCountryIds([]);
-                  }}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-              {renderCountrySelector(newTeamCountryIds, setNewTeamCountryIds)}
+                  }
+                }}
+                autoFocus
+                className="flex-1"
+              />
+              <Button size="sm" onClick={handleCreateTeam} disabled={!newTeamName.trim()}>
+                Create
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setIsAddingNewTeam(false);
+                  setNewTeamName('');
+                }}
+              >
+                <X className="w-4 h-4" />
+              </Button>
             </div>
           )}
 
@@ -396,8 +346,6 @@ export function ManageTeamsModal({
                       </div>
                     )}
                   </div>
-
-                  {renderCountrySelector(editingTeamCountryIds, setEditingTeamCountryIds)}
 
                   {/* Team Stats */}
                   <div className="grid grid-cols-2 gap-3">
