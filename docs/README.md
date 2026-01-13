@@ -8,7 +8,8 @@ For backend services and API details, see:
 - Share links: `/share/:token` and `/shares/:token`.
 - Timeline row height is 45px.
 - Event titles are optional; when missing, the UI falls back to the event type name.
-- Profile: theme preference (system/light/dark) is local-only and the security section allows password updates when the user is not linked to an employee or last login was not SSO.
+- Header: team selection and theme (system/light/dark) live in the user dropdown; theme is local-only.
+- Profile: the security section allows password updates when the user is not linked to an employee or last login was not SSO.
 
 ## Backlog
 

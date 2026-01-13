@@ -4,20 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useToast } from "@/hooks/use-toast";
 import { useMe, useUpdateMyPassword } from "@/queries/useMe";
-import { useTeams } from "@/queries/useTeams";
-import { useTheme } from "next-themes";
 
 export default function ProfilePage() {
   const { toast } = useToast();
   const { data: me } = useMe();
   const updateMyPassword = useUpdateMyPassword();
-  const { data: teams = [] } = useTeams();
-  const { theme = "system", setTheme } = useTheme();
   const [isSaving, setIsSaving] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
     password: "",
@@ -27,7 +22,6 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({
     displayName: me?.displayName ?? "",
     preferredName: "",
-    defaultTeamId: teams[0]?.id ?? "",
   });
 
   const handleSave = async () => {
@@ -168,50 +162,6 @@ export default function ProfilePage() {
                   }
                   placeholder="How you'd like to be called"
                 />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Preferences</CardTitle>
-            <CardDescription>Default settings for the timeline view.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-2">
-                <Label>Theme</Label>
-                <Select value={theme} onValueChange={setTheme}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select theme..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="system">System</SelectItem>
-                    <SelectItem value="light">Light</SelectItem>
-                    <SelectItem value="dark">Dark</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Default Team</Label>
-                <Select
-                  value={formData.defaultTeamId}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({ ...prev, defaultTeamId: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select team..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {teams.map((team) => (
-                      <SelectItem key={team.id} value={team.id}>
-                        {team.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
             </div>
           </CardContent>

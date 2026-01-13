@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronDown, LogOut, User, Calendar, Shield, HelpCircle, Users, Share2 } from "lucide-react";
+import { ChevronDown, LogOut, User, Calendar, Shield, HelpCircle, Users, Share2, Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMe } from "@/queries/useMe";
 import { EventTypeDto, TeamDto, TeamEmployeeDto, TimelineEvent } from "@/lib/types";
@@ -8,7 +8,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -16,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { ManageTeamsModal } from "@/components/ManageTeamsModal";
 import { ShareViewModal } from "@/components/ShareViewModal";
+import { useTheme } from "next-themes";
 
 const getInitials = (name: string) => {
   return name
@@ -65,6 +71,7 @@ export function AppHeader({
 }: AppHeaderProps) {
   const location = useLocation();
   const { data: me } = useMe();
+  const { theme = "system", setTheme } = useTheme();
   const userName = me?.displayName ?? me?.email ?? "User";
   const isAdmin = me?.role === "ADMIN";
   const [showManageModal, setShowManageModal] = useState(false);
@@ -109,20 +116,6 @@ export function AppHeader({
 
           {showTeamControls && (
             <div className="flex items-center gap-2 ml-4 pl-4 border-l border-border">
-              <div className="relative">
-                <select
-                  value={selectedTeamId}
-                  onChange={(e) => onTeamChange(e.target.value)}
-                  className="appearance-none bg-card border border-border rounded-lg px-4 py-1.5 pr-10 text-sm font-medium text-foreground cursor-pointer hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
-                >
-                  {teams.map((team) => (
-                    <option key={team.id} value={team.id}>
-                      Team: {team.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-              </div>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -183,6 +176,41 @@ export function AppHeader({
                   My Profile
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="flex items-center gap-2">
+                  <Sun className="w-4 h-4" />
+                  Theme
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
+                    <DropdownMenuRadioItem value="system">System</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="light">Light</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="dark">
+                      <span className="flex items-center gap-2">
+                        <Moon className="w-3.5 h-3.5" />
+                        Dark
+                      </span>
+                    </DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              {showTeamControls && teams && selectedTeamId && onTeamChange && (
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    Team
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuRadioGroup value={selectedTeamId} onValueChange={onTeamChange}>
+                      {teams.map((team) => (
+                        <DropdownMenuRadioItem key={team.id} value={team.id}>
+                          {team.name}
+                        </DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="flex items-center gap-2 text-destructive cursor-pointer"
