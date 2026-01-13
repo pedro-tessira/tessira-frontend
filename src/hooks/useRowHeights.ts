@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { TimelineEvent, COMPANY_ROW_ID } from '@/lib/types';
+import { TimelineEvent } from '@/lib/types';
 import { getEventPosition } from '@/lib/dateUtils';
 
 const ROW_BASE_HEIGHT = 45;
@@ -25,7 +25,7 @@ export interface RowLayoutInfo {
 
 export function useRowHeights(
   employeeIds: string[],
-  events: TimelineEvent[],
+  eventsByRow: Map<string, TimelineEvent[]>,
   rangeStart: Date,
   rangeEnd: Date,
   colWidth: number,
@@ -36,10 +36,8 @@ export function useRowHeights(
     const result = new Map<string, RowLayoutInfo>();
     
     for (const employeeId of employeeIds) {
-      // Company row gets events with null employeeId, employees get their own events only
-      const employeeEvents = employeeId === COMPANY_ROW_ID
-        ? events.filter(e => e.employeeId === null)
-        : events.filter(e => e.employeeId === employeeId);
+      // Rows use pre-grouped events to avoid per-row filtering.
+      const employeeEvents = eventsByRow.get(employeeId) ?? [];
       
       // Sort events by start date, then by duration (longer first)
       const sortedEvents = [...employeeEvents].sort((a, b) => {
@@ -103,5 +101,5 @@ export function useRowHeights(
     }
     
     return result;
-  }, [employeeIds, events, rangeStart, rangeEnd, colWidth, expandedRows, aggregationByRow]);
+  }, [employeeIds, eventsByRow, rangeStart, rangeEnd, colWidth, expandedRows, aggregationByRow]);
 }
