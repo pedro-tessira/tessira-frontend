@@ -40,8 +40,22 @@ const getInitials = (name?: string | null) => {
 };
 
 export default function AdminUsersPage() {
-  const getEmployeeName = (employee?: { displayName?: string; fullName?: string } | null) =>
-    employee?.displayName ?? employee?.fullName ?? "Unknown";
+const getEmployeeName = (employee?: { displayName?: string; fullName?: string } | null) =>
+  employee?.displayName ?? employee?.fullName ?? "Unknown";
+
+const roleLabels: Record<string, string> = {
+  ADMIN: "Admin",
+  MANAGER: "Manager",
+  TEAM_OWNER: "Team owner",
+  USER: "User",
+};
+
+const roleBadgeClass: Record<string, string> = {
+  ADMIN: "bg-purple-50 text-purple-700",
+  MANAGER: "bg-blue-50 text-blue-700",
+  TEAM_OWNER: "bg-indigo-50 text-indigo-700",
+  USER: "bg-slate-50 text-slate-700",
+};
   const { toast } = useToast();
   const { data: ssoProviders = [] } = useSsoProviders();
   const [activeTab, setActiveTab] = useState("users");
@@ -389,17 +403,9 @@ export default function AdminUsersPage() {
                         <TableCell>
                           <Badge
                             variant="secondary"
-                            className={
-                              user.role === "ADMIN"
-                                ? "bg-purple-50 text-purple-700"
-                                : user.role === "MANAGER"
-                                ? "bg-blue-50 text-blue-700"
-                                : user.role === "TEAM_OWNER"
-                                ? "bg-indigo-50 text-indigo-700"
-                                : ""
-                            }
+                            className={roleBadgeClass[user.role] ?? "bg-slate-50 text-slate-700"}
                           >
-                            {user.role.replace("_", " ")}
+                            {roleLabels[user.role] ?? user.role}
                           </Badge>
                         </TableCell>
                         <TableCell>
