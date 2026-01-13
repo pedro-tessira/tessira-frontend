@@ -20,7 +20,7 @@ export interface AdminUserDto {
 export interface UpdateUserRequest {
   email?: string;
   displayName?: string;
-  role?: "ADMIN" | "MANAGER" | "USER";
+  role?: "ADMIN" | "MANAGER" | "TEAM_OWNER" | "USER";
   active?: boolean;
   employeeId?: string | null;
 }
