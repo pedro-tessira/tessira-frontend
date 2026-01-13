@@ -204,7 +204,7 @@ export default function AdminUsersPage() {
         payload: {
           displayName: editUserName.trim(),
           email: editUserEmail.trim(),
-          role: editUserRole as "ADMIN" | "USER",
+          role: editUserRole as "ADMIN" | "MANAGER" | "USER",
           active: editUserActive,
           employeeId: linkEmployeeId === "unlinked" ? null : linkEmployeeId,
         },
@@ -314,7 +314,7 @@ export default function AdminUsersPage() {
                   <SelectContent>
                     <SelectItem value="all">All Roles</SelectItem>
                     <SelectItem value="ADMIN">Admin</SelectItem>
-                    <SelectItem value="TEAM_OWNER">Team Owner</SelectItem>
+                    <SelectItem value="MANAGER">Manager</SelectItem>
                     <SelectItem value="USER">User</SelectItem>
                   </SelectContent>
                 </Select>
@@ -391,7 +391,7 @@ export default function AdminUsersPage() {
                             className={
                               user.role === "ADMIN"
                                 ? "bg-purple-50 text-purple-700"
-                                : user.role === "TEAM_OWNER"
+                                : user.role === "MANAGER"
                                 ? "bg-blue-50 text-blue-700"
                                 : ""
                             }
@@ -640,7 +640,7 @@ export default function AdminUsersPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ADMIN">Admin</SelectItem>
-                  <SelectItem value="TEAM_OWNER">Team Owner</SelectItem>
+                  <SelectItem value="MANAGER">Manager</SelectItem>
                   <SelectItem value="USER">User</SelectItem>
                 </SelectContent>
               </Select>
@@ -816,6 +816,7 @@ export default function AdminUsersPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ADMIN">Admin</SelectItem>
+                      <SelectItem value="MANAGER">Manager</SelectItem>
                       <SelectItem value="USER">User</SelectItem>
                     </SelectContent>
                   </Select>
