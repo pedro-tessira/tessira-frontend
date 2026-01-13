@@ -8,6 +8,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
@@ -195,21 +196,17 @@ export function AppHeader({
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
               {showTeamControls && teams && selectedTeamId && onTeamChange && (
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="flex items-center gap-2">
-                    <Users className="w-4 h-4" />
-                    Team
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    <DropdownMenuRadioGroup value={selectedTeamId} onValueChange={onTeamChange}>
-                      {teams.map((team) => (
-                        <DropdownMenuRadioItem key={team.id} value={team.id}>
-                          {team.name}
-                        </DropdownMenuRadioItem>
-                      ))}
-                    </DropdownMenuRadioGroup>
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>Team</DropdownMenuLabel>
+                  <DropdownMenuRadioGroup value={selectedTeamId} onValueChange={onTeamChange}>
+                    {teams.map((team) => (
+                      <DropdownMenuRadioItem key={team.id} value={team.id}>
+                        {team.name}
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </>
               )}
               <DropdownMenuSeparator />
               <DropdownMenuItem
