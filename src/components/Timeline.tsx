@@ -1,4 +1,4 @@
-import { EventTypeDto, TimelineEvent, COMPANY_ROW_ID } from '@/lib/types';
+import { EventTypeDto, TimelineEvent } from '@/lib/types';
 import { DayColumn } from '@/lib/dateUtils';
 import { TimelineHeader } from './TimelineHeader';
 import { TimelineRow } from './TimelineRow';
@@ -6,7 +6,7 @@ import { RowLayoutInfo } from '@/hooks/useRowHeights';
 
 interface TimelineProps {
   rowIds: string[];
-  events: TimelineEvent[];
+  eventsByRow: Map<string, TimelineEvent[]>;
   eventTypes: EventTypeDto[];
   columns: DayColumn[];
   colWidth: number;
@@ -20,7 +20,7 @@ interface TimelineProps {
 
 export function Timeline({
   rowIds,
-  events,
+  eventsByRow,
   eventTypes,
   columns,
   colWidth,
@@ -48,7 +48,20 @@ export function Timeline({
           colWidth={colWidth}
         />
       </div>
-      <div className="relative" style={{ width: totalWidth }}>
+      <div className="relative" style={{ width: totalWidth, height: totalRowHeight }}>
+        {/* Background columns for weekends and today */}
+        <div className="absolute inset-0 flex">
+          {columns.map((col, idx) => (
+            <div
+              key={idx}
+              className={`shrink-0 h-full border-r border-timeline-grid ${
+                col.isToday ? 'bg-timeline-today' : col.isWeekend ? 'bg-timeline-weekend' : ''
+              }`}
+              style={{ width: colWidth }}
+            />
+          ))}
+        </div>
+
         {/* Today indicator line */}
         {todayLeft !== null && (
           <div 
@@ -56,30 +69,24 @@ export function Timeline({
             style={{ left: todayLeft, height: totalRowHeight }}
           />
         )}
-        
-        {rowIds.map(rowId => {
-          const layoutInfo = rowLayouts.get(rowId);
-          if (!layoutInfo) return null;
-          
-          // Company row gets events with null employeeId, employees get their own
-          const rowEvents = rowId === COMPANY_ROW_ID
-            ? events.filter(e => e.employeeId === null)
-            : events.filter(e => e.employeeId === rowId);
-          
-          return (
-            <TimelineRow
-              key={rowId}
-              employeeId={rowId}
-              events={rowEvents}
-              eventTypes={eventTypes}
-              columns={columns}
-              colWidth={colWidth}
-              layoutInfo={layoutInfo}
-              isExpanded={expandedRows.has(rowId)}
-              onToggleExpand={() => onToggleExpand(rowId)}
-            />
-          );
-        })}
+
+        <div className="relative">
+          {rowIds.map(rowId => {
+            const layoutInfo = rowLayouts.get(rowId);
+            if (!layoutInfo) return null;
+
+            return (
+              <TimelineRow
+                key={rowId}
+                eventTypes={eventTypes}
+                layoutInfo={layoutInfo}
+                isExpanded={expandedRows.has(rowId)}
+                onToggleExpand={() => onToggleExpand(rowId)}
+                rowWidth={totalWidth}
+              />
+            );
+          })}
+        </div>
       </div>
     </div>
   );

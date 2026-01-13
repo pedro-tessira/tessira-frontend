@@ -57,8 +57,9 @@ export default function SharePage() {
   const rows = timeline?.rows ?? [];
   const teamEmployees = useMemo(() => rows.map(row => row.employee), [rows]);
 
-  const timelineEvents = useMemo<TimelineEvent[]>(() => {
-    if (!timeline) return [];
+  const { timelineEvents, eventsByRow } = useMemo(() => {
+    const map = new Map<string, TimelineEvent[]>();
+    if (!timeline) return { timelineEvents: [], eventsByRow: map };
     const companyEvents = (companyLane?.events ?? []).map(event => ({
       ...event,
       eventTypeId: event.eventTypeId ?? event.eventType?.id ?? null,
@@ -67,8 +68,12 @@ export default function SharePage() {
       canDelete: false,
       title: event.title?.trim() ? event.title : event.eventType?.name ?? event.eventType?.code ?? "Event",
     }));
-    const rowEvents = rows.flatMap(row =>
-      row.events.map(event => ({
+    if (companyLane) {
+      map.set(COMPANY_ROW_ID, companyEvents);
+    }
+    const allEvents: TimelineEvent[] = [...companyEvents];
+    rows.forEach(row => {
+      const rowEvents = row.events.map(event => ({
         ...event,
         eventTypeId: event.eventTypeId ?? event.eventType?.id ?? null,
         employeeId: row.employee.id,
@@ -76,10 +81,12 @@ export default function SharePage() {
         canEdit: false,
         canDelete: false,
         title: event.title?.trim() ? event.title : event.eventType?.name ?? event.eventType?.code ?? "Event",
-      }))
-    );
-    return [...companyEvents, ...rowEvents];
-  }, [companyLane?.events, rows, timeline]);
+      }));
+      map.set(row.employee.id, rowEvents);
+      allEvents.push(...rowEvents);
+    });
+    return { timelineEvents: allEvents, eventsByRow: map };
+  }, [companyLane, rows, timeline]);
 
   const aggregationByRow = useMemo(() => {
     const map = new Map<string, { hasMore: boolean; hiddenCount: number }>();
@@ -104,7 +111,7 @@ export default function SharePage() {
 
   const rowLayouts = useRowHeights(
     allRowIds,
-    timelineEvents,
+    eventsByRow,
     rangeStart,
     rangeEnd,
     COL_WIDTH,
@@ -371,7 +378,7 @@ export default function SharePage() {
           <div ref={timelineRef} className="flex-1 overflow-auto scrollbar-thin">
             <Timeline
               rowIds={companyLane ? allRowIds : allRowIds.filter(id => id !== COMPANY_ROW_ID)}
-              events={timelineEvents}
+              eventsByRow={eventsByRow}
               eventTypes={[]}
               columns={columns}
               colWidth={COL_WIDTH}

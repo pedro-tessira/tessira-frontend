@@ -107,26 +107,32 @@ export default function SharedView() {
     return map;
   }, [expandedEmployeeIds, expandedEmployeeQueries]);
 
-  const timelineEvents = useMemo<TimelineEvent[]>(() => {
-    if (!timeline) return [];
+  const { timelineEvents, eventsByRow } = useMemo(() => {
+    const map = new Map<string, TimelineEvent[]>();
+    if (!timeline) return { timelineEvents: [], eventsByRow: map };
     const companyEvents = timeline.globalLane.events.map(event => ({
       ...event,
       eventTypeId: event.eventTypeId ?? event.eventType?.id ?? null,
       employeeId: null,
       title: event.title?.trim() ? event.title : event.eventType?.name ?? event.eventType?.code ?? "Event",
     }));
-    const rowEvents = timeline.rows.flatMap(row => {
+    map.set(COMPANY_ROW_ID, companyEvents);
+
+    const allEvents: TimelineEvent[] = [...companyEvents];
+    timeline.rows.forEach(row => {
       const expandedEvents = expandedEventsByEmployee.get(row.employee.id);
       const sourceEvents = expandedEvents ?? row.events;
-      return sourceEvents.map(event => ({
+      const rowEvents = sourceEvents.map(event => ({
         ...event,
         eventTypeId: event.eventTypeId ?? event.eventType?.id ?? null,
         employeeId: row.employee.id,
         employeeName: row.employee.fullName ?? row.employee.displayName,
         title: event.title?.trim() ? event.title : event.eventType?.name ?? event.eventType?.code ?? "Event",
       }));
+      map.set(row.employee.id, rowEvents);
+      allEvents.push(...rowEvents);
     });
-    return [...companyEvents, ...rowEvents];
+    return { timelineEvents: allEvents, eventsByRow: map };
   }, [expandedEventsByEmployee, timeline]);
 
   const aggregationByRow = useMemo(() => {
@@ -148,7 +154,7 @@ export default function SharedView() {
     [teamEmployees]
   );
 
-  const rowLayouts = useRowHeights(allRowIds, timelineEvents, rangeStart, rangeEnd, COL_WIDTH, expandedRows, aggregationByRow);
+  const rowLayouts = useRowHeights(allRowIds, eventsByRow, rangeStart, rangeEnd, COL_WIDTH, expandedRows, aggregationByRow);
 
   const toggleExpand = (employeeId: string) => {
     setExpandedRows(prev => {
@@ -353,7 +359,8 @@ export default function SharedView() {
           <div ref={timelineRef} className="flex-1 overflow-auto scrollbar-thin">
             <Timeline
               rowIds={allRowIds}
-              events={timelineEvents}
+              eventsByRow={eventsByRow}
+              eventTypes={eventTypes}
               columns={columns}
               colWidth={COL_WIDTH}
               rangeStart={rangeStart}
