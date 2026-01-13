@@ -8,7 +8,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
@@ -117,6 +116,20 @@ export function AppHeader({
 
           {showTeamControls && (
             <div className="flex items-center gap-2 ml-4 pl-4 border-l border-border">
+              <div className="relative">
+                <select
+                  value={selectedTeamId}
+                  onChange={(e) => onTeamChange(e.target.value)}
+                  className="appearance-none bg-card border border-border rounded-lg px-4 py-1.5 pr-10 text-sm font-medium text-foreground cursor-pointer hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  {teams.map((team) => (
+                    <option key={team.id} value={team.id}>
+                      Team: {team.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+              </div>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -195,19 +208,6 @@ export function AppHeader({
                   </DropdownMenuRadioGroup>
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
-              {showTeamControls && teams && selectedTeamId && onTeamChange && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuLabel>Team</DropdownMenuLabel>
-                  <DropdownMenuRadioGroup value={selectedTeamId} onValueChange={onTeamChange}>
-                    {teams.map((team) => (
-                      <DropdownMenuRadioItem key={team.id} value={team.id}>
-                        {team.name}
-                      </DropdownMenuRadioItem>
-                    ))}
-                  </DropdownMenuRadioGroup>
-                </>
-              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="flex items-center gap-2 text-destructive cursor-pointer"
