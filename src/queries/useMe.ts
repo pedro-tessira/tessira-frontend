@@ -1,4 +1,4 @@
-import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
+import { useMutation, useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { clearToken } from "@/lib/auth";
 import { MeDto } from "@/lib/types";
@@ -21,5 +21,15 @@ export const useMe = (options?: UseQueryOptions<MeDto>) => {
       }
     },
     ...options,
+  });
+};
+
+export const useUpdateMyPassword = () => {
+  return useMutation({
+    mutationFn: ({ password }: { password: string }) =>
+      apiFetch<void>("/api/auth/me/password", {
+        method: "POST",
+        body: JSON.stringify({ password }),
+      }),
   });
 };

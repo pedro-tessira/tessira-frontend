@@ -22,10 +22,19 @@ export interface EmployeeDto {
   email: string;
 }
 
-export interface MeDto extends EmployeeDto {
+export interface UserResponse {
+  id: string;
+  email: string;
+  displayName: string;
   role: string;
-  employeeId: string;
+  active?: boolean;
+  employeeId?: string | null;
+  employee?: EmployeeSummary | null;
+  lastLoginAt?: string | null;
+  lastLoginMethod?: string | null;
 }
+
+export type MeDto = UserResponse;
 
 export type TeamRole = "OWNER" | "MEMBER";
 
@@ -63,6 +72,14 @@ export interface UserSummary {
   displayName: string;
   role: string;
   active?: boolean;
+}
+
+export interface EmployeeSummary {
+  id: string;
+  fullName: string;
+  email: string;
+  active?: boolean;
+  source?: "INTERNAL_WORKDAY" | "EXTERNAL_MANUAL";
 }
 
 export interface EventTypeConfig {

@@ -347,7 +347,7 @@ export default function SharePage() {
               <CompanyRow
                 isSelected={selectedEmployeeId === COMPANY_ROW_ID}
                 onClick={() => setSelectedEmployeeId(COMPANY_ROW_ID)}
-                height={rowLayouts.get(COMPANY_ROW_ID)?.height ?? 56}
+                height={rowLayouts.get(COMPANY_ROW_ID)?.height ?? 45}
                 hasOverflow={rowLayouts.get(COMPANY_ROW_ID)?.hasOverflow ?? false}
                 isExpanded={false}
               />
@@ -359,7 +359,7 @@ export default function SharePage() {
                 employee={employee}
                 isSelected={employee.id === selectedEmployeeId}
                 onClick={() => setSelectedEmployeeId(employee.id)}
-                height={rowLayouts.get(employee.id)?.height ?? 56}
+                height={rowLayouts.get(employee.id)?.height ?? 45}
                 hasOverflow={rowLayouts.get(employee.id)?.hasOverflow ?? false}
                 isExpanded={false}
               />

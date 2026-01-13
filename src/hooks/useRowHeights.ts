@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { TimelineEvent, COMPANY_ROW_ID } from '@/lib/types';
 import { getEventPosition } from '@/lib/dateUtils';
 
-const ROW_BASE_HEIGHT = 56;
+const ROW_BASE_HEIGHT = 45;
 const EVENT_HEIGHT = 28;
 const EVENT_GAP = 4;
 const EVENT_PADDING = 6;

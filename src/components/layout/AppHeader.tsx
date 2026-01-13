@@ -85,9 +85,7 @@ export function AppHeader({
       <header className="h-14 border-b border-border bg-card flex items-center justify-between px-4 shrink-0">
         <div className="flex items-center gap-6">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">H</span>
-            </div>
+            <img src="/logo.png" alt="Horizon" className="w-8 h-8 rounded-lg object-contain" />
             <span className="font-semibold text-lg text-foreground">Horizon</span>
           </Link>
 

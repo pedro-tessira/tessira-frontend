@@ -773,7 +773,7 @@ export function AppShell() {
                     }
                     setSelectedEmployeeId(COMPANY_ROW_ID);
                   }}
-                  height={layoutInfo?.height ?? 56}
+                  height={layoutInfo?.height ?? 45}
                   hasOverflow={layoutInfo?.hasOverflow ?? false}
                   isExpanded={expandedRows.has(COMPANY_ROW_ID)}
                 />
@@ -793,7 +793,7 @@ export function AppShell() {
                     }
                     setSelectedEmployeeId(employee.id);
                   }}
-                  height={layoutInfo?.height ?? 56}
+                  height={layoutInfo?.height ?? 45}
                   hasOverflow={layoutInfo?.hasOverflow ?? false}
                   isExpanded={expandedRows.has(employee.id)}
                 />

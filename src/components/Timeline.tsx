@@ -37,7 +37,7 @@ export function Timeline({
   // Calculate total content height for the today line
   const totalRowHeight = rowIds.reduce((sum, rowId) => {
     const layout = rowLayouts.get(rowId);
-    return sum + (layout?.height ?? 56);
+    return sum + (layout?.height ?? 45);
   }, 0);
   
   return (

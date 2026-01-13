@@ -8,41 +8,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useToast } from "@/hooks/use-toast";
-import { useMe } from "@/queries/useMe";
+import { useMe, useUpdateMyPassword } from "@/queries/useMe";
 import { useTeams } from "@/queries/useTeams";
-
-const timezoneOptions = [
-  "UTC",
-  "Europe/Lisbon",
-  "Europe/London",
-  "America/New_York",
-  "America/Los_Angeles",
-];
-
-const languageOptions = [
-  { value: "en", label: "English" },
-  { value: "pt", label: "Português" },
-  { value: "es", label: "Español" },
-];
+import { useTheme } from "next-themes";
 
 export default function ProfilePage() {
   const { toast } = useToast();
   const { data: me } = useMe();
+  const updateMyPassword = useUpdateMyPassword();
   const { data: teams = [] } = useTeams();
+  const { theme = "system", setTheme } = useTheme();
   const [isSaving, setIsSaving] = useState(false);
-
-  const initialTimezone = useMemo(
-    () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
-    []
-  );
+  const [passwordForm, setPasswordForm] = useState({
+    password: "",
+    confirmPassword: "",
+  });
 
   const [formData, setFormData] = useState({
     displayName: me?.displayName ?? "",
     preferredName: "",
-    timezone: initialTimezone,
-    language: "en",
     defaultTeamId: teams[0]?.id ?? "",
-    defaultGranularity: "month",
   });
 
   const handleSave = async () => {
@@ -52,7 +37,68 @@ export default function ProfilePage() {
     toast({ title: "Profile updated", description: "Your changes have been saved." });
   };
 
-  const authMethod = me?.email?.endsWith("@local") ? "Dev login" : "Unknown";
+  const authMethod = useMemo(() => {
+    if (me?.lastLoginMethod) {
+      const normalized = me.lastLoginMethod.replace(/_/g, " ");
+      if (me.lastLoginMethod.toLowerCase() === "password") {
+        return "Password";
+      }
+      return normalized
+        .toLowerCase()
+        .replace(/(^\\w)|\\s(\\w)/g, (match) => match.toUpperCase());
+    }
+    if (me?.email?.endsWith("@local")) {
+      return "Dev login";
+    }
+    return "Unknown";
+  }, [me?.email, me?.lastLoginMethod]);
+
+  const isSsoLogin = useMemo(() => {
+    const method = me?.lastLoginMethod?.toLowerCase();
+    if (!method) return false;
+    return new Set([
+      "sso",
+      "entra",
+      "okta",
+      "google",
+      "adfs",
+      "saml_generic",
+      "oidc_generic",
+    ]).has(method);
+  }, [me?.lastLoginMethod]);
+
+  const canUpdatePassword = !me?.employeeId || !isSsoLogin;
+  const passwordMismatch =
+    passwordForm.password.length > 0 &&
+    passwordForm.confirmPassword.length > 0 &&
+    passwordForm.password !== passwordForm.confirmPassword;
+
+  const handlePasswordUpdate = () => {
+    if (!passwordForm.password.trim()) {
+      toast({ title: "Password required", description: "Enter a new password to continue." });
+      return;
+    }
+    if (passwordMismatch) {
+      toast({ title: "Passwords do not match", description: "Confirm your new password." });
+      return;
+    }
+    updateMyPassword.mutate(
+      { password: passwordForm.password.trim() },
+      {
+        onSuccess: () => {
+          setPasswordForm({ password: "", confirmPassword: "" });
+          toast({ title: "Password updated", description: "Your password has been updated." });
+        },
+        onError: (error) => {
+          toast({
+            title: "Unable to update password",
+            description: error?.message ?? "Please try again in a moment.",
+            variant: "destructive",
+          });
+        },
+      }
+    );
+  };
 
   return (
     <MainLayout>
@@ -67,74 +113,6 @@ export default function ProfilePage() {
             Save Changes
           </Button>
         </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Profile Information</CardTitle>
-            <CardDescription>Your display name and localization preferences.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Display Name</Label>
-                <Input
-                  value={formData.displayName}
-                  onChange={(event) =>
-                    setFormData((prev) => ({ ...prev, displayName: event.target.value }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Preferred Name (optional)</Label>
-                <Input
-                  value={formData.preferredName}
-                  onChange={(event) =>
-                    setFormData((prev) => ({ ...prev, preferredName: event.target.value }))
-                  }
-                  placeholder="How you'd like to be called"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Timezone</Label>
-                <Select
-                  value={formData.timezone}
-                  onValueChange={(value) => setFormData((prev) => ({ ...prev, timezone: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {timezoneOptions.map((zone) => (
-                      <SelectItem key={zone} value={zone}>
-                        {zone}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Language</Label>
-                <Select
-                  value={formData.language}
-                  onValueChange={(value) => setFormData((prev) => ({ ...prev, language: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {languageOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         <Card>
           <CardHeader>
@@ -167,11 +145,54 @@ export default function ProfilePage() {
 
         <Card>
           <CardHeader>
+            <CardTitle className="text-lg">Profile Information</CardTitle>
+            <CardDescription>Your display name.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Display Name</Label>
+                <Input
+                  value={formData.displayName}
+                  onChange={(event) =>
+                    setFormData((prev) => ({ ...prev, displayName: event.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Preferred Name (optional)</Label>
+                <Input
+                  value={formData.preferredName}
+                  onChange={(event) =>
+                    setFormData((prev) => ({ ...prev, preferredName: event.target.value }))
+                  }
+                  placeholder="How you'd like to be called"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle className="text-lg">Preferences</CardTitle>
             <CardDescription>Default settings for the timeline view.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <Label>Theme</Label>
+                <Select value={theme} onValueChange={setTheme}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select theme..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="system">System</SelectItem>
+                    <SelectItem value="light">Light</SelectItem>
+                    <SelectItem value="dark">Dark</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2">
                 <Label>Default Team</Label>
                 <Select
@@ -192,25 +213,6 @@ export default function ProfilePage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Default Granularity</Label>
-                <Select
-                  value={formData.defaultGranularity}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({ ...prev, defaultGranularity: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="day">Day</SelectItem>
-                    <SelectItem value="month">Month</SelectItem>
-                    <SelectItem value="quarter">Quarter</SelectItem>
-                    <SelectItem value="year">Year</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -223,9 +225,56 @@ export default function ProfilePage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">
-              Password management is handled by your organization.
-            </p>
+            {canUpdatePassword ? (
+              <div className="space-y-4">
+                <p className="text-muted-foreground">
+                  Update your password for manual sign-ins.
+                </p>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">New Password</Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      value={passwordForm.password}
+                      onChange={(event) =>
+                        setPasswordForm((prev) => ({ ...prev, password: event.target.value }))
+                      }
+                      placeholder="Enter a new password"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password">Confirm Password</Label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      value={passwordForm.confirmPassword}
+                      onChange={(event) =>
+                        setPasswordForm((prev) => ({ ...prev, confirmPassword: event.target.value }))
+                      }
+                      placeholder="Re-enter your new password"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  {passwordMismatch ? (
+                    <span className="text-sm text-destructive">Passwords do not match.</span>
+                  ) : (
+                    <span className="text-sm text-muted-foreground"> </span>
+                  )}
+                  <Button
+                    onClick={handlePasswordUpdate}
+                    disabled={updateMyPassword.isPending || passwordMismatch}
+                  >
+                    {updateMyPassword.isPending ? "Updating..." : "Update Password"}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-muted-foreground">
+                Password management is handled by your organization.
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>

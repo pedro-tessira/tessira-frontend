@@ -101,6 +101,42 @@
     --border: 217 33% 17%;
     --input: 217 33% 17%;
     --ring: 212 27% 84%;
+
+    /* Event colors */
+    --event-vacation: 142 70% 70%;
+    --event-vacation-bg: 142 30% 18%;
+    --event-vacation-border: 142 35% 28%;
+
+    --event-sick: 0 75% 72%;
+    --event-sick-bg: 0 35% 18%;
+    --event-sick-border: 0 40% 28%;
+
+    --event-training: 217 80% 75%;
+    --event-training-bg: 217 35% 18%;
+    --event-training-border: 217 40% 28%;
+
+    --event-team: 270 75% 78%;
+    --event-team-bg: 270 35% 18%;
+    --event-team-border: 270 40% 30%;
+
+    --event-company: 32 85% 70%;
+    --event-company-bg: 32 40% 18%;
+    --event-company-border: 32 45% 30%;
+
+    /* Timeline */
+    --timeline-header: 217 33% 14%;
+    --timeline-weekend: 32 25% 16%;
+    --timeline-today: 217 40% 20%;
+    --timeline-grid: 217 25% 22%;
+
+    /* Sidebar */
+    --sidebar-background: 222 47% 12%;
+    --sidebar-foreground: 210 40% 96%;
+    --sidebar-border: 217 25% 22%;
+    --sidebar-accent: 217 33% 18%;
+
+    /* Header */
+    --header-background: 222 47% 12%;
   }
 }
 

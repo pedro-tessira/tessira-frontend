@@ -320,7 +320,7 @@ export default function SharedView() {
                     }
                     setSelectedEmployeeId(COMPANY_ROW_ID);
                   }}
-                  height={layoutInfo?.height ?? 56}
+                  height={layoutInfo?.height ?? 45}
                   hasOverflow={layoutInfo?.hasOverflow ?? false}
                   isExpanded={expandedRows.has(COMPANY_ROW_ID)}
                 />
@@ -340,7 +340,7 @@ export default function SharedView() {
                     }
                     setSelectedEmployeeId(employee.id);
                   }}
-                  height={layoutInfo?.height ?? 56}
+                  height={layoutInfo?.height ?? 45}
                   hasOverflow={layoutInfo?.hasOverflow ?? false}
                   isExpanded={expandedRows.has(employee.id)}
                 />

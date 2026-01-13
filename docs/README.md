@@ -6,7 +6,9 @@ For backend services and API details, see:
 ## UI Notes
 
 - Share links: `/share/:token` and `/shares/:token`.
+- Timeline row height is 45px.
 - Event titles are optional; when missing, the UI falls back to the event type name.
+- Profile: theme preference (system/light/dark) is local-only and the security section allows password updates when the user is not linked to an employee or last login was not SSO.
 
 ## Backlog
 
