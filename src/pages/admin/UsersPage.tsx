@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+import { useMe } from "@/queries/useMe";
 import { useSsoProviders } from "@/queries/useSsoProviders";
 import {
   useAdminEmployees,
@@ -58,6 +59,7 @@ const roleBadgeClass: Record<string, string> = {
 };
   const { toast } = useToast();
   const { data: ssoProviders = [] } = useSsoProviders();
+  const { data: me } = useMe();
   const [activeTab, setActiveTab] = useState("users");
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
@@ -435,6 +437,7 @@ const roleBadgeClass: Record<string, string> = {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-end gap-2">
+                            {user.id !== me?.id && (
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
@@ -455,6 +458,7 @@ const roleBadgeClass: Record<string, string> = {
                                 {(user.active ?? true) ? "Deactivate" : "Activate"}
                               </TooltipContent>
                             </Tooltip>
+                            )}
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
