@@ -24,6 +24,7 @@ const Index = () => {
   const { isLoading: isMeLoading } = useMe({ enabled: !!token });
   const { data: ssoProviders = [] } = usePublicSsoProviders();
   const isDevLogin = email.trim().endsWith('@local');
+  const hasSsoProviders = ssoProviders.length > 0;
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -67,34 +68,32 @@ const Index = () => {
             </div>
           </div>
           <div className="space-y-4">
-            <div className="space-y-3">
-              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Sign in with SSO
-              </div>
-              <div className="grid gap-2">
-                {ssoProviders.length === 0 ? (
-                  <div className="text-xs text-muted-foreground">
-                    No SSO providers are available.
+            {hasSsoProviders && (
+              <>
+                <div className="space-y-3">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Sign in with SSO
                   </div>
-                ) : (
-                  ssoProviders.map((provider) => (
-                    <button
-                      key={provider.id}
-                      type="button"
-                      className="w-full px-4 py-2 bg-background border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors"
-                    >
-                      Continue with {provider.displayName || provider.provider}
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
+                  <div className="grid gap-2">
+                    {ssoProviders.map((provider) => (
+                      <button
+                        key={provider.id}
+                        type="button"
+                        className="w-full px-4 py-2 bg-background border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                      >
+                        Continue with {provider.displayName || provider.provider}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-            <div className="flex items-center gap-3">
-              <div className="h-px flex-1 bg-border" />
-              <span className="text-xs text-muted-foreground">or</span>
-              <div className="h-px flex-1 bg-border" />
-            </div>
+                <div className="flex items-center gap-3">
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="text-xs text-muted-foreground">or</span>
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+              </>
+            )}
 
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="flex flex-col gap-1.5">
