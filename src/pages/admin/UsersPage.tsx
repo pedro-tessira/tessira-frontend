@@ -20,7 +20,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { useMe } from "@/queries/useMe";
-import { useSsoProviders } from "@/queries/useSsoProviders";
 import {
   useAdminEmployees,
   useCreateEmployee,
@@ -56,7 +55,6 @@ const roleBadgeClass: Record<string, string> = {
   USER: "bg-slate-50 text-slate-700",
 };
   const { toast } = useToast();
-  const { data: ssoProviders = [] } = useSsoProviders();
   const { data: me } = useMe();
   const [activeTab, setActiveTab] = useState("users");
   const [searchQuery, setSearchQuery] = useState("");
@@ -70,7 +68,6 @@ const roleBadgeClass: Record<string, string> = {
   const [editUserEmail, setEditUserEmail] = useState("");
   const [editUserRole, setEditUserRole] = useState("USER");
   const [editUserActive, setEditUserActive] = useState(true);
-  const [editAuthMethods, setEditAuthMethods] = useState<string[]>([]);
   const [employeeSearch, setEmployeeSearch] = useState("");
   const [employeeTeam, setEmployeeTeam] = useState("all");
   const [employeeSource, setEmployeeSource] = useState("all");
@@ -204,7 +201,6 @@ const roleBadgeClass: Record<string, string> = {
     setEditUserEmail(user.email ?? "");
     setEditUserRole(user.role ?? "USER");
     setEditUserActive(user.active ?? true);
-    setEditAuthMethods([]);
     const matchedEmployee = adminEmployees.find((employee) => employee.id === user.employeeId);
     setLinkEmployeeId(matchedEmployee?.id ?? "unlinked");
     setIsEditOpen(true);
@@ -821,7 +817,6 @@ const roleBadgeClass: Record<string, string> = {
             setEditUserEmail("");
             setEditUserRole("USER");
             setEditUserActive(true);
-            setEditAuthMethods([]);
             setLinkEmployeeId("unlinked");
           }
         }}
@@ -883,44 +878,6 @@ const roleBadgeClass: Record<string, string> = {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Auth Methods</Label>
-                  <div className="space-y-2 rounded-lg border border-border p-3">
-                    {["SSO", "Manual"].map((method) => (
-                      <label key={method} className="flex items-center gap-2 text-sm text-foreground">
-                        <input
-                          type="checkbox"
-                          className="h-4 w-4 rounded border-border"
-                          checked={editAuthMethods.includes(method)}
-                          onChange={(event) => {
-                            const checked = event.target.checked;
-                            setEditAuthMethods((prev) =>
-                              checked ? [...prev, method] : prev.filter((item) => item !== method)
-                            );
-                          }}
-                        />
-                        {method}
-                      </label>
-                    ))}
-                  </div>
-                  {editAuthMethods.includes("SSO") && (
-                    <div className="mt-3 space-y-2 rounded-lg border border-border p-3">
-                      <Label>Allowed SSO Providers</Label>
-                      <div className="space-y-2">
-                        {ssoProviders.length === 0 ? (
-                          <p className="text-xs text-muted-foreground">No SSO providers configured.</p>
-                        ) : (
-                          ssoProviders.map((provider) => (
-                            <label key={provider.id} className="flex items-center gap-2 text-sm text-foreground">
-                              <input type="checkbox" className="h-4 w-4 rounded border-border" />
-                              {provider.displayName || provider.provider}
-                            </label>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
                 <div className="space-y-2">
                   <Label>Linked Employee</Label>
                   <Select value={linkEmployeeId} onValueChange={setLinkEmployeeId}>
