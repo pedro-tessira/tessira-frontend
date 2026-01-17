@@ -64,7 +64,9 @@ const Index = () => {
             </div>
             <div>
               <h1 className="text-lg font-semibold text-foreground">Horizon</h1>
-              <p className="text-sm text-muted-foreground">Choose how to sign in</p>
+              <p className="text-sm text-muted-foreground">
+                {hasSsoProviders ? "Choose how to sign in" : "Sign in to continue"}
+              </p>
             </div>
           </div>
           <div className="space-y-4">
