@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Search, MoreHorizontal, User as UserIcon, Users as UsersIcon } from "lucide-react";
+import { KeyRound, Link2, Pencil, Plus, Power, Search, User as UserIcon, Users as UsersIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,17 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { useSsoProviders } from "@/queries/useSsoProviders";
 import {
@@ -248,6 +242,11 @@ const roleBadgeClass: Record<string, string> = {
     setIsResetPasswordOpen(true);
   };
 
+  const handleForceRelink = (userId: string) => {
+    handleOpenEdit(userId);
+    setLinkEmployeeId("unlinked");
+  };
+
   const handleResetPassword = () => {
     if (!resetUserId || !resetPassword.trim()) {
       toast({
@@ -430,35 +429,65 @@ const roleBadgeClass: Record<string, string> = {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                updateUser.mutate({
-                                  userId: user.id,
-                                  payload: { active: !(user.active ?? true) },
-                                })
-                              }
-                            >
-                              {(user.active ?? true) ? "Deactivate" : "Activate"}
-                            </Button>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreHorizontal className="w-4 h-4" />
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() =>
+                                    updateUser.mutate({
+                                      userId: user.id,
+                                      payload: { active: !(user.active ?? true) },
+                                    })
+                                  }
+                                >
+                                  <Power className="w-4 h-4" />
                                 </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleOpenEdit(user.id)}>
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleOpenResetPassword(user.id)}>
-                                  Reset Password
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem>Force Relink Employee</DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {(user.active ?? true) ? "Deactivate" : "Activate"}
+                              </TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => handleOpenEdit(user.id)}
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Edit</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => handleOpenResetPassword(user.id)}
+                                >
+                                  <KeyRound className="w-4 h-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Reset Password</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => handleForceRelink(user.id)}
+                                >
+                                  <Link2 className="w-4 h-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Force Relink Employee</TooltipContent>
+                            </Tooltip>
                           </div>
                         </TableCell>
                       </TableRow>
