@@ -47,14 +47,12 @@ const getEmployeeName = (employee?: { displayName?: string; fullName?: string } 
 const roleLabels: Record<string, string> = {
   ADMIN: "Admin",
   MANAGER: "Manager",
-  TEAM_OWNER: "Team owner",
   USER: "User",
 };
 
 const roleBadgeClass: Record<string, string> = {
   ADMIN: "bg-purple-50 text-purple-700",
   MANAGER: "bg-blue-50 text-blue-700",
-  TEAM_OWNER: "bg-indigo-50 text-indigo-700",
   USER: "bg-slate-50 text-slate-700",
 };
   const { toast } = useToast();
@@ -220,7 +218,7 @@ const roleBadgeClass: Record<string, string> = {
         payload: {
           displayName: editUserName.trim(),
           email: editUserEmail.trim(),
-          role: editUserRole as "ADMIN" | "MANAGER" | "TEAM_OWNER" | "USER",
+          role: editUserRole as "ADMIN" | "MANAGER" | "USER",
           active: editUserActive,
           employeeId: linkEmployeeId === "unlinked" ? null : linkEmployeeId,
         },
@@ -336,7 +334,6 @@ const roleBadgeClass: Record<string, string> = {
                     <SelectItem value="all">All Roles</SelectItem>
                     <SelectItem value="ADMIN">Admin</SelectItem>
                     <SelectItem value="MANAGER">Manager</SelectItem>
-                    <SelectItem value="TEAM_OWNER">Team Owner</SelectItem>
                     <SelectItem value="USER">User</SelectItem>
                   </SelectContent>
                 </Select>
@@ -689,7 +686,6 @@ const roleBadgeClass: Record<string, string> = {
                 <SelectContent>
                   <SelectItem value="ADMIN">Admin</SelectItem>
                   <SelectItem value="MANAGER">Manager</SelectItem>
-                  <SelectItem value="TEAM_OWNER">Team Owner</SelectItem>
                   <SelectItem value="USER">User</SelectItem>
                 </SelectContent>
               </Select>
@@ -866,7 +862,6 @@ const roleBadgeClass: Record<string, string> = {
                     <SelectContent>
                       <SelectItem value="ADMIN">Admin</SelectItem>
                       <SelectItem value="MANAGER">Manager</SelectItem>
-                      <SelectItem value="TEAM_OWNER">Team Owner</SelectItem>
                       <SelectItem value="USER">User</SelectItem>
                     </SelectContent>
                   </Select>
