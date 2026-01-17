@@ -59,7 +59,6 @@ const roleBadgeClass: Record<string, string> = {
   const [activeTab, setActiveTab] = useState("users");
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
-  const [authFilter, setAuthFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -94,13 +93,12 @@ const roleBadgeClass: Record<string, string> = {
 
   const filteredUsers = adminUsers.filter((user) => {
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
-    const matchesAuth = authFilter === "all";
     const isActive = user.active ?? true;
     const matchesStatus =
       statusFilter === "all" ||
       (statusFilter === "Active" && isActive) ||
       (statusFilter === "Disabled" && !isActive);
-    return matchesRole && matchesAuth && matchesStatus;
+    return matchesRole && matchesStatus;
   });
 
   const filteredEmployees = adminEmployees.filter((employee) => {
@@ -333,16 +331,6 @@ const roleBadgeClass: Record<string, string> = {
                     <SelectItem value="USER">User</SelectItem>
                   </SelectContent>
                 </Select>
-                <Select value={authFilter} onValueChange={setAuthFilter}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Auth Method" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Methods</SelectItem>
-                    <SelectItem value="SSO">SSO</SelectItem>
-                    <SelectItem value="Manual">Manual</SelectItem>
-                  </SelectContent>
-                </Select>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-40">
                     <SelectValue placeholder="Status" />
@@ -363,7 +351,6 @@ const roleBadgeClass: Record<string, string> = {
                 <TableHeader>
                   <TableRow>
                     <TableHead>User</TableHead>
-                    <TableHead>Auth Method</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Linked Employee</TableHead>
@@ -396,9 +383,6 @@ const roleBadgeClass: Record<string, string> = {
                               <p className="text-sm text-muted-foreground">{user.email}</p>
                             </div>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{user.lastLoginMethod ?? "—"}</Badge>
                         </TableCell>
                         <TableCell>
                           <Badge
