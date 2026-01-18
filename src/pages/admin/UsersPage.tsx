@@ -304,7 +304,7 @@ const roleBadgeClass: Record<string, string> = {
             {activeTab === "users" ? (
               <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
                 <Plus className="w-4 h-4" />
-                Create Manual User
+                Add User
               </Button>
             ) : (
               <Button onClick={() => setIsEmployeeCreateOpen(true)} className="gap-2">
