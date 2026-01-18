@@ -595,30 +595,36 @@ const roleBadgeClass: Record<string, string> = {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                if (employee.active ?? true) {
-                                  deactivateEmployee.mutate(employee.id);
-                                } else {
-                                  updateEmployee.mutate({
-                                    employeeId: employee.id,
-                                    payload: { active: true },
-                                  });
-                                }
-                              }}
-                            >
-                              {(employee.active ?? true) ? "Deactivate" : "Activate"}
-                            </Button>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreHorizontal className="w-4 h-4" />
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => {
+                                    if (employee.active ?? true) {
+                                      deactivateEmployee.mutate(employee.id);
+                                    } else {
+                                      updateEmployee.mutate({
+                                        employeeId: employee.id,
+                                        payload: { active: true },
+                                      });
+                                    }
+                                  }}
+                                >
+                                  <Power className="w-4 h-4" />
                                 </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {(employee.active ?? true) ? "Deactivate" : "Activate"}
+                              </TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8"
                                   onClick={() =>
                                     handleOpenEmployeeEdit(
                                       employee.id,
@@ -627,10 +633,11 @@ const roleBadgeClass: Record<string, string> = {
                                     )
                                   }
                                 >
-                                  Edit
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                                  <Pencil className="w-4 h-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Edit</TooltipContent>
+                            </Tooltip>
                           </div>
                         </TableCell>
                       </TableRow>
