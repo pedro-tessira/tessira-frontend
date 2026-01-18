@@ -225,6 +225,7 @@ export default function AdminAuthPage() {
   const isSaving = createProvider.isPending || updateProvider.isPending;
   const isTesting = testProvider.isPending;
   const canTest = Boolean(activeProvider?.id);
+  const hasActiveProviders = providers.some((provider) => provider.enabled);
   const requiredKeys = activeProviderType?.requiredSettings ?? [];
   const missingRequiredKeys = requiredKeys.filter((requiredKey) => {
     if (requiredKey.includes("|")) {
@@ -562,9 +563,15 @@ export default function AdminAuthPage() {
               <p className="text-sm text-muted-foreground">
                 When enabled, users must authenticate via SSO. Manual logins will be disabled.
               </p>
+              {!hasActiveProviders && (
+                <p className="text-sm text-muted-foreground">
+                  Enable at least one SSO provider to turn this on.
+                </p>
+              )}
             </div>
             <Switch
               checked={authSettings?.requireSso ?? false}
+              disabled={!hasActiveProviders}
               onCheckedChange={(checked) => {
                 updateAuthSettings.mutate(
                   { requireSso: checked },
