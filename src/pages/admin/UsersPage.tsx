@@ -289,25 +289,33 @@ const roleBadgeClass: Record<string, string> = {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-muted/60">
-          <TabsTrigger value="users" className="gap-2">
-            <UsersIcon className="h-4 w-4" />
-            Users
-          </TabsTrigger>
-          <TabsTrigger value="employees" className="gap-2">
-            <UserIcon className="h-4 w-4" />
-            Employees
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <TabsList className="bg-muted/60">
+            <TabsTrigger value="users" className="gap-2">
+              <UsersIcon className="h-4 w-4" />
+              Users
+            </TabsTrigger>
+            <TabsTrigger value="employees" className="gap-2">
+              <UserIcon className="h-4 w-4" />
+              Employees
+            </TabsTrigger>
+          </TabsList>
+          <div className="flex items-center gap-2">
+            {activeTab === "users" ? (
+              <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
+                <Plus className="w-4 h-4" />
+                Create Manual User
+              </Button>
+            ) : (
+              <Button onClick={() => setIsEmployeeCreateOpen(true)} className="gap-2">
+                <Plus className="w-4 h-4" />
+                Add Employee
+              </Button>
+            )}
+          </div>
+        </div>
 
         <TabsContent value="users" className="space-y-6">
-          <div className="flex items-center justify-end">
-            <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
-              <Plus className="w-4 h-4" />
-              Create Manual User
-            </Button>
-          </div>
-
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
@@ -487,13 +495,6 @@ const roleBadgeClass: Record<string, string> = {
         </TabsContent>
 
         <TabsContent value="employees" className="space-y-6">
-          <div className="flex items-center justify-end">
-            <Button onClick={() => setIsEmployeeCreateOpen(true)} className="gap-2">
-              <Plus className="w-4 h-4" />
-              Add Employee
-            </Button>
-          </div>
-
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
