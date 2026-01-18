@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuthSettings, useUpdateAuthSettings } from "@/queries/useAuthSettings";
 import {
   SsoProviderDto,
@@ -569,30 +570,41 @@ export default function AdminAuthPage() {
                 </p>
               )}
             </div>
-            <Switch
-              checked={authSettings?.requireSso ?? false}
-              disabled={!hasActiveProviders}
-              onCheckedChange={(checked) => {
-                updateAuthSettings.mutate(
-                  { requireSso: checked },
-                  {
-                    onSuccess: () => {
-                      toast({
-                        title: "Auth settings updated",
-                        description: `Require SSO is now ${checked ? "enabled" : "disabled"}.`,
-                      });
-                    },
-                    onError: (error: { message?: string }) => {
-                      toast({
-                        title: "Update failed",
-                        description: error?.message ?? "Unable to update auth settings.",
-                        variant: "destructive",
-                      });
-                    },
-                  }
-                );
-              }}
-            />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Switch
+                    checked={authSettings?.requireSso ?? false}
+                    disabled={!hasActiveProviders}
+                    onCheckedChange={(checked) => {
+                      updateAuthSettings.mutate(
+                        { requireSso: checked },
+                        {
+                          onSuccess: () => {
+                            toast({
+                              title: "Auth settings updated",
+                              description: `Require SSO is now ${checked ? "enabled" : "disabled"}.`,
+                            });
+                          },
+                          onError: (error: { message?: string }) => {
+                            toast({
+                              title: "Update failed",
+                              description: error?.message ?? "Unable to update auth settings.",
+                              variant: "destructive",
+                            });
+                          },
+                        }
+                      );
+                    }}
+                  />
+                </div>
+              </TooltipTrigger>
+              {!hasActiveProviders && (
+                <TooltipContent>
+                  Enable an SSO provider to turn this on.
+                </TooltipContent>
+              )}
+            </Tooltip>
           </div>
         </CardContent>
       </Card>
