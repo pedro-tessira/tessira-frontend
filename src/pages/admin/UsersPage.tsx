@@ -36,7 +36,7 @@ import {
   useDeactivateEmployee,
   useUpdateEmployee,
 } from "@/queries/useAdminEmployees";
-import { useAdminUsers, useResetUserPassword, useUpdateUser } from "@/queries/useAdminUsers";
+import { useAdminUsers, useDeactivateUser, useResetUserPassword, useUpdateUser } from "@/queries/useAdminUsers";
 
 const getInitials = (name?: string | null) => {
   if (!name?.trim()) return "--";
@@ -89,6 +89,7 @@ const roleBadgeClass: Record<string, string> = {
   const [editEmployeeName, setEditEmployeeName] = useState("");
   const [editEmployeeEmail, setEditEmployeeEmail] = useState("");
   const [linkEmployeeId, setLinkEmployeeId] = useState("unlinked");
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
   const [deleteEmployeeId, setDeleteEmployeeId] = useState<string | null>(null);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
   const [resetUserId, setResetUserId] = useState<string | null>(null);
@@ -96,6 +97,7 @@ const roleBadgeClass: Record<string, string> = {
 
   const { data: adminUsers = [] } = useAdminUsers(searchQuery);
   const updateUser = useUpdateUser();
+  const deleteUser = useDeactivateUser();
   const resetUserPassword = useResetUserPassword();
   const createEmployee = useCreateEmployee();
   const updateEmployee = useUpdateEmployee();
@@ -494,6 +496,19 @@ const roleBadgeClass: Record<string, string> = {
                               </TooltipTrigger>
                               <TooltipContent>Force Relink Employee</TooltipContent>
                             </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8 text-destructive"
+                                  onClick={() => setDeleteUserId(user.id)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Delete</TooltipContent>
+                            </Tooltip>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -845,6 +860,44 @@ const roleBadgeClass: Record<string, string> = {
                     toast({
                       title: "Delete failed",
                       description: error?.message ?? "Unable to delete employee.",
+                      variant: "destructive",
+                    });
+                  },
+                });
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deleteUserId} onOpenChange={(open) => !open && setDeleteUserId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete user</AlertDialogTitle>
+            <AlertDialogDescription>
+              This user will be deleted and removed from all teams. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (!deleteUserId) return;
+                deleteUser.mutate(deleteUserId, {
+                  onSuccess: () => {
+                    toast({
+                      title: "User deleted",
+                      description: "The user has been removed.",
+                    });
+                    setDeleteUserId(null);
+                  },
+                  onError: (error: { message?: string }) => {
+                    toast({
+                      title: "Delete failed",
+                      description: error?.message ?? "Unable to delete user.",
                       variant: "destructive",
                     });
                   },
