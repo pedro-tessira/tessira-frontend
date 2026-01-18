@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { KeyRound, Link2, MoreHorizontal, Pencil, Plus, Power, Search, User as UserIcon, Users as UsersIcon } from "lucide-react";
+import { KeyRound, Link2, MoreHorizontal, Pencil, Plus, Power, Search, Trash2, User as UserIcon, Users as UsersIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,16 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useMe } from "@/queries/useMe";
 import {
@@ -79,6 +89,7 @@ const roleBadgeClass: Record<string, string> = {
   const [editEmployeeName, setEditEmployeeName] = useState("");
   const [editEmployeeEmail, setEditEmployeeEmail] = useState("");
   const [linkEmployeeId, setLinkEmployeeId] = useState("unlinked");
+  const [deleteEmployeeId, setDeleteEmployeeId] = useState<string | null>(null);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
   const [resetUserId, setResetUserId] = useState<string | null>(null);
   const [resetPassword, setResetPassword] = useState("");
@@ -88,7 +99,7 @@ const roleBadgeClass: Record<string, string> = {
   const resetUserPassword = useResetUserPassword();
   const createEmployee = useCreateEmployee();
   const updateEmployee = useUpdateEmployee();
-  const deactivateEmployee = useDeactivateEmployee();
+  const deleteEmployee = useDeactivateEmployee();
   const { data: adminEmployees = [] } = useAdminEmployees(employeeSearch);
 
   const filteredUsers = adminUsers.filter((user) => {
@@ -602,14 +613,10 @@ const roleBadgeClass: Record<string, string> = {
                                   size="icon"
                                   className="h-8 w-8"
                                   onClick={() => {
-                                    if (employee.active ?? true) {
-                                      deactivateEmployee.mutate(employee.id);
-                                    } else {
-                                      updateEmployee.mutate({
-                                        employeeId: employee.id,
-                                        payload: { active: true },
-                                      });
-                                    }
+                                    updateEmployee.mutate({
+                                      employeeId: employee.id,
+                                      payload: { active: !(employee.active ?? true) },
+                                    });
                                   }}
                                 >
                                   <Power className="w-4 h-4" />
@@ -637,6 +644,19 @@ const roleBadgeClass: Record<string, string> = {
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>Edit</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8 text-destructive"
+                                  onClick={() => setDeleteEmployeeId(employee.id)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Delete</TooltipContent>
                             </Tooltip>
                           </div>
                         </TableCell>
@@ -798,6 +818,44 @@ const roleBadgeClass: Record<string, string> = {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteEmployeeId} onOpenChange={(open) => !open && setDeleteEmployeeId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete employee</AlertDialogTitle>
+            <AlertDialogDescription>
+              This employee will be deleted and removed from all teams. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (!deleteEmployeeId) return;
+                deleteEmployee.mutate(deleteEmployeeId, {
+                  onSuccess: () => {
+                    toast({
+                      title: "Employee deleted",
+                      description: "The employee has been removed.",
+                    });
+                    setDeleteEmployeeId(null);
+                  },
+                  onError: (error: { message?: string }) => {
+                    toast({
+                      title: "Delete failed",
+                      description: error?.message ?? "Unable to delete employee.",
+                      variant: "destructive",
+                    });
+                  },
+                });
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog
         open={isEditOpen}
