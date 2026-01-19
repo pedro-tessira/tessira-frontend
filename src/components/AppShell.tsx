@@ -32,6 +32,7 @@ import { useCreateTeam, useDeleteTeam, useUpdateTeam } from '@/queries/useTeamMu
 import { useCreateEventType, useDeleteEventType, useUpdateEventType } from '@/queries/useEventTypeMutations';
 import { useCreateTeamMember, useDeleteTeamMember, useUpdateTeamMember } from '@/queries/useTeamMemberMutations';
 import { useEmployeeSearch } from '@/queries/useEmployeeSearch';
+import { useMe } from '@/queries/useMe';
 
 const COL_WIDTH = 80;
 const TODAY = new Date();
@@ -56,6 +57,7 @@ const deriveEventTypeCode = (label: string) => {
 
 export function AppShell() {
   const { toast } = useToast();
+  const { data: me } = useMe();
   const { data: teams = [] } = useTeams();
   const [selectedTeamId, setSelectedTeamId] = useState<string>('');
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
@@ -74,13 +76,6 @@ export function AppShell() {
   const timelineRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
   const lastTeamIdRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (teams.length === 0) return;
-    if (!selectedTeamId || !teams.find(team => team.id === selectedTeamId)) {
-      setSelectedTeamId(teams[0].id);
-    }
-  }, [teams, selectedTeamId]);
 
   useEffect(() => {
     setExpandedRows(new Set());
@@ -626,6 +621,26 @@ export function AppShell() {
     });
   }, [manageEmployeesQueries, teams]);
 
+  const visibleTeams = useMemo(() => {
+    if (me?.role === "ADMIN") {
+      return teams;
+    }
+    if (!me?.employeeId) {
+      return [];
+    }
+    const memberTeamIds = new Set(
+      allEmployees.filter(employee => employee.id === me.employeeId).map(employee => employee.teamId)
+    );
+    return teams.filter(team => memberTeamIds.has(team.id));
+  }, [teams, allEmployees, me?.employeeId, me?.role]);
+
+  useEffect(() => {
+    if (visibleTeams.length === 0) return;
+    if (!selectedTeamId || !visibleTeams.find(team => team.id === selectedTeamId)) {
+      setSelectedTeamId(visibleTeams[0].id);
+    }
+  }, [visibleTeams, selectedTeamId]);
+
   const toggleExpand = (employeeId: string) => {
     setExpandedRows(prev => {
       const next = new Set(prev);
@@ -705,7 +720,7 @@ export function AppShell() {
   return (
     <MainLayout
       fullWidth
-      teams={teams}
+      teams={visibleTeams}
       employees={allEmployees}
       events={timelineEvents}
       eventTypes={eventTypes}
@@ -739,7 +754,7 @@ export function AppShell() {
       <ManageEventTypesModal
         open={showManageEventTypes}
         onOpenChange={setShowManageEventTypes}
-        teams={teams}
+        teams={visibleTeams}
         employees={allEmployees}
         events={timelineEvents}
         eventTypeConfigs={eventTypeConfigs}
