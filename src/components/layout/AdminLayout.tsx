@@ -1,7 +1,9 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { KeyRound, Users, Building2, Tags, Activity, ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { AppHeader } from "./AppHeader";
+import { clearToken } from "@/lib/auth";
 
 const adminNavItems = [
   {
@@ -38,12 +40,18 @@ const adminNavItems = [
 
 export function AdminLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const isActive = (href: string) => location.pathname === href;
   const currentPage = adminNavItems.find((item) => isActive(item.href));
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <AppHeader />
+      <AppHeader
+        onLogout={() => {
+          clearToken();
+          navigate("/");
+        }}
+      />
 
       <div className="flex flex-1 overflow-hidden">
         <aside className="w-64 border-r border-border bg-card shrink-0 overflow-y-auto">
