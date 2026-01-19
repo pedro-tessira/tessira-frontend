@@ -27,6 +27,7 @@ interface ManageTeamsModalProps {
   employees: TeamEmployeeDto[];
   events: TimelineEvent[];
   selectedTeamId: string;
+  canDeleteTeam?: boolean;
   onAddEmployee: (name: string, teamId: string) => void;
   onRemoveEmployee: (teamId: string, membershipId: string) => void;
   onUpdateEmployee: (teamId: string, membershipId: string, name: string, isOwner?: boolean) => void;
@@ -42,6 +43,7 @@ export function ManageTeamsModal({
   employees,
   events,
   selectedTeamId,
+  canDeleteTeam = true,
   onAddEmployee,
   onRemoveEmployee,
   onUpdateEmployee,
@@ -383,20 +385,24 @@ export function ManageTeamsModal({
 
                   {/* Delete Team */}
                   <div className="pt-4 border-t border-border">
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => setDeleteConfirmOpen(true)}
-                      disabled={teams.length === 1}
-                      className="w-full"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete Team
-                    </Button>
-                    {teams.length === 1 && (
-                      <p className="text-xs text-muted-foreground mt-2 text-center">
-                        Cannot delete the last team.
-                      </p>
+                    {canDeleteTeam && (
+                      <>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => setDeleteConfirmOpen(true)}
+                          disabled={teams.length === 1}
+                          className="w-full"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete Team
+                        </Button>
+                        {teams.length === 1 && (
+                          <p className="text-xs text-muted-foreground mt-2 text-center">
+                            Cannot delete the last team.
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

@@ -244,6 +244,7 @@ export function AppHeader({
                 employees={employees}
                 events={events}
                 selectedTeamId={selectedTeamId}
+                canDeleteTeam={me?.role !== "USER"}
                 onAddEmployee={onAddEmployee}
                 onRemoveEmployee={onRemoveEmployee}
                 onUpdateEmployee={onUpdateEmployee}
