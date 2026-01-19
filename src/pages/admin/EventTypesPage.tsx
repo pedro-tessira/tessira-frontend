@@ -243,6 +243,9 @@ export default function AdminEventTypesPage() {
                   <Badge variant="outline">{eventType.code}</Badge>
                   <Badge variant="secondary">{eventType.timelineScope}</Badge>
                   <Badge variant="secondary">{eventType.visibilityScope}</Badge>
+                  <Badge variant="secondary" className={eventType.userCreatable ? "" : "bg-muted text-muted-foreground"}>
+                    {eventType.userCreatable ? "User Creatable" : "Admin Only"}
+                  </Badge>
                 </div>
               </div>
               <Badge
