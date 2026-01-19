@@ -57,6 +57,10 @@ export const useShare = (params: ShareParams) => {
     queryKey: shareQueryKey(params),
     queryFn: () => publicFetch<ShareTimelineResponse>(buildShareUrl(params)),
     enabled: !!params.token && !!params.from && !!params.to,
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
     retry: false,
   });
 };
