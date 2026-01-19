@@ -380,63 +380,61 @@ export function ShareViewModal({ open, onOpenChange, teamId, employees, eventTyp
                           {link.title ?? 'Shared timeline'}
                         </p>
                       </div>
-                      <TooltipProvider>
-                        <div className="flex items-center gap-1">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() =>
-                                  navigator.clipboard.writeText(
-                                    `${window.location.origin}${link.urlPath}`
-                                  )
-                                }
-                                className="h-8 w-8"
-                              >
-                                <Copy className="w-4 h-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Copy link</p>
-                            </TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => {
-                                  if (!link.id || !isShareId(link.id)) return;
-                                  revokeShare.mutate(link.id, {
-                                    onSuccess: () => {
-                                      toast({
-                                        title: 'Share link revoked',
-                                        description: 'This link is no longer active.',
-                                      });
-                                      refetchShares();
-                                    },
-                                    onError: (error: { message?: string }) => {
-                                      toast({
-                                        title: 'Revoke failed',
-                                        description: error?.message ?? 'Unable to revoke share link.',
-                                        variant: 'destructive',
-                                      });
-                                    },
-                                  });
-                                }}
-                                disabled={revokeShare.isPending || !link.id || !isShareId(link.id)}
-                                className="h-8 w-8 text-destructive hover:text-destructive"
-                              >
-                                <Ban className="w-4 h-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Revoke link</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-                      </TooltipProvider>
+                      <div className="flex items-center gap-1">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() =>
+                                navigator.clipboard.writeText(
+                                  `${window.location.origin}${link.urlPath}`
+                                )
+                              }
+                              className="h-8 w-8"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Copy link</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => {
+                                if (!link.id || !isShareId(link.id)) return;
+                                revokeShare.mutate(link.id, {
+                                  onSuccess: () => {
+                                    toast({
+                                      title: 'Share link revoked',
+                                      description: 'This link is no longer active.',
+                                    });
+                                    refetchShares();
+                                  },
+                                  onError: (error: { message?: string }) => {
+                                    toast({
+                                      title: 'Revoke failed',
+                                      description: error?.message ?? 'Unable to revoke share link.',
+                                      variant: 'destructive',
+                                    });
+                                  },
+                                });
+                              }}
+                              disabled={revokeShare.isPending || !link.id || !isShareId(link.id)}
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                            >
+                              <Ban className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Revoke link</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
