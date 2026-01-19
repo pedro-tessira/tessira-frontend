@@ -14,6 +14,8 @@ interface AddEventModalProps {
   onOpenChange: (open: boolean) => void;
   employees: EmployeeDto[];
   eventTypes: EventTypeDto[];
+  currentUserRole?: string;
+  currentUserEmployeeId?: string | null;
   onSubmit: (event: {
     title?: string | null;
     startDate: string;
@@ -24,15 +26,31 @@ interface AddEventModalProps {
   }) => void;
 }
 
-export function AddEventModal({ open, onOpenChange, employees, eventTypes, onSubmit }: AddEventModalProps) {
+export function AddEventModal({
+  open,
+  onOpenChange,
+  employees,
+  eventTypes,
+  currentUserRole,
+  currentUserEmployeeId,
+  onSubmit,
+}: AddEventModalProps) {
   const today = format(new Date(), 'yyyy-MM-dd');
+  const isNormalUser = currentUserRole === "USER";
+  const effectiveEmployees = useMemo(() => {
+    if (!isNormalUser) return employees;
+    if (!currentUserEmployeeId) return [];
+    return employees.filter(employee => employee.id === currentUserEmployeeId);
+  }, [employees, currentUserEmployeeId, isNormalUser]);
+  const selectableEventTypes = useMemo(() => {
+    if (!isNormalUser) return eventTypes;
+    return eventTypes.filter(eventType => eventType.timelineScope === "INDIVIDUAL");
+  }, [eventTypes, isNormalUser]);
   const [title, setTitle] = useState('');
-  const [employeeId, setEmployeeId] = useState<string | null>(employees[0]?.id ?? null);
+  const [employeeId, setEmployeeId] = useState<string | null>(effectiveEmployees[0]?.id ?? null);
   const [selectedEventTypeId, setSelectedEventTypeId] = useState<string>('');
   const [startDate, setStartDate] = useState(today);
   const [endDate, setEndDate] = useState(today);
-
-  const selectableEventTypes = useMemo(() => eventTypes, [eventTypes]);
 
   useEffect(() => {
     if (!selectedEventTypeId && selectableEventTypes.length > 0) {
@@ -41,10 +59,10 @@ export function AddEventModal({ open, onOpenChange, employees, eventTypes, onSub
   }, [selectableEventTypes, selectedEventTypeId]);
 
   useEffect(() => {
-    if (!employeeId && employees.length > 0) {
-      setEmployeeId(employees[0].id);
+    if (!employeeId && effectiveEmployees.length > 0) {
+      setEmployeeId(effectiveEmployees[0].id);
     }
-  }, [employeeId, employees]);
+  }, [employeeId, effectiveEmployees]);
 
   const selectedEventType = selectableEventTypes.find(eventType => eventType.id === selectedEventTypeId);
   const eventScope = (selectedEventType?.timelineScope ?? 'INDIVIDUAL') as EventScope;
@@ -52,7 +70,7 @@ export function AddEventModal({ open, onOpenChange, employees, eventTypes, onSub
 
   const resetForm = () => {
     setTitle('');
-    setEmployeeId(employees[0]?.id ?? null);
+    setEmployeeId(effectiveEmployees[0]?.id ?? null);
     setSelectedEventTypeId(selectableEventTypes[0]?.id ?? '');
     setStartDate(today);
     setEndDate(today);
@@ -61,9 +79,13 @@ export function AddEventModal({ open, onOpenChange, employees, eventTypes, onSub
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!startDate || !endDate || !selectedEventTypeId) return;
+    if (isNormalUser && isEmployeeScoped && !currentUserEmployeeId) return;
+    if (isNormalUser && !isEmployeeScoped) return;
     
     onSubmit({
-      employeeId: isEmployeeScoped ? employeeId : null,
+      employeeId: isEmployeeScoped
+        ? (isNormalUser ? currentUserEmployeeId ?? null : employeeId)
+        : null,
       eventTypeId: selectedEventTypeId,
       scope: eventScope,
       title: title.trim() ? title.trim() : null,
@@ -118,7 +140,7 @@ export function AddEventModal({ open, onOpenChange, employees, eventTypes, onSub
           </div>
 
           {/* Employee (only for individual events) */}
-          {isEmployeeScoped && (
+          {isEmployeeScoped && !isNormalUser && (
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">Employee</label>
               <select
@@ -126,10 +148,15 @@ export function AddEventModal({ open, onOpenChange, employees, eventTypes, onSub
                 onChange={e => setEmployeeId(e.target.value)}
                 className="px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
               >
-                {employees.map(emp => (
+                {effectiveEmployees.map(emp => (
                   <option key={emp.id} value={emp.id}>{emp.displayName}</option>
                 ))}
               </select>
+            </div>
+          )}
+          {isEmployeeScoped && isNormalUser && (
+            <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+              Event will be created for your timeline.
             </div>
           )}
 
@@ -170,6 +197,7 @@ export function AddEventModal({ open, onOpenChange, employees, eventTypes, onSub
             </button>
             <button
               type="submit"
+              disabled={isNormalUser && (!currentUserEmployeeId || selectableEventTypes.length === 0)}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
             >
               Add Event

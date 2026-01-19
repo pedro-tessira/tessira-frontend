@@ -750,6 +750,8 @@ export function AppShell() {
         onOpenChange={setShowAddEventForm}
         employees={teamEmployees}
         eventTypes={eventTypes}
+        currentUserRole={me?.role}
+        currentUserEmployeeId={me?.employeeId ?? null}
         onSubmit={handleAddEvent}
       />
 
