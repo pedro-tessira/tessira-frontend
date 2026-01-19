@@ -43,8 +43,9 @@ export function AddEventModal({
     return employees.filter(employee => employee.id === currentUserEmployeeId);
   }, [employees, currentUserEmployeeId, isNormalUser]);
   const selectableEventTypes = useMemo(() => {
-    if (!isNormalUser) return eventTypes;
-    return eventTypes.filter(eventType => eventType.timelineScope === "INDIVIDUAL");
+    const userCreatableTypes = eventTypes.filter(eventType => eventType.userCreatable);
+    if (!isNormalUser) return userCreatableTypes;
+    return userCreatableTypes.filter(eventType => eventType.timelineScope === "INDIVIDUAL");
   }, [eventTypes, isNormalUser]);
   const [title, setTitle] = useState('');
   const [employeeId, setEmployeeId] = useState<string | null>(effectiveEmployees[0]?.id ?? null);
@@ -137,6 +138,11 @@ export function AddEventModal({
                 </button>
               ))}
             </div>
+            {selectableEventTypes.length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                No event types available for creation.
+              </p>
+            )}
           </div>
 
           {/* Employee (only for individual events) */}
