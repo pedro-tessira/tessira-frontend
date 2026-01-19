@@ -62,6 +62,7 @@ export function ShareViewModal({ open, onOpenChange, teamId, employees, eventTyp
     [employees, me?.employeeId]
   );
   const canCreateShare = me?.role !== "USER" || isTeamOwner;
+  const canRevokeShare = me?.role !== "USER" || isTeamOwner;
 
   useEffect(() => {
     if (!limitEmployees) {
@@ -324,34 +325,36 @@ export function ShareViewModal({ open, onOpenChange, teamId, employees, eventTyp
                     <p className="text-xs text-muted-foreground">
                       Anyone with this link can view the timeline in read-only mode.
                     </p>
-                    <Button
-                      variant="destructive"
-                      onClick={() => {
-                        if (!shareId) return;
-                        revokeShare.mutate(shareId, {
-                          onSuccess: () => {
-                            toast({
-                              title: 'Share link revoked',
-                              description: 'This link is no longer active.',
-                            });
-                            setShareUrl(null);
-                            setShareId(null);
-                          },
-                          onError: (error: { message?: string }) => {
-                            toast({
-                              title: 'Revoke failed',
-                              description: error?.message ?? 'Unable to revoke share link.',
-                              variant: 'destructive',
-                            });
-                          },
-                        });
-                      }}
-                      disabled={revokeShare.isPending}
-                      className="w-full"
-                    >
-                      <Ban className="w-4 h-4 mr-2" />
-                      {revokeShare.isPending ? 'Revoking...' : 'Disable Share Link'}
-                    </Button>
+                    {canRevokeShare && (
+                      <Button
+                        variant="destructive"
+                        onClick={() => {
+                          if (!shareId) return;
+                          revokeShare.mutate(shareId, {
+                            onSuccess: () => {
+                              toast({
+                                title: 'Share link revoked',
+                                description: 'This link is no longer active.',
+                              });
+                              setShareUrl(null);
+                              setShareId(null);
+                            },
+                            onError: (error: { message?: string }) => {
+                              toast({
+                                title: 'Revoke failed',
+                                description: error?.message ?? 'Unable to revoke share link.',
+                                variant: 'destructive',
+                              });
+                            },
+                          });
+                        }}
+                        disabled={revokeShare.isPending}
+                        className="w-full"
+                      >
+                        <Ban className="w-4 h-4 mr-2" />
+                        {revokeShare.isPending ? 'Revoking...' : 'Disable Share Link'}
+                      </Button>
+                    )}
                   </div>
                 </div>
               )}
@@ -394,40 +397,42 @@ export function ShareViewModal({ open, onOpenChange, teamId, employees, eventTyp
                             <p>Copy link</p>
                           </TooltipContent>
                         </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => {
-                                if (!link.id || !isShareId(link.id)) return;
-                                revokeShare.mutate(link.id, {
-                                  onSuccess: () => {
-                                    toast({
-                                      title: 'Share link revoked',
-                                      description: 'This link is no longer active.',
-                                    });
-                                    refetchShares();
-                                  },
-                                  onError: (error: { message?: string }) => {
-                                    toast({
-                                      title: 'Revoke failed',
-                                      description: error?.message ?? 'Unable to revoke share link.',
-                                      variant: 'destructive',
-                                    });
-                                  },
-                                });
-                              }}
-                              disabled={revokeShare.isPending || !link.id || !isShareId(link.id)}
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                            >
-                              <Ban className="w-4 h-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Revoke link</p>
-                          </TooltipContent>
-                        </Tooltip>
+                        {canRevokeShare && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => {
+                                  if (!link.id || !isShareId(link.id)) return;
+                                  revokeShare.mutate(link.id, {
+                                    onSuccess: () => {
+                                      toast({
+                                        title: 'Share link revoked',
+                                        description: 'This link is no longer active.',
+                                      });
+                                      refetchShares();
+                                    },
+                                    onError: (error: { message?: string }) => {
+                                      toast({
+                                        title: 'Revoke failed',
+                                        description: error?.message ?? 'Unable to revoke share link.',
+                                        variant: 'destructive',
+                                      });
+                                    },
+                                  });
+                                }}
+                                disabled={revokeShare.isPending || !link.id || !isShareId(link.id)}
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                              >
+                                <Ban className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Revoke link</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
                       </div>
                     </div>
 
