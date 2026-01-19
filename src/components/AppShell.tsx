@@ -84,6 +84,7 @@ export function AppShell() {
 
   const { data: employees = [] } = useEmployees(selectedTeamId, searchQuery);
   const { data: eventTypes = [] } = useEventTypes(selectedTeamId);
+  const canManageEventTypes = me?.role !== "USER";
 
   useEffect(() => {
     if (!selectedTeamId || eventTypes.length === 0) return;
@@ -741,6 +742,7 @@ export function AppShell() {
         eventTypes={eventTypes}
         onAddEventClick={() => setShowAddEventForm(true)}
         onManageEventTypesClick={() => setShowManageEventTypes(true)}
+        canManageEventTypes={canManageEventTypes}
       />
 
       <AddEventModal
@@ -751,17 +753,19 @@ export function AppShell() {
         onSubmit={handleAddEvent}
       />
 
-      <ManageEventTypesModal
-        open={showManageEventTypes}
-        onOpenChange={setShowManageEventTypes}
-        teams={visibleTeams}
-        employees={allEmployees}
-        events={timelineEvents}
-        eventTypeConfigs={eventTypeConfigs}
-        onAddEventType={handleAddEventType}
-        onUpdateEventType={handleUpdateEventType}
-        onRemoveEventType={handleRemoveEventType}
-      />
+      {canManageEventTypes && (
+        <ManageEventTypesModal
+          open={showManageEventTypes}
+          onOpenChange={setShowManageEventTypes}
+          teams={visibleTeams}
+          employees={allEmployees}
+          events={timelineEvents}
+          eventTypeConfigs={eventTypeConfigs}
+          onAddEventType={handleAddEventType}
+          onUpdateEventType={handleUpdateEventType}
+          onRemoveEventType={handleRemoveEventType}
+        />
+      )}
 
       <div className="flex-1 flex overflow-hidden">
         <div className="w-[280px] shrink-0 bg-sidebar border-r border-sidebar-border flex flex-col min-h-0">

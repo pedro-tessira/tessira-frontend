@@ -15,6 +15,7 @@ interface LegendChipsProps {
   eventTypes: EventTypeDto[];
   onAddEventClick: () => void;
   onManageEventTypesClick: () => void;
+  canManageEventTypes?: boolean;
 }
 
 export function LegendChips({ 
@@ -24,6 +25,7 @@ export function LegendChips({
   eventTypes, 
   onAddEventClick,
   onManageEventTypesClick,
+  canManageEventTypes = true,
 }: LegendChipsProps) {
   const allActive = eventTypes.length > 0 && activeFilters.size === eventTypes.length;
   
@@ -63,21 +65,23 @@ export function LegendChips({
       })}
       
       <div className="ml-auto flex items-center gap-2">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button 
-                onClick={onManageEventTypesClick}
-                className="p-2 border border-border rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              >
-                <Settings2 className="w-4 h-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Manage Event Types</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        {canManageEventTypes && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  onClick={onManageEventTypesClick}
+                  className="p-2 border border-border rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                >
+                  <Settings2 className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Manage Event Types</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
         
         <TooltipProvider>
           <Tooltip>
