@@ -17,7 +17,19 @@ export const sharesQueryKey = (teamId: string) => ["shares", teamId];
 export const useShares = (teamId: string) => {
   return useQuery<ShareSummary[]>({
     queryKey: sharesQueryKey(teamId),
-    queryFn: () => apiFetch<ShareSummary[]>(`/api/shares?teamId=${teamId}`),
+    queryFn: async () => {
+      try {
+        return await apiFetch<ShareSummary[]>(`/api/shares?teamId=${teamId}`, {
+          skipAuthRedirect: true,
+        });
+      } catch (error: unknown) {
+        const status = typeof error === "object" && error && "status" in error ? Number(error.status) : null;
+        if (status === 401 || status === 403) {
+          return [];
+        }
+        throw error;
+      }
+    },
     enabled: !!teamId,
   });
 };
