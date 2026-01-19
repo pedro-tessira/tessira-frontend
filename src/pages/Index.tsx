@@ -23,7 +23,6 @@ const Index = () => {
   const [loginError, setLoginError] = useState<string | null>(null);
   const { isLoading: isMeLoading } = useMe({ enabled: !!token });
   const { data: ssoProviders = [] } = usePublicSsoProviders();
-  const isDevLogin = email.trim().endsWith('@local');
   const hasSsoProviders = ssoProviders.length > 0;
 
   const handleLogin = async (event: React.FormEvent) => {
@@ -32,12 +31,7 @@ const Index = () => {
     setIsLoggingIn(true);
     setLoginError(null);
     try {
-      const body: { email: string; password?: string } = { email: email.trim() };
-      if (!isDevLogin) {
-        body.password = password;
-      } else {
-        body.password = "";
-      }
+      const body: { email: string; password: string } = { email: email.trim(), password };
       const response = await apiFetch<PasswordLoginResponse>('/api/auth/sessions', {
         method: 'POST',
         body: JSON.stringify(body),
@@ -107,17 +101,15 @@ const Index = () => {
                   className="px-3 py-2 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
-              {!isDevLogin && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-foreground">Password</label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={event => setPassword(event.target.value)}
-                    className="px-3 py-2 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                  />
-                </div>
-              )}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-foreground">Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={event => setPassword(event.target.value)}
+                  className="px-3 py-2 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                />
+              </div>
               {loginError && (
                 <div className="text-xs text-destructive">{loginError}</div>
               )}
