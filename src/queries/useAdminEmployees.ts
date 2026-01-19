@@ -21,6 +21,10 @@ export const useAdminEmployees = (search: string) => {
     queryKey: ["adminEmployees", search],
     queryFn: () =>
       apiFetch<EmployeeSearchDto[]>(`/api/employees?search=${encodeURIComponent(search)}`),
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
   });
 };
 

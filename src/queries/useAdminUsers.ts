@@ -30,6 +30,10 @@ export const useAdminUsers = (search: string) => {
     queryKey: ["adminUsers", search],
     queryFn: () =>
       apiFetch<AdminUserDto[]>(`/api/admin/users?search=${encodeURIComponent(search)}`),
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
   });
 };
 
