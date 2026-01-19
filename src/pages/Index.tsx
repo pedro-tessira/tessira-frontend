@@ -28,6 +28,10 @@ const Index = () => {
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!email.trim()) return;
+    if (!password.trim()) {
+      setLoginError("Password is required.");
+      return;
+    }
     setIsLoggingIn(true);
     setLoginError(null);
     try {
