@@ -74,6 +74,7 @@ export function AppHeader({
   const { theme = "system", setTheme } = useTheme();
   const userName = me?.displayName ?? me?.email ?? "User";
   const isAdmin = me?.role === "ADMIN";
+  const canManageTeams = me?.role !== "USER";
   const [showManageModal, setShowManageModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
 
@@ -130,21 +131,23 @@ export function AppHeader({
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               </div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => setShowManageModal(true)}
-                      className="p-2 border border-border rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                    >
-                      <Users className="w-4 h-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Manage Teams</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              {canManageTeams && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => setShowManageModal(true)}
+                        className="p-2 border border-border rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                      >
+                        <Users className="w-4 h-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Manage Teams</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
             </div>
           )}
         </div>
@@ -233,20 +236,22 @@ export function AppHeader({
         onUpdateTeam &&
         onRemoveTeam && (
           <>
-            <ManageTeamsModal
-              open={showManageModal}
-              onOpenChange={setShowManageModal}
-              teams={teams}
-              employees={employees}
-              events={events}
-              selectedTeamId={selectedTeamId}
-              onAddEmployee={onAddEmployee}
-              onRemoveEmployee={onRemoveEmployee}
-              onUpdateEmployee={onUpdateEmployee}
-              onAddTeam={onAddTeam}
-              onUpdateTeam={onUpdateTeam}
-              onRemoveTeam={onRemoveTeam}
-            />
+            {canManageTeams && (
+              <ManageTeamsModal
+                open={showManageModal}
+                onOpenChange={setShowManageModal}
+                teams={teams}
+                employees={employees}
+                events={events}
+                selectedTeamId={selectedTeamId}
+                onAddEmployee={onAddEmployee}
+                onRemoveEmployee={onRemoveEmployee}
+                onUpdateEmployee={onUpdateEmployee}
+                onAddTeam={onAddTeam}
+                onUpdateTeam={onUpdateTeam}
+                onRemoveTeam={onRemoveTeam}
+              />
+            )}
             <ShareViewModal
               open={showShareModal}
               onOpenChange={setShowShareModal}
