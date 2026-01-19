@@ -17,7 +17,7 @@ interface PasswordLoginResponse {
 const Index = () => {
   const queryClient = useQueryClient();
   const [token, setTokenState] = useState(() => getToken());
-  const [email, setEmail] = useState('admin@local');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
