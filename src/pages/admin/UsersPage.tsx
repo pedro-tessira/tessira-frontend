@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useMe } from "@/queries/useMe";
+import { getPasswordPolicyIssues, isPasswordPolicyValid } from "@/lib/passwordPolicy";
 import {
   useAdminEmployees,
   useCreateEmployee,
@@ -71,6 +72,10 @@ const roleBadgeClass: Record<string, string> = {
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createUserName, setCreateUserName] = useState("");
+  const [createUserEmail, setCreateUserEmail] = useState("");
+  const [createUserRole, setCreateUserRole] = useState("USER");
+  const [createUserPassword, setCreateUserPassword] = useState("");
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editUserId, setEditUserId] = useState<string | null>(null);
   const [editUserName, setEditUserName] = useState("");
@@ -125,7 +130,27 @@ const roleBadgeClass: Record<string, string> = {
   });
 
   const handleCreateUser = () => {
+    if (!createUserPassword.trim()) {
+      toast({
+        title: "Password required",
+        description: "Enter a temporary password to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!isPasswordPolicyValid(createUserPassword.trim())) {
+      toast({
+        title: "Password too weak",
+        description: "Use at least 12 characters with uppercase, lowercase, number, and symbol.",
+        variant: "destructive",
+      });
+      return;
+    }
     setIsCreateOpen(false);
+    setCreateUserName("");
+    setCreateUserEmail("");
+    setCreateUserRole("USER");
+    setCreateUserPassword("");
     toast({
       title: "User created",
       description: "The new user has been created successfully.",
@@ -265,6 +290,14 @@ const roleBadgeClass: Record<string, string> = {
       toast({
         title: "Password required",
         description: "Enter a temporary password to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!isPasswordPolicyValid(resetPassword.trim())) {
+      toast({
+        title: "Password too weak",
+        description: "Use at least 12 characters with uppercase, lowercase, number, and symbol.",
         variant: "destructive",
       });
       return;
@@ -694,15 +727,26 @@ const roleBadgeClass: Record<string, string> = {
           <div className="mt-6 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
-              <Input id="name" placeholder="John Doe" />
+              <Input
+                id="name"
+                placeholder="John Doe"
+                value={createUserName}
+                onChange={(event) => setCreateUserName(event.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email Address</Label>
-              <Input id="email" type="email" placeholder="john.doe@company.com" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="john.doe@company.com"
+                value={createUserEmail}
+                onChange={(event) => setCreateUserEmail(event.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
-              <Select defaultValue="USER">
+              <Select value={createUserRole} onValueChange={setCreateUserRole}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -715,7 +759,18 @@ const roleBadgeClass: Record<string, string> = {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Temporary Password</Label>
-              <Input id="password" type="password" placeholder="••••••••" />
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={createUserPassword}
+                onChange={(event) => setCreateUserPassword(event.target.value)}
+              />
+              {createUserPassword.trim().length > 0 && !isPasswordPolicyValid(createUserPassword.trim()) && (
+                <p className="text-xs text-destructive">
+                  Password must include: {getPasswordPolicyIssues(createUserPassword.trim()).join(", ")}.
+                </p>
+              )}
               <p className="text-xs text-muted-foreground">
                 User will be prompted to change this on first login.
               </p>
@@ -734,7 +789,17 @@ const roleBadgeClass: Record<string, string> = {
               </Select>
             </div>
             <div className="flex gap-2 pt-4">
-              <Button variant="outline" onClick={() => setIsCreateOpen(false)} className="flex-1">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsCreateOpen(false);
+                  setCreateUserName("");
+                  setCreateUserEmail("");
+                  setCreateUserRole("USER");
+                  setCreateUserPassword("");
+                }}
+                className="flex-1"
+              >
                 Cancel
               </Button>
               <Button onClick={handleCreateUser} className="flex-1">

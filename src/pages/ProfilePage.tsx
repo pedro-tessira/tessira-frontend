@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useToast } from "@/hooks/use-toast";
 import { useMe, useUpdateMyPassword } from "@/queries/useMe";
+import { getPasswordPolicyIssues, isPasswordPolicyValid } from "@/lib/passwordPolicy";
 
 export default function ProfilePage() {
   const { toast } = useToast();
@@ -74,6 +75,14 @@ export default function ProfilePage() {
     }
     if (passwordMismatch) {
       toast({ title: "Passwords do not match", description: "Confirm your new password." });
+      return;
+    }
+    if (!isPasswordPolicyValid(passwordForm.password.trim())) {
+      toast({
+        title: "Password too weak",
+        description: "Use at least 12 characters with uppercase, lowercase, number, and symbol.",
+        variant: "destructive",
+      });
       return;
     }
     updateMyPassword.mutate(
@@ -192,6 +201,12 @@ export default function ProfilePage() {
                       }
                       placeholder="Enter a new password"
                     />
+                    {passwordForm.password.trim().length > 0 &&
+                      !isPasswordPolicyValid(passwordForm.password.trim()) && (
+                        <p className="text-xs text-destructive">
+                          Password must include: {getPasswordPolicyIssues(passwordForm.password.trim()).join(", ")}.
+                        </p>
+                      )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="confirm-password">Confirm Password</Label>
