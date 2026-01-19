@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { useMe } from '@/queries/useMe';
 import { EventTypeDto, TeamEmployeeDto } from '@/lib/types';
@@ -203,7 +202,11 @@ export function ShareViewModal({ open, onOpenChange, teamId, employees, eventTyp
                 </span>
               )}
             </div>
-            {!shareUrl ? (
+            {!canCreateShare ? (
+              <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+                Only team owners can create share links.
+              </div>
+            ) : !shareUrl ? (
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="share-title">Title</Label>
@@ -295,26 +298,13 @@ export function ShareViewModal({ open, onOpenChange, teamId, employees, eventTyp
                   )}
                 </div>
 
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div>
-                        <Button
-                          onClick={handleGenerateLink}
-                          className="w-full"
-                          disabled={!canCreateShare || isCreateDisabled}
-                        >
-                          {createShare.isPending ? 'Creating link...' : 'Generate Share Link'}
-                        </Button>
-                      </div>
-                    </TooltipTrigger>
-                    {!canCreateShare && (
-                      <TooltipContent>
-                        Only team owners can create share links.
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
+                <Button
+                  onClick={handleGenerateLink}
+                  className="w-full"
+                  disabled={isCreateDisabled}
+                >
+                  {createShare.isPending ? 'Creating link...' : 'Generate Share Link'}
+                </Button>
               </div>
             ) : (
               <div className="space-y-3">
