@@ -42,6 +42,10 @@ export const useTimeline = (
     queryKey: timelineQueryKey(params),
     queryFn: () => apiFetch<TimelineResponseDto>(buildTimelineUrl(params)),
     enabled: !!params.teamId,
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
     ...options,
   });
 };
