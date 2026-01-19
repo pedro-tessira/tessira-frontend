@@ -14,6 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
+import { useMe } from '@/queries/useMe';
 import { EventTypeDto, TeamEmployeeDto } from '@/lib/types';
 import { useCreateShare, useRevokeShare, useShares } from '@/queries/useShares';
 
@@ -27,6 +28,7 @@ interface ShareViewModalProps {
 
 export function ShareViewModal({ open, onOpenChange, teamId, employees, eventTypes }: ShareViewModalProps) {
   const { toast } = useToast();
+  const { data: me } = useMe();
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [shareId, setShareId] = useState<string | null>(null);
@@ -55,6 +57,11 @@ export function ShareViewModal({ open, onOpenChange, teamId, employees, eventTyp
 
   const employeeOptions = useMemo(() => employees, [employees]);
   const eventTypeOptions = useMemo(() => eventTypes, [eventTypes]);
+  const isTeamOwner = useMemo(
+    () => employees.some((employee) => employee.isOwner && employee.id === me?.employeeId),
+    [employees, me?.employeeId]
+  );
+  const canCreateShare = me?.role !== "USER" || isTeamOwner;
 
   useEffect(() => {
     if (!limitEmployees) {
@@ -82,6 +89,14 @@ export function ShareViewModal({ open, onOpenChange, teamId, employees, eventTyp
     (limitEventTypes && selectedEventTypes.length === 0);
 
   const handleGenerateLink = () => {
+    if (!canCreateShare) {
+      toast({
+        title: "Insufficient permissions",
+        description: "Only team owners can create share links.",
+        variant: "destructive",
+      });
+      return;
+    }
     createShare.mutate(
       {
         teamId,
@@ -271,13 +286,26 @@ export function ShareViewModal({ open, onOpenChange, teamId, employees, eventTyp
                 )}
               </div>
 
-              <Button
-                onClick={handleGenerateLink}
-                className="w-full"
-                disabled={isCreateDisabled}
-              >
-                {createShare.isPending ? 'Creating link...' : 'Generate Share Link'}
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button
+                        onClick={handleGenerateLink}
+                        className="w-full"
+                        disabled={!canCreateShare || isCreateDisabled}
+                      >
+                        {createShare.isPending ? 'Creating link...' : 'Generate Share Link'}
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  {!canCreateShare && (
+                    <TooltipContent>
+                      Only team owners can create share links.
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
 
               {isSharesLoading && (
                 <p className="text-xs text-muted-foreground">Loading share links...</p>
