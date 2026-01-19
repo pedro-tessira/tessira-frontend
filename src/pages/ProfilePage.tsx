@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Loader2, Save, Shield } from "lucide-react";
+import { Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,23 +14,10 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const { data: me } = useMe();
   const updateMyPassword = useUpdateMyPassword();
-  const [isSaving, setIsSaving] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
     password: "",
     confirmPassword: "",
   });
-
-  const [formData, setFormData] = useState({
-    displayName: me?.displayName ?? "",
-    preferredName: "",
-  });
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    setIsSaving(false);
-    toast({ title: "Profile updated", description: "Your changes have been saved." });
-  };
 
   const authMethod = useMemo(() => {
     if (me?.lastLoginMethod) {
@@ -111,10 +98,6 @@ export default function ProfilePage() {
             <h1 className="text-2xl font-semibold text-foreground">My Profile</h1>
             <p className="text-muted-foreground mt-1">Manage your account settings and preferences.</p>
           </div>
-          <Button onClick={handleSave} disabled={isSaving} className="gap-2">
-            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Save Changes
-          </Button>
         </div>
 
         <Card>
@@ -129,6 +112,10 @@ export default function ProfilePage() {
                 <p className="font-medium">{me?.email ?? "—"}</p>
               </div>
               <div className="space-y-1">
+                <Label className="text-muted-foreground text-xs">Display Name</Label>
+                <p className="font-medium">{me?.displayName ?? "—"}</p>
+              </div>
+              <div className="space-y-1">
                 <Label className="text-muted-foreground text-xs">Auth Method</Label>
                 <Badge variant="outline">{authMethod}</Badge>
               </div>
@@ -141,36 +128,6 @@ export default function ProfilePage() {
               <div className="space-y-1">
                 <Label className="text-muted-foreground text-xs">Employee ID</Label>
                 <p className="font-medium">{me?.employeeId ?? "—"}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Profile Information</CardTitle>
-            <CardDescription>Your display name.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Display Name</Label>
-                <Input
-                  value={formData.displayName}
-                  onChange={(event) =>
-                    setFormData((prev) => ({ ...prev, displayName: event.target.value }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Preferred Name (optional)</Label>
-                <Input
-                  value={formData.preferredName}
-                  onChange={(event) =>
-                    setFormData((prev) => ({ ...prev, preferredName: event.target.value }))
-                  }
-                  placeholder="How you'd like to be called"
-                />
               </div>
             </div>
           </CardContent>
