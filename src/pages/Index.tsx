@@ -21,6 +21,13 @@ const Index = () => {
   const [password, setPassword] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [lastAuthError, setLastAuthError] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem("lastAuthError");
+    } catch {
+      return null;
+    }
+  });
   const { isLoading: isMeLoading } = useMe({ enabled: !!token });
   const { data: ssoProviders = [] } = usePublicSsoProviders();
   const hasSsoProviders = ssoProviders.length > 0;
@@ -34,6 +41,12 @@ const Index = () => {
     }
     setIsLoggingIn(true);
     setLoginError(null);
+    setLastAuthError(null);
+    try {
+      localStorage.removeItem("lastAuthError");
+    } catch {
+      // Ignore storage errors.
+    }
     try {
       const body: { email: string; password: string } = { email: email.trim(), password };
       const response = await apiFetch<PasswordLoginResponse>('/api/auth/sessions', {
@@ -68,6 +81,26 @@ const Index = () => {
             </div>
           </div>
           <div className="space-y-4">
+            {lastAuthError && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                You were signed out after a {(() => {
+                  try {
+                    const parsed = JSON.parse(lastAuthError);
+                    return parsed?.status ? `HTTP ${parsed.status}` : "request";
+                  } catch {
+                    return "request";
+                  }
+                })()} on{" "}
+                {(() => {
+                  try {
+                    const parsed = JSON.parse(lastAuthError);
+                    return parsed?.path ?? "an API call";
+                  } catch {
+                    return "an API call";
+                  }
+                })()}.
+              </div>
+            )}
             {hasSsoProviders && (
               <>
                 <div className="space-y-3">

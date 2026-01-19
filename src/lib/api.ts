@@ -34,6 +34,18 @@ export async function apiFetch<T>(
   });
 
   if (!skipAuthRedirect && (response.status === 401 || response.status === 403)) {
+    try {
+      localStorage.setItem(
+        "lastAuthError",
+        JSON.stringify({
+          path,
+          status: response.status,
+          time: new Date().toISOString(),
+        })
+      );
+    } catch {
+      // Ignore storage errors.
+    }
     clearToken();
     window.location.assign("/");
   }
