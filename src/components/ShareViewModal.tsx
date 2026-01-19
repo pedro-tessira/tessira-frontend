@@ -194,176 +194,169 @@ export function ShareViewModal({ open, onOpenChange, teamId, employees, eventTyp
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold text-foreground">Create link</h3>
-              {!canCreateShare && (
-                <span className="text-xs text-muted-foreground">
-                  Only team owners can create links.
-                </span>
+          {canCreateShare && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold text-foreground">Create link</h3>
+              </div>
+              {!shareUrl ? (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="share-title">Title</Label>
+                    <Input
+                      id="share-title"
+                      placeholder="Optional title..."
+                      value={title}
+                      onChange={(event) => setTitle(event.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="share-expiration">Expiration</Label>
+                    <Input
+                      id="share-expiration"
+                      type="datetime-local"
+                      value={expiresAt}
+                      onChange={(event) => setExpiresAt(event.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">Leave empty for no expiration.</p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="include-global"
+                      checked={includeGlobalLane}
+                      onCheckedChange={(checked) => setIncludeGlobalLane(checked === true)}
+                    />
+                    <Label htmlFor="include-global" className="text-sm cursor-pointer">
+                      Include global lane (global events)
+                    </Label>
+                  </div>
+
+                  <div className="space-y-3 rounded-lg border border-border p-3">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="limit-employees"
+                        checked={limitEmployees}
+                        onCheckedChange={(checked) => setLimitEmployees(checked === true)}
+                      />
+                      <Label htmlFor="limit-employees" className="text-sm cursor-pointer">
+                        Limit to specific employees
+                      </Label>
+                    </div>
+                    {limitEmployees && (
+                      <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border border-border p-2">
+                        {employeeOptions.map(employee => (
+                          <label key={employee.id} className="flex items-center gap-2 text-sm">
+                            <Checkbox
+                              checked={selectedEmployees.includes(employee.id)}
+                              onCheckedChange={() => toggleSelection(employee.id, setSelectedEmployees)}
+                            />
+                            <span>{employee.displayName}</span>
+                          </label>
+                        ))}
+                        {employeeOptions.length === 0 && (
+                          <p className="text-xs text-muted-foreground">No employees available.</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-3 rounded-lg border border-border p-3">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="limit-event-types"
+                        checked={limitEventTypes}
+                        onCheckedChange={(checked) => setLimitEventTypes(checked === true)}
+                      />
+                      <Label htmlFor="limit-event-types" className="text-sm cursor-pointer">
+                        Limit to specific event types
+                      </Label>
+                    </div>
+                    {limitEventTypes && (
+                      <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border border-border p-2">
+                        {eventTypeOptions.map(eventType => (
+                          <label key={eventType.id} className="flex items-center gap-2 text-sm">
+                            <Checkbox
+                              checked={selectedEventTypes.includes(eventType.id)}
+                              onCheckedChange={() => toggleSelection(eventType.id, setSelectedEventTypes)}
+                            />
+                            <span>{eventType.name}</span>
+                          </label>
+                        ))}
+                        {eventTypeOptions.length === 0 && (
+                          <p className="text-xs text-muted-foreground">No event types available.</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <Button
+                    onClick={handleGenerateLink}
+                    className="w-full"
+                    disabled={isCreateDisabled}
+                  >
+                    {createShare.isPending ? 'Creating link...' : 'Generate Share Link'}
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-start gap-2 min-w-0">
+                    <div className="h-9 flex-1 min-w-0 rounded-md border border-border bg-background px-3 sm:max-w-[420px] flex items-center">
+                      <div className="overflow-x-auto whitespace-nowrap text-sm text-foreground scrollbar-thin">
+                        {shareUrl}
+                      </div>
+                    </div>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={handleCopy}
+                      className="shrink-0 self-end h-9 w-9"
+                    >
+                      {copied ? (
+                        <Check className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <p className="text-xs text-muted-foreground">
+                      Anyone with this link can view the timeline in read-only mode.
+                    </p>
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        if (!shareId) return;
+                        revokeShare.mutate(shareId, {
+                          onSuccess: () => {
+                            toast({
+                              title: 'Share link revoked',
+                              description: 'This link is no longer active.',
+                            });
+                            setShareUrl(null);
+                            setShareId(null);
+                          },
+                          onError: (error: { message?: string }) => {
+                            toast({
+                              title: 'Revoke failed',
+                              description: error?.message ?? 'Unable to revoke share link.',
+                              variant: 'destructive',
+                            });
+                          },
+                        });
+                      }}
+                      disabled={revokeShare.isPending}
+                      className="w-full"
+                    >
+                      <Ban className="w-4 h-4 mr-2" />
+                      {revokeShare.isPending ? 'Revoking...' : 'Disable Share Link'}
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
-            {!canCreateShare ? (
-              <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-                Only team owners can create share links.
-              </div>
-            ) : !shareUrl ? (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="share-title">Title</Label>
-                  <Input
-                    id="share-title"
-                    placeholder="Optional title..."
-                    value={title}
-                    onChange={(event) => setTitle(event.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="share-expiration">Expiration</Label>
-                  <Input
-                    id="share-expiration"
-                    type="datetime-local"
-                    value={expiresAt}
-                    onChange={(event) => setExpiresAt(event.target.value)}
-                  />
-                  <p className="text-xs text-muted-foreground">Leave empty for no expiration.</p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="include-global"
-                    checked={includeGlobalLane}
-                    onCheckedChange={(checked) => setIncludeGlobalLane(checked === true)}
-                  />
-                  <Label htmlFor="include-global" className="text-sm cursor-pointer">
-                    Include global lane (global events)
-                  </Label>
-                </div>
-
-                <div className="space-y-3 rounded-lg border border-border p-3">
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="limit-employees"
-                      checked={limitEmployees}
-                      onCheckedChange={(checked) => setLimitEmployees(checked === true)}
-                    />
-                    <Label htmlFor="limit-employees" className="text-sm cursor-pointer">
-                      Limit to specific employees
-                    </Label>
-                  </div>
-                  {limitEmployees && (
-                    <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border border-border p-2">
-                      {employeeOptions.map(employee => (
-                        <label key={employee.id} className="flex items-center gap-2 text-sm">
-                          <Checkbox
-                            checked={selectedEmployees.includes(employee.id)}
-                            onCheckedChange={() => toggleSelection(employee.id, setSelectedEmployees)}
-                          />
-                          <span>{employee.displayName}</span>
-                        </label>
-                      ))}
-                      {employeeOptions.length === 0 && (
-                        <p className="text-xs text-muted-foreground">No employees available.</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-3 rounded-lg border border-border p-3">
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="limit-event-types"
-                      checked={limitEventTypes}
-                      onCheckedChange={(checked) => setLimitEventTypes(checked === true)}
-                    />
-                    <Label htmlFor="limit-event-types" className="text-sm cursor-pointer">
-                      Limit to specific event types
-                    </Label>
-                  </div>
-                  {limitEventTypes && (
-                    <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border border-border p-2">
-                      {eventTypeOptions.map(eventType => (
-                        <label key={eventType.id} className="flex items-center gap-2 text-sm">
-                          <Checkbox
-                            checked={selectedEventTypes.includes(eventType.id)}
-                            onCheckedChange={() => toggleSelection(eventType.id, setSelectedEventTypes)}
-                          />
-                          <span>{eventType.name}</span>
-                        </label>
-                      ))}
-                      {eventTypeOptions.length === 0 && (
-                        <p className="text-xs text-muted-foreground">No event types available.</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <Button
-                  onClick={handleGenerateLink}
-                  className="w-full"
-                  disabled={isCreateDisabled}
-                >
-                  {createShare.isPending ? 'Creating link...' : 'Generate Share Link'}
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex items-start gap-2 min-w-0">
-                  <div className="h-9 flex-1 min-w-0 rounded-md border border-border bg-background px-3 sm:max-w-[420px] flex items-center">
-                    <div className="overflow-x-auto whitespace-nowrap text-sm text-foreground scrollbar-thin">
-                      {shareUrl}
-                    </div>
-                  </div>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    onClick={handleCopy}
-                    className="shrink-0 self-end h-9 w-9"
-                  >
-                    {copied ? (
-                      <Check className="w-4 h-4 text-green-500" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                  </Button>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <p className="text-xs text-muted-foreground">
-                    Anyone with this link can view the timeline in read-only mode.
-                  </p>
-                  <Button
-                    variant="destructive"
-                    onClick={() => {
-                      if (!shareId) return;
-                      revokeShare.mutate(shareId, {
-                        onSuccess: () => {
-                          toast({
-                            title: 'Share link revoked',
-                            description: 'This link is no longer active.',
-                          });
-                          setShareUrl(null);
-                          setShareId(null);
-                        },
-                        onError: (error: { message?: string }) => {
-                          toast({
-                            title: 'Revoke failed',
-                            description: error?.message ?? 'Unable to revoke share link.',
-                            variant: 'destructive',
-                          });
-                        },
-                      });
-                    }}
-                    disabled={revokeShare.isPending}
-                    className="w-full"
-                  >
-                    <Ban className="w-4 h-4 mr-2" />
-                    {revokeShare.isPending ? 'Revoking...' : 'Disable Share Link'}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
+          )}
 
           <div className="space-y-2">
             <div className="text-sm font-semibold text-foreground">Existing links</div>
