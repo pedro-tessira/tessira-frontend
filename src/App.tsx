@@ -18,7 +18,16 @@ import AdminEventTypesPage from "./pages/admin/EventTypesPage";
 import AdminAuditPage from "./pages/admin/AuditPage";
 import { AdminRoute } from "./components/AdminRoute";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+      refetchOnWindowFocus: false,
+      staleTime: 30_000,
+    },
+  },
+});
 
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
@@ -26,7 +35,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-      <BrowserRouter future={{ v7_relativeSplatPath: true }}>
+        <BrowserRouter future={{ v7_relativeSplatPath: true }}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/help" element={<HelpPage />} />
