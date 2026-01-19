@@ -461,53 +461,49 @@ export function ShareViewModal({ open, onOpenChange, teamId, employees, eventTyp
 
                     <div className="flex flex-wrap items-center gap-2 text-xs">
                       {link.includeGlobalLane && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="rounded-full bg-blue-50 text-blue-600 px-2 py-0.5 cursor-default">
-                                Global lane
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Includes global events in the timeline.</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="rounded-full bg-blue-50 text-blue-600 px-2 py-0.5 cursor-default">
+                              Global lane
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Includes global events in the timeline.</p>
+                          </TooltipContent>
+                        </Tooltip>
                       )}
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="rounded-full bg-slate-100 text-slate-600 px-2 py-0.5 cursor-default">
-                              {link.employeeIds && link.employeeIds.length > 0
-                                ? `${link.employeeIds.length} employee(s)`
-                                : 'All employees'}
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <div className="max-w-[240px] max-h-[160px] overflow-y-auto text-xs">
-                              {link.employeeNames && link.employeeNames.length > 0
-                                ? link.employeeNames.join(', ')
-                                : 'All employees included'}
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="rounded-full bg-purple-50 text-purple-600 px-2 py-0.5 cursor-default">
-                              {link.eventTypeIds && link.eventTypeIds.length > 0
-                                ? `${link.eventTypeIds.length} event type(s)`
-                                : 'All event types'}
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <div className="max-w-[240px] max-h-[160px] overflow-y-auto text-xs">
-                              {link.eventTypeNames && link.eventTypeNames.length > 0
-                                ? link.eventTypeNames.join(', ')
-                                : 'All event types included'}
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="rounded-full bg-slate-100 text-slate-600 px-2 py-0.5 cursor-default">
+                            {link.employeeIds && link.employeeIds.length > 0
+                              ? `${link.employeeIds.length} employee(s)`
+                              : 'All employees'}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <div className="max-w-[240px] max-h-[160px] overflow-y-auto text-xs">
+                            {link.employeeNames && link.employeeNames.length > 0
+                              ? link.employeeNames.join(', ')
+                              : 'All employees included'}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="rounded-full bg-purple-50 text-purple-600 px-2 py-0.5 cursor-default">
+                            {link.eventTypeIds && link.eventTypeIds.length > 0
+                              ? `${link.eventTypeIds.length} event type(s)`
+                              : 'All event types'}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <div className="max-w-[240px] max-h-[160px] overflow-y-auto text-xs">
+                            {link.eventTypeNames && link.eventTypeNames.length > 0
+                              ? link.eventTypeNames.join(', ')
+                              : 'All event types included'}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                   </div>
                 ))}
