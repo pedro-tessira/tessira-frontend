@@ -239,11 +239,11 @@ export default function AdminEventTypesPage() {
             <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">
               <div>
                 <CardTitle className="text-lg">{eventType.name}</CardTitle>
-                <CardDescription className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap text-sm text-muted-foreground">
                   <Badge variant="outline">{eventType.code}</Badge>
                   <Badge variant="secondary">{eventType.timelineScope}</Badge>
                   <Badge variant="secondary">{eventType.visibilityScope}</Badge>
-                </CardDescription>
+                </div>
               </div>
               <Badge
                 variant="secondary"
