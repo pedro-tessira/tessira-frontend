@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { AppHeader } from "./AppHeader";
 import { EventTypeDto, TeamDto, TeamEmployeeDto, TimelineEvent } from "@/lib/types";
+import { clearToken } from "@/lib/auth";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -37,6 +38,15 @@ export function MainLayout({
   onRemoveTeam,
   onLogout,
 }: MainLayoutProps) {
+  const handleLogout = () => {
+    if (onLogout) {
+      onLogout();
+      return;
+    }
+    clearToken();
+    window.location.assign("/");
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <AppHeader
@@ -52,7 +62,7 @@ export function MainLayout({
         onAddTeam={onAddTeam}
         onUpdateTeam={onUpdateTeam}
         onRemoveTeam={onRemoveTeam}
-        onLogout={onLogout}
+        onLogout={handleLogout}
       />
       <main className={fullWidth ? "flex-1 flex flex-col overflow-hidden" : "flex-1 container mx-auto p-6"}>
         {children}
