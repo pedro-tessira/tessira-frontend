@@ -6,6 +6,7 @@ import {
   EventScope,
   EventTypeConfig,
   EventTypeDto,
+  EventDto,
   TimelineEvent,
   TeamEmployeeDto,
   EventTypeVisibilityScope,
@@ -150,8 +151,15 @@ export function AppShell() {
 
   const { timelineEvents, eventsByRow } = useMemo(() => {
     const map = new Map<string, TimelineEvent[]>();
-    if (!timeline) return { timelineEvents: [], eventsByRow: map };
-    const companyEvents = timeline.globalLane.events.map(event => ({
+    if (!timeline || activeFilters.size === 0) {
+      return { timelineEvents: [], eventsByRow: map };
+    }
+    const isEventVisible = (event: EventDto) => {
+      const eventTypeId = event.eventTypeId ?? event.eventType?.id ?? null;
+      if (!eventTypeId) return false;
+      return activeFilters.has(eventTypeId);
+    };
+    const companyEvents = timeline.globalLane.events.filter(isEventVisible).map(event => ({
       ...event,
       eventTypeId: event.eventTypeId ?? event.eventType?.id ?? null,
       employeeId: null,
@@ -163,7 +171,8 @@ export function AppShell() {
     timeline.rows.forEach(row => {
       const expandedEvents = expandedEventsByEmployee.get(row.employee.id);
       const sourceEvents = expandedEvents ?? row.events;
-      const rowEvents = sourceEvents.map(event => ({
+      const visibleEvents = sourceEvents.filter(isEventVisible);
+      const rowEvents = visibleEvents.map(event => ({
         ...event,
         eventTypeId: event.eventTypeId ?? event.eventType?.id ?? null,
         employeeId: row.employee.id,
@@ -174,7 +183,7 @@ export function AppShell() {
       allEvents.push(...rowEvents);
     });
     return { timelineEvents: allEvents, eventsByRow: map };
-  }, [expandedEventsByEmployee, timeline]);
+  }, [activeFilters, expandedEventsByEmployee, timeline]);
 
   const aggregationByRow = useMemo(() => {
     const map = new Map<string, { hasMore: boolean; hiddenCount: number }>();
