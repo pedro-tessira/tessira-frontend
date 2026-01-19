@@ -63,6 +63,13 @@ export function ShareViewModal({ open, onOpenChange, teamId, employees, eventTyp
   );
   const canCreateShare = me?.role !== "USER" || isTeamOwner;
   const canRevokeShare = me?.role !== "USER" || isTeamOwner;
+  const visibleShareHistory = useMemo(() => {
+    if (!me?.employeeId) return [];
+    return shareHistory.filter(link => {
+      if (!link.employeeIds || link.employeeIds.length === 0) return true;
+      return link.employeeIds.includes(me.employeeId);
+    });
+  }, [me?.employeeId, shareHistory]);
 
   useEffect(() => {
     if (!limitEmployees) {
@@ -367,9 +374,9 @@ export function ShareViewModal({ open, onOpenChange, teamId, employees, eventTyp
               <p className="text-xs text-muted-foreground">Loading share links...</p>
             )}
 
-            {shareHistory.length > 0 ? (
+            {visibleShareHistory.length > 0 ? (
               <div className="space-y-2">
-                {shareHistory.map(link => (
+                {visibleShareHistory.map(link => (
                   <div key={link.id} className="rounded-lg border border-border bg-card p-3 space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
