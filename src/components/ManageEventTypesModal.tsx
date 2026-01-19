@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Pencil, Lock, User, Users, Building2, Globe } from 'lucide-react';
+import { Plus, Trash2, Pencil, User, Users, Building2, Globe } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -87,6 +87,7 @@ export function ManageEventTypesModal({
   const [editingEventTypeTimelineScope, setEditingEventTypeTimelineScope] = useState<EventTypeTimelineScope>('INDIVIDUAL');
   const [editingEventTypeVisibilityScope, setEditingEventTypeVisibilityScope] = useState<EventTypeVisibilityScope>('GLOBAL');
   const [editingEventTypeTeamIds, setEditingEventTypeTeamIds] = useState<string[]>([]);
+  const [editingEventTypeUserCreatable, setEditingEventTypeUserCreatable] = useState(true);
   const [editingCodeTouched, setEditingCodeTouched] = useState(false);
   
   const [isAddingEventType, setIsAddingEventType] = useState(false);
@@ -96,6 +97,7 @@ export function ManageEventTypesModal({
   const [newEventTypeTimelineScope, setNewEventTypeTimelineScope] = useState<EventTypeTimelineScope>('INDIVIDUAL');
   const [newEventTypeVisibilityScope, setNewEventTypeVisibilityScope] = useState<EventTypeVisibilityScope>('GLOBAL');
   const [newEventTypeTeamIds, setNewEventTypeTeamIds] = useState<string[]>([]);
+  const [newEventTypeUserCreatable, setNewEventTypeUserCreatable] = useState(true);
   const [newCodeTouched, setNewCodeTouched] = useState(false);
   
   const [deleteEventTypeConfirmOpen, setDeleteEventTypeConfirmOpen] = useState(false);
@@ -121,6 +123,7 @@ export function ManageEventTypesModal({
       setNewEventTypeTimelineScope('INDIVIDUAL');
       setNewEventTypeVisibilityScope('GLOBAL');
       setNewEventTypeTeamIds([]);
+      setNewEventTypeUserCreatable(true);
       setNewCodeTouched(false);
     }
   }, [open]);
@@ -149,6 +152,7 @@ export function ManageEventTypesModal({
     setEditingEventTypeTimelineScope(eventType.timelineScope);
     setEditingEventTypeVisibilityScope(eventType.visibilityScope);
     setEditingEventTypeTeamIds(eventType.teamIds || []);
+    setEditingEventTypeUserCreatable(eventType.userCreatable ?? true);
     setEditingCodeTouched(false);
   };
 
@@ -170,6 +174,7 @@ export function ManageEventTypesModal({
         timelineScope: editingEventTypeTimelineScope,
         visibilityScope: editingEventTypeVisibilityScope,
         teamIds: editingEventTypeVisibilityScope === 'TEAM' ? editingEventTypeTeamIds : undefined,
+        userCreatable: editingEventTypeUserCreatable,
       });
       setEditingEventTypeId(null);
     }
@@ -183,6 +188,7 @@ export function ManageEventTypesModal({
     setEditingEventTypeTimelineScope('INDIVIDUAL');
     setEditingEventTypeVisibilityScope('GLOBAL');
     setEditingEventTypeTeamIds([]);
+    setEditingEventTypeUserCreatable(true);
     setEditingCodeTouched(false);
   };
 
@@ -196,6 +202,7 @@ export function ManageEventTypesModal({
         timelineScope: newEventTypeTimelineScope,
         visibilityScope: newEventTypeVisibilityScope,
         teamIds: newEventTypeVisibilityScope === 'TEAM' ? newEventTypeTeamIds : undefined,
+        userCreatable: newEventTypeUserCreatable,
       });
       setNewEventTypeLabel('');
       setNewEventTypeCode('');
@@ -203,6 +210,7 @@ export function ManageEventTypesModal({
       setNewEventTypeTimelineScope('INDIVIDUAL');
       setNewEventTypeVisibilityScope('GLOBAL');
       setNewEventTypeTeamIds([]);
+      setNewEventTypeUserCreatable(true);
       setNewCodeTouched(false);
       setIsAddingEventType(false);
     }
@@ -364,6 +372,16 @@ export function ManageEventTypesModal({
                         ))}
                       </SelectContent>
                     </Select>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="new-user-creatable"
+                        checked={newEventTypeUserCreatable}
+                        onCheckedChange={(checked) => setNewEventTypeUserCreatable(checked === true)}
+                      />
+                      <Label htmlFor="new-user-creatable" className="text-sm cursor-pointer">
+                        Allow users to create
+                      </Label>
+                    </div>
                   </div>
 
                   {newEventTypeVisibilityScope === 'TEAM' && renderTeamSelector(
@@ -385,8 +403,6 @@ export function ManageEventTypesModal({
               {/* Event type list */}
               {eventTypeConfigs.map((eventType) => {
                 const count = events.filter(e => e.eventTypeId === eventType.id || e.eventType?.id === eventType.id).length;
-                const isLocked = eventType.source === 'WORKDAY';
-                const sourceLabel = eventType.source === 'WORKDAY' ? 'Workday' : 'Local';
                 const isEditing = editingEventTypeId === eventType.id;
 
                 if (isEditing) {
@@ -468,6 +484,16 @@ export function ManageEventTypesModal({
                             ))}
                           </SelectContent>
                         </Select>
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id="edit-user-creatable"
+                            checked={editingEventTypeUserCreatable}
+                            onCheckedChange={(checked) => setEditingEventTypeUserCreatable(checked === true)}
+                          />
+                          <Label htmlFor="edit-user-creatable" className="text-sm cursor-pointer">
+                            Allow users to create
+                          </Label>
+                        </div>
                       </div>
 
                       {editingEventTypeVisibilityScope === 'TEAM' && renderTeamSelector(
@@ -531,49 +557,33 @@ export function ManageEventTypesModal({
                       </Tooltip>
                     </TooltipProvider>
                     <span className="text-xs text-muted-foreground">{count} events</span>
-                    {isLocked ? (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Lock className="w-4 h-4 text-muted-foreground" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Managed by {sourceLabel}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    ) : (
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleStartEventTypeEdit(eventType)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Pencil className="w-4 h-4 text-muted-foreground" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setEventTypeToDelete(eventType.id);
-                            setDeleteEventTypeConfirmOpen(true);
-                          }}
-                          className="h-8 w-8 p-0 hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleStartEventTypeEdit(eventType)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Pencil className="w-4 h-4 text-muted-foreground" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setEventTypeToDelete(eventType.id);
+                          setDeleteEventTypeConfirmOpen(true);
+                        }}
+                        className="h-8 w-8 p-0 hover:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 );
               })}
             </div>
           
 
-          <p className="text-xs text-muted-foreground pt-2 border-t border-border mt-2">
-            Locked event types are managed by Workday and cannot be modified.
-          </p>
         </DialogContent>
       </Dialog>
 

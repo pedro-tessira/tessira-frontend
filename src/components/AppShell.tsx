@@ -601,6 +601,7 @@ export function AppShell() {
       visibilityScope: eventType.visibilityScope,
       timelineScope: eventType.timelineScope,
       teamIds: eventType.visibilityScope === 'TEAM' ? eventType.teamIds ?? [] : undefined,
+      userCreatable: eventType.userCreatable ?? true,
     }));
   }, [eventTypes]);
 

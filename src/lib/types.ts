@@ -91,6 +91,7 @@ export interface EventTypeConfig {
   visibilityScope: EventTypeVisibilityScope;
   timelineScope: EventTypeTimelineScope;
   teamIds?: string[];
+  userCreatable?: boolean;
 }
 
 export interface CreateShareRequest {

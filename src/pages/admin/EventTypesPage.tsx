@@ -65,7 +65,7 @@ export default function AdminEventTypesPage() {
         timelineScope: eventType.timelineScope,
         teamIds: normalizeTeamIds(eventType.visibilityScope, eventType.teamIds),
         color: eventType.color,
-        userCreatable: true,
+        userCreatable: eventType.userCreatable ?? true,
       },
       {
         onSuccess: () => {
@@ -99,7 +99,7 @@ export default function AdminEventTypesPage() {
           timelineScope: merged.timelineScope,
           teamIds: normalizeTeamIds(merged.visibilityScope, merged.teamIds),
           color: merged.color,
-          userCreatable: true,
+          userCreatable: merged.userCreatable ?? true,
         },
       },
       {
@@ -148,6 +148,7 @@ export default function AdminEventTypesPage() {
       visibilityScope: eventType.visibilityScope,
       timelineScope: eventType.timelineScope,
       teamIds: eventType.visibilityScope === "TEAM" ? eventType.teamIds ?? [] : undefined,
+      userCreatable: eventType.userCreatable ?? true,
     }));
   }, [eventTypes]);
 
