@@ -1,10 +1,29 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Search, RefreshCw, Link2, AlertTriangle } from "lucide-react";
+import { Plus, Search, RefreshCw, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useMe } from "@/queries/useMe";
 import { useTeams } from "@/queries/useTeams";
@@ -23,6 +42,7 @@ export default function AdminEventTypesPage() {
   const { data: eventTypes = [], isLoading } = useEventTypes(selectedTeamId);
   const [showManageModal, setShowManageModal] = useState(false);
   const [managedEventTypeId, setManagedEventTypeId] = useState<string | null>(null);
+  const [deleteEventTypeId, setDeleteEventTypeId] = useState<string | null>(null);
   const createEventTypeMutation = useCreateEventType(selectedTeamId);
   const updateEventTypeMutation = useUpdateEventType(selectedTeamId);
   const deleteEventTypeMutation = useDeleteEventType(selectedTeamId);
@@ -202,55 +222,63 @@ export default function AdminEventTypesPage() {
     });
   };
 
-  const renderEventTypeCard = (eventType: EventTypeConfig) => {
+  const renderEventTypeRow = (eventType: EventTypeConfig) => {
     const canManage = canManageEventType(eventType);
     return (
-      <Card key={eventType.id}>
-        <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">
+      <TableRow key={eventType.id}>
+        <TableCell>
           <div>
-            <CardTitle className="text-lg">{eventType.name}</CardTitle>
-            <div className="flex items-center gap-2 flex-wrap text-sm text-muted-foreground">
-              <Badge variant="outline">{eventType.code}</Badge>
-              <Badge variant="secondary">{eventType.timelineScope}</Badge>
-              <Badge variant="secondary">{eventType.visibilityScope}</Badge>
-              <Badge variant="secondary" className={eventType.userCreatable ? "" : "bg-muted text-muted-foreground"}>
-                {eventType.userCreatable ? "User Creatable" : "Admin Only"}
-              </Badge>
-            </div>
+            <p className="font-medium">{eventType.name}</p>
+            <p className="text-sm text-muted-foreground">{eventType.code}</p>
           </div>
-          <Badge
-            variant="secondary"
-            className={eventType.source === "WORKDAY" ? "bg-blue-50 text-blue-700" : ""}
-          >
-            {eventType.source === "WORKDAY" ? "HRIS: Workday" : "Local"}
+        </TableCell>
+        <TableCell>
+          <Badge variant="secondary">{eventType.timelineScope}</Badge>
+        </TableCell>
+        <TableCell>
+          <Badge variant="secondary">{eventType.visibilityScope}</Badge>
+        </TableCell>
+        <TableCell>
+          <Badge variant="secondary" className={eventType.userCreatable ? "" : "bg-muted text-muted-foreground"}>
+            {eventType.userCreatable ? "User Creatable" : "Admin Only"}
           </Badge>
-        </CardHeader>
-        <CardContent className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            {eventType.source === "WORKDAY" ? (
-              <Link2 className="w-4 h-4 text-primary" />
-            ) : (
-              <AlertTriangle className="w-4 h-4 text-amber-500" />
-            )}
-            {eventType.source === "WORKDAY"
-              ? "Linked to HRIS event type"
-              : "Local event type"}
+        </TableCell>
+        <TableCell className="text-right">
+          <div className="flex items-center justify-end gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => {
+                    setManagedEventTypeId(eventType.id);
+                    setShowManageModal(true);
+                  }}
+                  disabled={!canManage}
+                >
+                  <Pencil className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Edit</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 text-destructive"
+                  onClick={() => setDeleteEventTypeId(eventType.id)}
+                  disabled={!canManage}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Delete</TooltipContent>
+            </Tooltip>
           </div>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setManagedEventTypeId(eventType.id);
-                setShowManageModal(true);
-              }}
-              disabled={!canManage}
-            >
-              Manage
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        </TableCell>
+      </TableRow>
     );
   };
 
@@ -343,9 +371,24 @@ export default function AdminEventTypesPage() {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid gap-4">
-                  {hrisEventTypes.map(renderEventTypeCard)}
-                </div>
+                <Card>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Event Type</TableHead>
+                          <TableHead>Timeline</TableHead>
+                          <TableHead>Visibility</TableHead>
+                          <TableHead>User Access</TableHead>
+                          <TableHead className="w-12 text-right"></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {hrisEventTypes.map(renderEventTypeRow)}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
               )}
             </TabsContent>
             <TabsContent value="local" className="mt-4">
@@ -356,9 +399,24 @@ export default function AdminEventTypesPage() {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid gap-4">
-                  {localEventTypes.map(renderEventTypeCard)}
-                </div>
+                <Card>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Event Type</TableHead>
+                          <TableHead>Timeline</TableHead>
+                          <TableHead>Visibility</TableHead>
+                          <TableHead>User Access</TableHead>
+                          <TableHead className="w-12 text-right"></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {localEventTypes.map(renderEventTypeRow)}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
               )}
             </TabsContent>
           </Tabs>
@@ -385,6 +443,34 @@ export default function AdminEventTypesPage() {
         onUpdateEventType={handleUpdateEventType}
         onRemoveEventType={handleRemoveEventType}
       />
+
+      <AlertDialog open={!!deleteEventTypeId} onOpenChange={(open) => {
+        if (!open) {
+          setDeleteEventTypeId(null);
+        }
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Event Type</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this event type? All events of this type will be deleted as well. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!deleteEventTypeId) return;
+                handleRemoveEventType(deleteEventTypeId);
+                setDeleteEventTypeId(null);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
