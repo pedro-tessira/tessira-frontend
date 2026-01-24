@@ -131,6 +131,7 @@ export interface TeamDto {
   name: string;
   createdByUserId?: string | null;
   createdByName?: string | null;
+  createdByEmail?: string | null;
 }
 
 export interface EventDto {

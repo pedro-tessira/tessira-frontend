@@ -419,7 +419,9 @@ export function ManageTeamsModal({
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">Team Created By</label>
                     <div className="p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground">
-                      {managingTeam.createdByName ?? managingTeam.createdByUserId ?? "—"}
+                      {managingTeam.createdByName
+                        ? `${managingTeam.createdByName}${managingTeam.createdByEmail ? ` (${managingTeam.createdByEmail})` : ""}`
+                        : managingTeam.createdByEmail ?? managingTeam.createdByUserId ?? "—"}
                     </div>
                   </div>
 
