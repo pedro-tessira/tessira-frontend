@@ -653,6 +653,23 @@ export function AppShell() {
     if (me?.role === "ADMIN") {
       return teams;
     }
+    if (me?.role === "MANAGER") {
+      const createdTeams = me?.id
+        ? teams.filter(team => team.createdByUserId === me.id)
+        : [];
+      if (!me?.employeeId) {
+        return createdTeams;
+      }
+      const memberTeamIds = new Set(
+        allEmployees.filter(employee => employee.id === me.employeeId).map(employee => employee.teamId)
+      );
+      const combined = [
+        ...teams.filter(team => memberTeamIds.has(team.id)),
+        ...createdTeams,
+      ];
+      const deduped = new Map(combined.map(team => [team.id, team]));
+      return Array.from(deduped.values());
+    }
     if (!me?.employeeId) {
       return [];
     }
