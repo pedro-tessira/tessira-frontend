@@ -387,7 +387,16 @@ export function ManageEventTypesModal({
       )}
 
       <div className="flex gap-2 justify-end">
-        <Button size="sm" variant="ghost" onClick={handleCancelEventTypeEdit}>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            handleCancelEventTypeEdit();
+            if (singleRecordMode) {
+              handleClose();
+            }
+          }}
+        >
           Cancel
         </Button>
         <Button size="sm" onClick={handleSaveEventTypeEdit} disabled={!canEditEventType}>
@@ -525,7 +534,16 @@ export function ManageEventTypesModal({
                   )}
 
                   <div className="flex gap-2 justify-end">
-                    <Button size="sm" variant="ghost" onClick={() => setIsAddingEventType(false)}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setIsAddingEventType(false);
+                        if (singleRecordMode) {
+                          handleClose();
+                        }
+                      }}
+                    >
                       Cancel
                     </Button>
                     <Button size="sm" onClick={handleAddEventType} disabled={!newEventTypeLabel.trim()}>
