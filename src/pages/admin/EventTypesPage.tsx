@@ -47,6 +47,13 @@ export default function AdminEventTypesPage() {
   const updateEventTypeMutation = useUpdateEventType(selectedTeamId);
   const deleteEventTypeMutation = useDeleteEventType(selectedTeamId);
 
+  const managerTeamIds = useMemo(() => {
+    if (me?.role !== "MANAGER" || !me?.id) return [];
+    return teams.filter(team => team.createdByUserId === me.id).map(team => team.id);
+  }, [me?.id, me?.role, teams]);
+  const isAdmin = me?.role === "ADMIN";
+  const isManager = me?.role === "MANAGER";
+  const canCreateEventType = isAdmin || (isManager && managerTeamIds.length > 0);
   const teamOptions = useMemo(() => {
     if (!isManager) {
       return teams.map((team) => ({ label: team.name, value: team.id }));
@@ -55,13 +62,6 @@ export default function AdminEventTypesPage() {
       .filter((team) => managerTeamIds.includes(team.id))
       .map((team) => ({ label: team.name, value: team.id }));
   }, [isManager, managerTeamIds, teams]);
-  const managerTeamIds = useMemo(() => {
-    if (me?.role !== "MANAGER" || !me?.id) return [];
-    return teams.filter(team => team.createdByUserId === me.id).map(team => team.id);
-  }, [me?.id, me?.role, teams]);
-  const isAdmin = me?.role === "ADMIN";
-  const isManager = me?.role === "MANAGER";
-  const canCreateEventType = isAdmin || (isManager && managerTeamIds.length > 0);
 
   useEffect(() => {
     if (!selectedTeamId && teams.length > 0) {
