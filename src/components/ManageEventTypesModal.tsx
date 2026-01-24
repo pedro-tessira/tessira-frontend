@@ -287,6 +287,16 @@ export function ManageEventTypesModal({
     </div>
   );
 
+  const formatTeamSummary = (teamIds?: string[]) => {
+    if (!teamIds || teamIds.length === 0) return "No teams selected.";
+    const names = teamIds
+      .map((teamId) => teams.find((team) => team.id === teamId)?.name)
+      .filter(Boolean) as string[];
+    if (names.length === 0) return "No teams selected.";
+    if (names.length <= 3) return names.join(", ");
+    return `${names.slice(0, 3).join(", ")} +${names.length - 3}`;
+  };
+
   const renderEditForm = (eventTypeId: string, canEditEventType: boolean) => (
     <div key={eventTypeId} className="p-3 rounded-lg bg-muted/50 border border-primary/50 space-y-3">
       <div className="flex gap-2">
@@ -385,6 +395,11 @@ export function ManageEventTypesModal({
         editingEventTypeTeamIds,
         (teamId) => toggleTeamSelection(teamId, true)
       )}
+      <div className="text-xs text-muted-foreground">
+        {editingEventTypeVisibilityScope === "GLOBAL"
+          ? "Applies to all teams."
+          : `Selected teams: ${formatTeamSummary(editingEventTypeTeamIds)}`}
+      </div>
 
       <div className="flex gap-2 justify-end">
         <Button
@@ -532,6 +547,11 @@ export function ManageEventTypesModal({
                     newEventTypeTeamIds,
                     (teamId) => toggleTeamSelection(teamId, false)
                   )}
+                  <div className="text-xs text-muted-foreground">
+                    {newEventTypeVisibilityScope === "GLOBAL"
+                      ? "Applies to all teams."
+                      : `Selected teams: ${formatTeamSummary(newEventTypeTeamIds)}`}
+                  </div>
 
                   <div className="flex gap-2 justify-end">
                     <Button

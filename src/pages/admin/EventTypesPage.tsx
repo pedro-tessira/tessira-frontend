@@ -47,10 +47,14 @@ export default function AdminEventTypesPage() {
   const updateEventTypeMutation = useUpdateEventType(selectedTeamId);
   const deleteEventTypeMutation = useDeleteEventType(selectedTeamId);
 
-  const teamOptions = useMemo(
-    () => teams.map((team) => ({ label: team.name, value: team.id })),
-    [teams]
-  );
+  const teamOptions = useMemo(() => {
+    if (!isManager) {
+      return teams.map((team) => ({ label: team.name, value: team.id }));
+    }
+    return teams
+      .filter((team) => managerTeamIds.includes(team.id))
+      .map((team) => ({ label: team.name, value: team.id }));
+  }, [isManager, managerTeamIds, teams]);
   const managerTeamIds = useMemo(() => {
     if (me?.role !== "MANAGER" || !me?.id) return [];
     return teams.filter(team => team.createdByUserId === me.id).map(team => team.id);
@@ -224,6 +228,15 @@ export default function AdminEventTypesPage() {
 
   const renderEventTypeRow = (eventType: EventTypeConfig) => {
     const canManage = canManageEventType(eventType);
+    const teamLabel = (() => {
+      if (eventType.visibilityScope === "GLOBAL") return "All teams";
+      const teamNames = (eventType.teamIds ?? [])
+        .map((teamId) => teams.find((team) => team.id === teamId)?.name)
+        .filter(Boolean) as string[];
+      if (teamNames.length === 0) return "No teams";
+      if (teamNames.length <= 2) return teamNames.join(", ");
+      return `${teamNames.slice(0, 2).join(", ")} +${teamNames.length - 2}`;
+    })();
     return (
       <TableRow key={eventType.id}>
         <TableCell>
@@ -237,6 +250,9 @@ export default function AdminEventTypesPage() {
         </TableCell>
         <TableCell>
           <Badge variant="secondary">{eventType.visibilityScope}</Badge>
+        </TableCell>
+        <TableCell>
+          <span className="text-sm text-muted-foreground">{teamLabel}</span>
         </TableCell>
         <TableCell>
           <Badge variant="secondary" className={eventType.userCreatable ? "" : "bg-muted text-muted-foreground"}>
@@ -322,24 +338,6 @@ export default function AdminEventTypesPage() {
                 className="pl-9"
               />
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-muted-foreground">Team</label>
-              <select
-                value={selectedTeamId}
-                onChange={(event) => setSelectedTeamId(event.target.value)}
-                className="h-10 rounded-lg border border-border bg-background px-3 text-sm text-foreground"
-                disabled={teams.length === 0}
-              >
-                {teams.length === 0 ? (
-                  <option value="">No teams available</option>
-                ) : null}
-                {teamOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -359,10 +357,30 @@ export default function AdminEventTypesPage() {
           </Card>
         ) : (
           <Tabs defaultValue="hris" className="w-full">
-            <TabsList className="w-full justify-start">
-              <TabsTrigger value="hris">HRIS ({hrisEventTypes.length})</TabsTrigger>
-              <TabsTrigger value="local">Local ({localEventTypes.length})</TabsTrigger>
-            </TabsList>
+            <div className="flex items-center justify-between gap-3">
+              <TabsList className="justify-start">
+                <TabsTrigger value="hris">HRIS ({hrisEventTypes.length})</TabsTrigger>
+                <TabsTrigger value="local">Local ({localEventTypes.length})</TabsTrigger>
+              </TabsList>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-muted-foreground">Team</label>
+                <select
+                  value={selectedTeamId}
+                  onChange={(event) => setSelectedTeamId(event.target.value)}
+                  className="h-9 rounded-lg border border-border bg-background px-3 text-sm text-foreground"
+                  disabled={teamOptions.length === 0}
+                >
+                  {teamOptions.length === 0 ? (
+                    <option value="">No teams available</option>
+                  ) : null}
+                  {teamOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
             <TabsContent value="hris" className="mt-4">
               {hrisEventTypes.length === 0 ? (
                 <Card>
@@ -379,6 +397,7 @@ export default function AdminEventTypesPage() {
                           <TableHead>Event Type</TableHead>
                           <TableHead>Timeline</TableHead>
                           <TableHead>Visibility</TableHead>
+                          <TableHead>Teams</TableHead>
                           <TableHead>User Access</TableHead>
                           <TableHead className="w-12 text-right"></TableHead>
                         </TableRow>
@@ -407,6 +426,7 @@ export default function AdminEventTypesPage() {
                           <TableHead>Event Type</TableHead>
                           <TableHead>Timeline</TableHead>
                           <TableHead>Visibility</TableHead>
+                          <TableHead>Teams</TableHead>
                           <TableHead>User Access</TableHead>
                           <TableHead className="w-12 text-right"></TableHead>
                         </TableRow>
