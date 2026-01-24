@@ -85,7 +85,12 @@ export function AppShell() {
 
   const { data: employees = [] } = useEmployees(selectedTeamId, searchQuery);
   const { data: eventTypes = [] } = useEventTypes(selectedTeamId);
-  const canManageEventTypes = me?.role !== "USER";
+  const canManageEventTypes = useMemo(() => {
+    if (me?.role === "ADMIN") return true;
+    if (me?.role !== "MANAGER") return false;
+    if (!me?.id || !selectedTeamId) return false;
+    return teams.some(team => team.id === selectedTeamId && team.createdByUserId === me.id);
+  }, [me?.id, me?.role, selectedTeamId, teams]);
 
   useEffect(() => {
     if (!selectedTeamId || eventTypes.length === 0) return;
@@ -613,6 +618,18 @@ export function AppShell() {
       userCreatable: eventType.userCreatable ?? true,
     }));
   }, [eventTypes]);
+  const canManageEventType = useMemo(() => {
+    if (me?.role === "ADMIN") return () => true;
+    if (me?.role !== "MANAGER") return () => false;
+    if (!me?.id) return () => false;
+    const managerTeamIds = new Set(teams.filter(team => team.createdByUserId === me.id).map(team => team.id));
+    return (eventType: EventTypeConfig) => {
+      if (eventType.visibilityScope !== "TEAM") return false;
+      const teamIds = eventType.teamIds ?? [];
+      if (teamIds.length === 0) return false;
+      return teamIds.every(teamId => managerTeamIds.has(teamId));
+    };
+  }, [me?.id, me?.role, teams]);
 
   const manageEmployeesQueries = useQueries({
     queries: teams.map(team => ({
@@ -773,6 +790,8 @@ export function AppShell() {
           employees={allEmployees}
           events={timelineEvents}
           eventTypeConfigs={eventTypeConfigs}
+          restrictVisibilityScopeToTeam={me?.role === "MANAGER"}
+          canManageEventType={canManageEventType}
           onAddEventType={handleAddEventType}
           onUpdateEventType={handleUpdateEventType}
           onRemoveEventType={handleRemoveEventType}
