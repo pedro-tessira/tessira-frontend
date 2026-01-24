@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { X, Plus, Trash2, Pencil, Check, Crown, Users, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -27,7 +27,8 @@ interface ManageTeamsModalProps {
   employees: TeamEmployeeDto[];
   events: TimelineEvent[];
   selectedTeamId: string;
-  canDeleteTeam?: boolean;
+  currentUserId?: string | null;
+  currentUserRole?: string;
   onAddEmployee: (name: string, teamId: string) => void;
   onRemoveEmployee: (teamId: string, membershipId: string) => void;
   onUpdateEmployee: (teamId: string, membershipId: string, name: string, isOwner?: boolean) => void;
@@ -43,7 +44,8 @@ export function ManageTeamsModal({
   employees,
   events,
   selectedTeamId,
-  canDeleteTeam = true,
+  currentUserId,
+  currentUserRole,
   onAddEmployee,
   onRemoveEmployee,
   onUpdateEmployee,
@@ -134,8 +136,17 @@ export function ManageTeamsModal({
     }
   };
 
+  const canDeleteSelectedTeam = useMemo(() => {
+    if (!managingTeam) return false;
+    if (currentUserRole === "ADMIN") return true;
+    if (currentUserRole === "MANAGER" && currentUserId) {
+      return managingTeam.createdByUserId === currentUserId;
+    }
+    return false;
+  }, [currentUserId, currentUserRole, managingTeam]);
+
   const handleDeleteTeam = () => {
-    if (!managingTeamId) return;
+    if (!managingTeamId || !canDeleteSelectedTeam) return;
     onRemoveTeam(managingTeamId);
     const remainingTeam = teams.find(t => t.id !== managingTeamId);
     setManagingTeamId(remainingTeam?.id ?? '');
@@ -382,7 +393,7 @@ export function ManageTeamsModal({
 
                   {/* Delete Team */}
                   <div className="pt-4 border-t border-border">
-                    {canDeleteTeam && (
+                    {canDeleteSelectedTeam && (
                       <Button
                         variant="destructive"
                         size="sm"

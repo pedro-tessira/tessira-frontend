@@ -129,6 +129,8 @@ export interface ShareSummary {
 export interface TeamDto {
   id: string;
   name: string;
+  createdByUserId?: string | null;
+  createdByName?: string | null;
 }
 
 export interface EventDto {
