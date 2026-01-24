@@ -51,6 +51,8 @@ export default function AdminEventTypesPage() {
       eventType.code?.toLowerCase().includes(query)
     );
   });
+  const hrisEventTypes = filteredEventTypes.filter((eventType) => eventType.source === "WORKDAY");
+  const localEventTypes = filteredEventTypes.filter((eventType) => eventType.source !== "WORKDAY");
 
   const deriveEventTypeCode = (label: string) => {
     return label
@@ -199,6 +201,58 @@ export default function AdminEventTypesPage() {
     });
   };
 
+  const renderEventTypeCard = (eventType: EventTypeConfig) => {
+    const canManage = canManageEventType(eventType);
+    return (
+      <Card key={eventType.id}>
+        <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">
+          <div>
+            <CardTitle className="text-lg">{eventType.name}</CardTitle>
+            <div className="flex items-center gap-2 flex-wrap text-sm text-muted-foreground">
+              <Badge variant="outline">{eventType.code}</Badge>
+              <Badge variant="secondary">{eventType.timelineScope}</Badge>
+              <Badge variant="secondary">{eventType.visibilityScope}</Badge>
+              <Badge variant="secondary" className={eventType.userCreatable ? "" : "bg-muted text-muted-foreground"}>
+                {eventType.userCreatable ? "User Creatable" : "Admin Only"}
+              </Badge>
+            </div>
+          </div>
+          <Badge
+            variant="secondary"
+            className={eventType.source === "WORKDAY" ? "bg-blue-50 text-blue-700" : ""}
+          >
+            {eventType.source === "WORKDAY" ? "HRIS: Workday" : "Local"}
+          </Badge>
+        </CardHeader>
+        <CardContent className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            {eventType.source === "WORKDAY" ? (
+              <Link2 className="w-4 h-4 text-primary" />
+            ) : (
+              <AlertTriangle className="w-4 h-4 text-amber-500" />
+            )}
+            {eventType.source === "WORKDAY"
+              ? "Linked to HRIS event type"
+              : "Local event type"}
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setManagedEventTypeId(eventType.id);
+                setShowManageModal(true);
+              }}
+              disabled={!canManage}
+            >
+              Manage
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
@@ -261,7 +315,7 @@ export default function AdminEventTypesPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4">
+      <div className="space-y-4">
         {isLoading ? (
           <Card>
             <CardContent className="h-32 flex items-center justify-center text-sm text-muted-foreground">
@@ -275,57 +329,27 @@ export default function AdminEventTypesPage() {
             </CardContent>
           </Card>
         ) : (
-          filteredEventTypes.map((eventType) => {
-            const canManage = canManageEventType(eventType);
-            return (
-          <Card key={eventType.id}>
-            <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">
-              <div>
-                <CardTitle className="text-lg">{eventType.name}</CardTitle>
-                <div className="flex items-center gap-2 flex-wrap text-sm text-muted-foreground">
-                  <Badge variant="outline">{eventType.code}</Badge>
-                  <Badge variant="secondary">{eventType.timelineScope}</Badge>
-                  <Badge variant="secondary">{eventType.visibilityScope}</Badge>
-                  <Badge variant="secondary" className={eventType.userCreatable ? "" : "bg-muted text-muted-foreground"}>
-                    {eventType.userCreatable ? "User Creatable" : "Admin Only"}
-                  </Badge>
-                </div>
-              </div>
-              <Badge
-                variant="secondary"
-                className={eventType.source === "WORKDAY" ? "bg-blue-50 text-blue-700" : ""}
-              >
-                {eventType.source === "WORKDAY" ? "HRIS: Workday" : "Local"}
-              </Badge>
-            </CardHeader>
-            <CardContent className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                {eventType.source === "WORKDAY" ? (
-                  <Link2 className="w-4 h-4 text-primary" />
-                ) : (
-                  <AlertTriangle className="w-4 h-4 text-amber-500" />
-                )}
-                {eventType.source === "WORKDAY"
-                  ? "Linked to HRIS event type"
-                  : "Local event type"}
-              </div>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setManagedEventTypeId(eventType.id);
-                    setShowManageModal(true);
-                  }}
-                  disabled={!canManage}
-                >
-                  Manage
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        );
-          })
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                HRIS event types
+              </span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            <div className="grid gap-4">
+              {hrisEventTypes.map(renderEventTypeCard)}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Local event types
+              </span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            <div className="grid gap-4">
+              {localEventTypes.map(renderEventTypeCard)}
+            </div>
+          </div>
         )}
       </div>
 
