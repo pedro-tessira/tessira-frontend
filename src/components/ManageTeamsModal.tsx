@@ -135,14 +135,11 @@ export function ManageTeamsModal({
   };
 
   const handleDeleteTeam = () => {
-    if (managingTeamId && teams.length > 1) {
-      onRemoveTeam(managingTeamId);
-      const remainingTeam = teams.find(t => t.id !== managingTeamId);
-      if (remainingTeam) {
-        setManagingTeamId(remainingTeam.id);
-      }
-      setDeleteConfirmOpen(false);
-    }
+    if (!managingTeamId) return;
+    onRemoveTeam(managingTeamId);
+    const remainingTeam = teams.find(t => t.id !== managingTeamId);
+    setManagingTeamId(remainingTeam?.id ?? '');
+    setDeleteConfirmOpen(false);
   };
 
   const handleAddMember = () => {
@@ -386,23 +383,15 @@ export function ManageTeamsModal({
                   {/* Delete Team */}
                   <div className="pt-4 border-t border-border">
                     {canDeleteTeam && (
-                      <>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => setDeleteConfirmOpen(true)}
-                          disabled={teams.length === 1}
-                          className="w-full"
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete Team
-                        </Button>
-                        {teams.length === 1 && (
-                          <p className="text-xs text-muted-foreground mt-2 text-center">
-                            Cannot delete the last team.
-                          </p>
-                        )}
-                      </>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setDeleteConfirmOpen(true)}
+                        className="w-full"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete Team
+                      </Button>
                     )}
                   </div>
                 </div>
