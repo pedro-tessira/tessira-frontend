@@ -245,6 +245,7 @@ export function AppHeader({
                 events={events}
                 selectedTeamId={selectedTeamId}
                 currentUserId={me?.id}
+                currentUserEmployeeId={me?.employeeId ?? null}
                 currentUserRole={me?.role}
                 onAddEmployee={onAddEmployee}
                 onRemoveEmployee={onRemoveEmployee}

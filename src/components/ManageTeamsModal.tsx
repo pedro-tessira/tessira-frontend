@@ -28,6 +28,7 @@ interface ManageTeamsModalProps {
   events: TimelineEvent[];
   selectedTeamId: string;
   currentUserId?: string | null;
+  currentUserEmployeeId?: string | null;
   currentUserRole?: string;
   onAddEmployee: (name: string, teamId: string) => void;
   onRemoveEmployee: (teamId: string, membershipId: string) => void;
@@ -45,6 +46,7 @@ export function ManageTeamsModal({
   events,
   selectedTeamId,
   currentUserId,
+  currentUserEmployeeId,
   currentUserRole,
   onAddEmployee,
   onRemoveEmployee,
@@ -129,7 +131,20 @@ export function ManageTeamsModal({
     }
   };
 
+  const canEditSelectedTeam = useMemo(() => {
+    if (!managingTeam) return false;
+    if (currentUserRole === "ADMIN") return true;
+    if (currentUserRole === "MANAGER" && currentUserId) {
+      return managingTeam.createdByUserId === currentUserId;
+    }
+    if (currentUserEmployeeId) {
+      return teamEmployees.some(employee => employee.id === currentUserEmployeeId && employee.isOwner);
+    }
+    return false;
+  }, [currentUserEmployeeId, currentUserId, currentUserRole, managingTeam, teamEmployees]);
+
   const handleSaveTeamName = () => {
+    if (!canEditSelectedTeam) return;
     if (managingTeamId && editingTeamName.trim()) {
       onUpdateTeam(managingTeamId, editingTeamName.trim());
       setIsEditingTeamName(false);
@@ -154,6 +169,7 @@ export function ManageTeamsModal({
   };
 
   const handleAddMember = () => {
+    if (!canEditSelectedTeam) return;
     if (newMemberName.trim()) {
       onAddEmployee(newMemberName.trim(), managingTeamId);
       setNewMemberName('');
@@ -163,11 +179,13 @@ export function ManageTeamsModal({
   };
 
   const handleStartMemberEdit = (employee: TeamEmployeeDto) => {
+    if (!canEditSelectedTeam) return;
     setEditingMemberId(employee.id);
     setEditingMemberName(getEmployeeName(employee));
   };
 
   const handleSaveMemberEdit = () => {
+    if (!canEditSelectedTeam) return;
     if (editingMemberId && editingMemberName.trim()) {
       const employee = employees.find(e => e.id === editingMemberId);
       if (employee?.membershipId) {
@@ -179,6 +197,7 @@ export function ManageTeamsModal({
   };
 
   const handleToggleOwner = (employee: TeamEmployeeDto) => {
+    if (!canEditSelectedTeam) return;
     if (!employee.membershipId) return;
     onUpdateEmployee(managingTeamId, employee.membershipId, getEmployeeName(employee), !employee.isOwner);
   };
@@ -348,11 +367,16 @@ export function ManageTeamsModal({
                       </div>
                     ) : (
                       <div
-                        className="flex items-center justify-between p-3 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors"
-                        onClick={() => setIsEditingTeamName(true)}
+                        className={`flex items-center justify-between p-3 rounded-lg bg-muted/50 transition-colors ${
+                          canEditSelectedTeam ? "cursor-pointer hover:bg-muted" : ""
+                        }`}
+                        onClick={() => {
+                          if (!canEditSelectedTeam) return;
+                          setIsEditingTeamName(true);
+                        }}
                       >
                         <span className="text-foreground">{managingTeam.name}</span>
-                        <Pencil className="w-4 h-4 text-muted-foreground" />
+                        {canEditSelectedTeam && <Pencil className="w-4 h-4 text-muted-foreground" />}
                       </div>
                     )}
                   </div>
@@ -392,8 +416,8 @@ export function ManageTeamsModal({
                   </div>
 
                   {/* Delete Team */}
-                  <div className="pt-4 border-t border-border">
-                    {canDeleteSelectedTeam && (
+                  {canDeleteSelectedTeam && (
+                    <div className="pt-4 border-t border-border">
                       <Button
                         variant="destructive"
                         size="sm"
@@ -403,90 +427,92 @@ export function ManageTeamsModal({
                         <Trash2 className="w-4 h-4 mr-2" />
                         Delete Team
                       </Button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
 
               {/* Members Tab */}
               <TabsContent value="members" className="mt-4 space-y-4">
                 {/* Add new member */}
-                <div className="flex">
-                  <div className="relative flex-1">
-                    <Input
-                      placeholder="Add new member..."
-                      value={newMemberName}
-                      onChange={(e) => handleMemberSearch(e.target.value)}
-                      onFocus={() => setShowMemberSuggestions(true)}
-                      onBlur={() => {
-                        window.setTimeout(() => setShowMemberSuggestions(false), 100);
-                      }}
-                      onKeyDown={(event) => {
-                        if (!showMemberSuggestions) return;
-                        if (event.key === 'ArrowDown') {
-                          event.preventDefault();
-                          setHighlightedMemberIndex((prev) => {
-                            if (memberSearchResults.length === 0) return -1;
-                            return prev >= memberSearchResults.length - 1 ? 0 : prev + 1;
-                          });
-                        }
-                        if (event.key === 'ArrowUp') {
-                          event.preventDefault();
-                          setHighlightedMemberIndex((prev) => {
-                            if (memberSearchResults.length === 0) return -1;
-                            return prev <= 0 ? memberSearchResults.length - 1 : prev - 1;
-                          });
-                        }
-                        if (event.key === 'Enter') {
-                          if (highlightedMemberIndex < 0) return;
-                          const selected = memberSearchResults[highlightedMemberIndex];
-                          if (!selected) return;
-                          event.preventDefault();
-                          handleSelectMember(selected);
-                        }
-                        if (event.key === 'Escape') {
-                          setShowMemberSuggestions(false);
-                        }
-                      }}
-                      className="flex-1"
-                    />
-                    {showMemberSuggestions && (
-                      <div className="absolute z-20 mt-1 w-full rounded-md border border-border bg-popover shadow-md">
-                        <div className="max-h-56 overflow-y-auto py-1">
-                          {newMemberName.trim().length < 2 && (
-                            <div className="px-3 py-2 text-xs text-muted-foreground">
-                              Type at least 2 characters to search.
-                            </div>
-                          )}
-                          {isSearchingMembers && (
-                            <div className="px-3 py-2 text-xs text-muted-foreground flex items-center gap-2">
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              Searching...
-                            </div>
-                          )}
-                          {!isSearchingMembers && newMemberName.trim().length >= 2 && memberSearchResults.length === 0 && (
-                            <div className="px-3 py-2 text-xs text-muted-foreground">
-                              No matches found
-                            </div>
-                          )}
-                          {!isSearchingMembers && memberSearchResults.map((employee, index) => (
-                            <button
-                              key={employee.id}
-                              type="button"
-                              onMouseDown={() => handleSelectMember(employee)}
-                              className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                                index === highlightedMemberIndex ? 'bg-muted' : 'hover:bg-muted'
-                              }`}
-                            >
-                              <div className="font-medium text-foreground">{getEmployeeName(employee)}</div>
-                              <div className="text-xs text-muted-foreground">{employee.email}</div>
-                            </button>
-                          ))}
+                {canEditSelectedTeam && (
+                  <div className="flex">
+                    <div className="relative flex-1">
+                      <Input
+                        placeholder="Add new member..."
+                        value={newMemberName}
+                        onChange={(e) => handleMemberSearch(e.target.value)}
+                        onFocus={() => setShowMemberSuggestions(true)}
+                        onBlur={() => {
+                          window.setTimeout(() => setShowMemberSuggestions(false), 100);
+                        }}
+                        onKeyDown={(event) => {
+                          if (!showMemberSuggestions) return;
+                          if (event.key === 'ArrowDown') {
+                            event.preventDefault();
+                            setHighlightedMemberIndex((prev) => {
+                              if (memberSearchResults.length === 0) return -1;
+                              return prev >= memberSearchResults.length - 1 ? 0 : prev + 1;
+                            });
+                          }
+                          if (event.key === 'ArrowUp') {
+                            event.preventDefault();
+                            setHighlightedMemberIndex((prev) => {
+                              if (memberSearchResults.length === 0) return -1;
+                              return prev <= 0 ? memberSearchResults.length - 1 : prev - 1;
+                            });
+                          }
+                          if (event.key === 'Enter') {
+                            if (highlightedMemberIndex < 0) return;
+                            const selected = memberSearchResults[highlightedMemberIndex];
+                            if (!selected) return;
+                            event.preventDefault();
+                            handleSelectMember(selected);
+                          }
+                          if (event.key === 'Escape') {
+                            setShowMemberSuggestions(false);
+                          }
+                        }}
+                        className="flex-1"
+                      />
+                      {showMemberSuggestions && (
+                        <div className="absolute z-20 mt-1 w-full rounded-md border border-border bg-popover shadow-md">
+                          <div className="max-h-56 overflow-y-auto py-1">
+                            {newMemberName.trim().length < 2 && (
+                              <div className="px-3 py-2 text-xs text-muted-foreground">
+                                Type at least 2 characters to search.
+                              </div>
+                            )}
+                            {isSearchingMembers && (
+                              <div className="px-3 py-2 text-xs text-muted-foreground flex items-center gap-2">
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                Searching...
+                              </div>
+                            )}
+                            {!isSearchingMembers && newMemberName.trim().length >= 2 && memberSearchResults.length === 0 && (
+                              <div className="px-3 py-2 text-xs text-muted-foreground">
+                                No matches found
+                              </div>
+                            )}
+                            {!isSearchingMembers && memberSearchResults.map((employee, index) => (
+                              <button
+                                key={employee.id}
+                                type="button"
+                                onMouseDown={() => handleSelectMember(employee)}
+                                className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                                  index === highlightedMemberIndex ? 'bg-muted' : 'hover:bg-muted'
+                                }`}
+                              >
+                                <div className="font-medium text-foreground">{getEmployeeName(employee)}</div>
+                                <div className="text-xs text-muted-foreground">{employee.email}</div>
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Member list */}
                 <div className="space-y-2 max-h-[280px] overflow-y-auto">
@@ -545,62 +571,64 @@ export function ManageTeamsModal({
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => handleToggleOwner(employee)}
-                                      className={`h-8 w-8 p-0 ${employee.isOwner ? 'text-primary' : ''}`}
-                                    >
-                                      <Crown className="w-4 h-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>{employee.isOwner ? 'Remove owner' : 'Make owner'}</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => handleStartMemberEdit(employee)}
-                                      className="h-8 w-8 p-0"
-                                    >
-                                      <Pencil className="w-4 h-4 text-muted-foreground" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Edit member</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => {
-                                        if (!employee.membershipId) return;
-                                        onRemoveEmployee(managingTeamId, employee.membershipId);
-                                      }}
-                                      className="h-8 w-8 p-0 hover:text-destructive"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Remove member</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </div>
+                            {canEditSelectedTeam && (
+                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => handleToggleOwner(employee)}
+                                        className={`h-8 w-8 p-0 ${employee.isOwner ? 'text-primary' : ''}`}
+                                      >
+                                        <Crown className="w-4 h-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>{employee.isOwner ? 'Remove owner' : 'Make owner'}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => handleStartMemberEdit(employee)}
+                                        className="h-8 w-8 p-0"
+                                      >
+                                        <Pencil className="w-4 h-4 text-muted-foreground" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Edit member</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => {
+                                          if (!employee.membershipId) return;
+                                          onRemoveEmployee(managingTeamId, employee.membershipId);
+                                        }}
+                                        className="h-8 w-8 p-0 hover:text-destructive"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Remove member</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
+                            )}
                           </>
                         )}
                       </div>
