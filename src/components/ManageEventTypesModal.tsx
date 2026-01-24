@@ -61,6 +61,7 @@ interface ManageEventTypesModalProps {
   events: TimelineEvent[];
   eventTypeConfigs: EventTypeConfig[];
   currentUserId?: string; // To determine owned teams
+  restrictVisibilityScopeToTeam?: boolean;
   onAddEventType: (eventType: Omit<EventTypeConfig, 'id'>) => void;
   onUpdateEventType: (eventTypeId: string, updates: Partial<EventTypeConfig>) => void;
   onRemoveEventType: (eventTypeId: string) => void;
@@ -75,6 +76,7 @@ export function ManageEventTypesModal({
   events,
   eventTypeConfigs,
   currentUserId,
+  restrictVisibilityScopeToTeam = false,
   onAddEventType,
   onUpdateEventType,
   onRemoveEventType,
@@ -121,12 +123,12 @@ export function ManageEventTypesModal({
       setNewEventTypeCode('');
       setNewEventTypeColor('#3b82f6');
       setNewEventTypeTimelineScope('INDIVIDUAL');
-      setNewEventTypeVisibilityScope('GLOBAL');
+      setNewEventTypeVisibilityScope(restrictVisibilityScopeToTeam ? 'TEAM' : 'GLOBAL');
       setNewEventTypeTeamIds([]);
       setNewEventTypeUserCreatable(true);
       setNewCodeTouched(false);
     }
-  }, [open]);
+  }, [open, restrictVisibilityScopeToTeam]);
 
   useEffect(() => {
     if (!newCodeTouched) {
@@ -150,7 +152,7 @@ export function ManageEventTypesModal({
     setEditingEventTypeCode(eventType.code);
     setEditingEventTypeColor(resolvedColor);
     setEditingEventTypeTimelineScope(eventType.timelineScope);
-    setEditingEventTypeVisibilityScope(eventType.visibilityScope);
+    setEditingEventTypeVisibilityScope(restrictVisibilityScopeToTeam ? 'TEAM' : eventType.visibilityScope);
     setEditingEventTypeTeamIds(eventType.teamIds || []);
     setEditingEventTypeUserCreatable(eventType.userCreatable ?? true);
     setEditingCodeTouched(false);
@@ -354,7 +356,11 @@ export function ManageEventTypesModal({
                         ))}
                       </SelectContent>
                     </Select>
-                    <Select value={newEventTypeVisibilityScope} onValueChange={(v) => setNewEventTypeVisibilityScope(v as EventTypeVisibilityScope)}>
+                    <Select
+                      value={newEventTypeVisibilityScope}
+                      onValueChange={(v) => setNewEventTypeVisibilityScope(v as EventTypeVisibilityScope)}
+                      disabled={restrictVisibilityScopeToTeam}
+                    >
                       <SelectTrigger className="w-[150px]">
                         <div className="flex items-center gap-2">
                           {visibilityScopeLabels[newEventTypeVisibilityScope].icon}
@@ -466,7 +472,11 @@ export function ManageEventTypesModal({
                             ))}
                           </SelectContent>
                         </Select>
-                        <Select value={editingEventTypeVisibilityScope} onValueChange={(v) => setEditingEventTypeVisibilityScope(v as EventTypeVisibilityScope)}>
+                        <Select
+                          value={editingEventTypeVisibilityScope}
+                          onValueChange={(v) => setEditingEventTypeVisibilityScope(v as EventTypeVisibilityScope)}
+                          disabled={restrictVisibilityScopeToTeam}
+                        >
                           <SelectTrigger className="w-[150px]">
                             <div className="flex items-center gap-2">
                               {visibilityScopeLabels[editingEventTypeVisibilityScope].icon}

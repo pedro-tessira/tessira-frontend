@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useMe } from "@/queries/useMe";
 import { useTeams } from "@/queries/useTeams";
 import { useEventTypes } from "@/queries/useEventTypes";
 import { ManageEventTypesModal } from "@/components/ManageEventTypesModal";
@@ -14,6 +15,7 @@ import { useCreateEventType, useDeleteEventType, useUpdateEventType } from "@/qu
 
 export default function AdminEventTypesPage() {
   const { toast } = useToast();
+  const { data: me } = useMe();
   const [searchQuery, setSearchQuery] = useState("");
   const { data: teams = [] } = useTeams();
   const [selectedTeamId, setSelectedTeamId] = useState("");
@@ -28,6 +30,13 @@ export default function AdminEventTypesPage() {
     () => teams.map((team) => ({ label: team.name, value: team.id })),
     [teams]
   );
+  const managerTeamIds = useMemo(() => {
+    if (me?.role !== "MANAGER" || !me?.id) return [];
+    return teams.filter(team => team.createdByUserId === me.id).map(team => team.id);
+  }, [me?.id, me?.role, teams]);
+  const isAdmin = me?.role === "ADMIN";
+  const isManager = me?.role === "MANAGER";
+  const canCreateEventType = isAdmin || (isManager && managerTeamIds.length > 0);
 
   useEffect(() => {
     if (!selectedTeamId && teams.length > 0) {
@@ -57,6 +66,14 @@ export default function AdminEventTypesPage() {
   };
 
   const handleAddEventType = (eventType: Omit<EventTypeConfig, "id">) => {
+    if (!canCreateEventType) {
+      toast({
+        title: "Not allowed",
+        description: "You do not have permission to create event types.",
+        variant: "destructive",
+      });
+      return;
+    }
     createEventTypeMutation.mutate(
       {
         name: eventType.label,
@@ -88,6 +105,20 @@ export default function AdminEventTypesPage() {
   const handleUpdateEventType = (eventTypeId: string, updates: Partial<EventTypeConfig>) => {
     const existing = eventTypeConfigs.find((eventType) => eventType.id === eventTypeId);
     if (!existing) return;
+    if (isManager) {
+      const teamIds = existing.teamIds ?? [];
+      const isEditable = existing.visibilityScope === "TEAM" &&
+        teamIds.length > 0 &&
+        teamIds.every(teamId => managerTeamIds.includes(teamId));
+      if (!isEditable) {
+        toast({
+          title: "Not allowed",
+          description: "Managers can only edit event types for teams they created.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
     const merged: EventTypeConfig = { ...existing, ...updates };
     updateEventTypeMutation.mutate(
       {
@@ -152,6 +183,15 @@ export default function AdminEventTypesPage() {
     }));
   }, [eventTypes]);
 
+  const canManageEventType = (eventType: EventTypeConfig) => {
+    if (isAdmin) return true;
+    if (!isManager) return false;
+    if (eventType.visibilityScope !== "TEAM") return false;
+    const teamIds = eventType.teamIds ?? [];
+    if (teamIds.length === 0) return false;
+    return teamIds.every(teamId => managerTeamIds.includes(teamId));
+  };
+
   const handleSyncAll = () => {
     toast({
       title: "Sync started",
@@ -179,6 +219,7 @@ export default function AdminEventTypesPage() {
               setManagedEventTypeId(null);
               setShowManageModal(true);
             }}
+            disabled={!canCreateEventType}
           >
             <Plus className="w-4 h-4" />
             New Event Type
@@ -234,7 +275,9 @@ export default function AdminEventTypesPage() {
             </CardContent>
           </Card>
         ) : (
-          filteredEventTypes.map((eventType) => (
+          filteredEventTypes.map((eventType) => {
+            const canManage = canManageEventType(eventType);
+            return (
           <Card key={eventType.id}>
             <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">
               <div>
@@ -274,13 +317,15 @@ export default function AdminEventTypesPage() {
                     setManagedEventTypeId(eventType.id);
                     setShowManageModal(true);
                   }}
+                  disabled={!canManage}
                 >
                   Manage
                 </Button>
               </div>
             </CardContent>
           </Card>
-        ))
+        );
+          })
         )}
       </div>
 
@@ -293,10 +338,11 @@ export default function AdminEventTypesPage() {
           }
         }}
         initialEventTypeId={managedEventTypeId}
-        teams={teams}
+        teams={isManager ? teams.filter(team => managerTeamIds.includes(team.id)) : teams}
         employees={[]}
         events={[]}
         eventTypeConfigs={eventTypeConfigs}
+        restrictVisibilityScopeToTeam={isManager}
         onAddEventType={handleAddEventType}
         onUpdateEventType={handleUpdateEventType}
         onRemoveEventType={handleRemoveEventType}
