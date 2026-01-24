@@ -33,7 +33,7 @@ export async function apiFetch<T>(
     headers,
   });
 
-  if (!skipAuthRedirect && (response.status === 401 || response.status === 403)) {
+  if (!skipAuthRedirect && response.status === 401) {
     try {
       localStorage.setItem(
         "lastAuthError",
