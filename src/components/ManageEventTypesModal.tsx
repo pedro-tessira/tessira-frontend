@@ -85,6 +85,9 @@ export function ManageEventTypesModal({
   onUpdateEventType,
   onRemoveEventType,
 }: ManageEventTypesModalProps) {
+  const handleClose = () => {
+    onOpenChange(false);
+  };
   // Event type editing state
   const [editingEventTypeId, setEditingEventTypeId] = useState<string | null>(null);
   const [editingEventTypeLabel, setEditingEventTypeLabel] = useState('');
@@ -187,6 +190,9 @@ export function ManageEventTypesModal({
         userCreatable: editingEventTypeUserCreatable,
       });
       setEditingEventTypeId(null);
+      if (singleRecordMode) {
+        handleClose();
+      }
     }
   };
 
@@ -223,6 +229,9 @@ export function ManageEventTypesModal({
       setNewEventTypeUserCreatable(true);
       setNewCodeTouched(false);
       setIsAddingEventType(false);
+      if (singleRecordMode) {
+        handleClose();
+      }
     }
   };
 
