@@ -3,6 +3,7 @@ import { Plus, Search, RefreshCw, Link2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useMe } from "@/queries/useMe";
@@ -329,27 +330,38 @@ export default function AdminEventTypesPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                HRIS event types
-              </span>
-              <div className="h-px flex-1 bg-border" />
-            </div>
-            <div className="grid gap-4">
-              {hrisEventTypes.map(renderEventTypeCard)}
-            </div>
-
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Local event types
-              </span>
-              <div className="h-px flex-1 bg-border" />
-            </div>
-            <div className="grid gap-4">
-              {localEventTypes.map(renderEventTypeCard)}
-            </div>
-          </div>
+          <Tabs defaultValue="hris" className="w-full">
+            <TabsList className="w-full justify-start">
+              <TabsTrigger value="hris">HRIS ({hrisEventTypes.length})</TabsTrigger>
+              <TabsTrigger value="local">Local ({localEventTypes.length})</TabsTrigger>
+            </TabsList>
+            <TabsContent value="hris" className="mt-4">
+              {hrisEventTypes.length === 0 ? (
+                <Card>
+                  <CardContent className="h-24 flex items-center justify-center text-sm text-muted-foreground">
+                    No HRIS event types found.
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-4">
+                  {hrisEventTypes.map(renderEventTypeCard)}
+                </div>
+              )}
+            </TabsContent>
+            <TabsContent value="local" className="mt-4">
+              {localEventTypes.length === 0 ? (
+                <Card>
+                  <CardContent className="h-24 flex items-center justify-center text-sm text-muted-foreground">
+                    No local event types found.
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-4">
+                  {localEventTypes.map(renderEventTypeCard)}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         )}
       </div>
 
