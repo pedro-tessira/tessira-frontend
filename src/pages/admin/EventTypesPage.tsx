@@ -343,6 +343,7 @@ export default function AdminEventTypesPage() {
         events={[]}
         eventTypeConfigs={eventTypeConfigs}
         restrictVisibilityScopeToTeam={isManager}
+        canManageEventType={canManageEventType}
         onAddEventType={handleAddEventType}
         onUpdateEventType={handleUpdateEventType}
         onRemoveEventType={handleRemoveEventType}

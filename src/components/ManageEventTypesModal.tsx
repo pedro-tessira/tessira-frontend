@@ -62,6 +62,7 @@ interface ManageEventTypesModalProps {
   eventTypeConfigs: EventTypeConfig[];
   currentUserId?: string; // To determine owned teams
   restrictVisibilityScopeToTeam?: boolean;
+  canManageEventType?: (eventType: EventTypeConfig) => boolean;
   onAddEventType: (eventType: Omit<EventTypeConfig, 'id'>) => void;
   onUpdateEventType: (eventTypeId: string, updates: Partial<EventTypeConfig>) => void;
   onRemoveEventType: (eventTypeId: string) => void;
@@ -77,6 +78,7 @@ export function ManageEventTypesModal({
   eventTypeConfigs,
   currentUserId,
   restrictVisibilityScopeToTeam = false,
+  canManageEventType,
   onAddEventType,
   onUpdateEventType,
   onRemoveEventType,
@@ -113,6 +115,7 @@ export function ManageEventTypesModal({
   
   // For demo, show all teams as available for selection
   const availableTeams = teams;
+  const canManage = (eventType: EventTypeConfig) => canManageEventType?.(eventType) ?? true;
 
   // Reset state when modal opens
   useEffect(() => {
@@ -410,8 +413,31 @@ export function ManageEventTypesModal({
               {eventTypeConfigs.map((eventType) => {
                 const count = events.filter(e => e.eventTypeId === eventType.id || e.eventType?.id === eventType.id).length;
                 const isEditing = editingEventTypeId === eventType.id;
+                const canEditEventType = canManage(eventType);
 
                 if (isEditing) {
+                  if (!canEditEventType) {
+                    return (
+                      <div
+                        key={eventType.id}
+                        className="flex items-center gap-3 p-3 rounded-lg bg-muted/50"
+                      >
+                        <div
+                          className="w-4 h-4 rounded-full"
+                          style={{ backgroundColor: isHexColor(eventType.color) ? eventType.color : colorOptions[0]?.value }}
+                        />
+                        <div className="flex-1">
+                          <span className="text-sm text-foreground">{eventType.label}</span>
+                          {eventType.visibilityScope === 'TEAM' && eventType.teamIds && eventType.teamIds.length > 0 && (
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              ({eventType.teamIds.length} team{eventType.teamIds.length !== 1 ? 's' : ''})
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground">{count} events</span>
+                      </div>
+                    );
+                  }
                   return (
                     <div key={eventType.id} className="p-3 rounded-lg bg-muted/50 border border-primary/50 space-y-3">
                       <div className="flex gap-2">
@@ -515,7 +541,7 @@ export function ManageEventTypesModal({
                         <Button size="sm" variant="ghost" onClick={handleCancelEventTypeEdit}>
                           Cancel
                         </Button>
-                        <Button size="sm" onClick={handleSaveEventTypeEdit}>
+                        <Button size="sm" onClick={handleSaveEventTypeEdit} disabled={!canEditEventType}>
                           Save
                         </Button>
                       </div>
@@ -567,27 +593,29 @@ export function ManageEventTypesModal({
                       </Tooltip>
                     </TooltipProvider>
                     <span className="text-xs text-muted-foreground">{count} events</span>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleStartEventTypeEdit(eventType)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Pencil className="w-4 h-4 text-muted-foreground" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setEventTypeToDelete(eventType.id);
-                          setDeleteEventTypeConfirmOpen(true);
-                        }}
-                        className="h-8 w-8 p-0 hover:text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    {canEditEventType && (
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleStartEventTypeEdit(eventType)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Pencil className="w-4 h-4 text-muted-foreground" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setEventTypeToDelete(eventType.id);
+                            setDeleteEventTypeConfirmOpen(true);
+                          }}
+                          className="h-8 w-8 p-0 hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 );
               })}
