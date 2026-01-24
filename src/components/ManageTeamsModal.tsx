@@ -415,6 +415,14 @@ export function ManageTeamsModal({
                     </div>
                   </div>
 
+                  {/* Team Created By */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Team Created By</label>
+                    <div className="p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground">
+                      {managingTeam.createdByName ?? managingTeam.createdByUserId ?? "—"}
+                    </div>
+                  </div>
+
                   {/* Delete Team */}
                   {canDeleteSelectedTeam && (
                     <div className="pt-4 border-t border-border">
