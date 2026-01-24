@@ -63,6 +63,7 @@ interface ManageEventTypesModalProps {
   currentUserId?: string; // To determine owned teams
   restrictVisibilityScopeToTeam?: boolean;
   canManageEventType?: (eventType: EventTypeConfig) => boolean;
+  singleRecordMode?: boolean;
   onAddEventType: (eventType: Omit<EventTypeConfig, 'id'>) => void;
   onUpdateEventType: (eventTypeId: string, updates: Partial<EventTypeConfig>) => void;
   onRemoveEventType: (eventTypeId: string) => void;
@@ -79,6 +80,7 @@ export function ManageEventTypesModal({
   currentUserId,
   restrictVisibilityScopeToTeam = false,
   canManageEventType,
+  singleRecordMode = false,
   onAddEventType,
   onUpdateEventType,
   onRemoveEventType,
@@ -130,8 +132,11 @@ export function ManageEventTypesModal({
       setNewEventTypeTeamIds([]);
       setNewEventTypeUserCreatable(true);
       setNewCodeTouched(false);
+      if (singleRecordMode && !initialEventTypeId) {
+        setIsAddingEventType(true);
+      }
     }
-  }, [open, restrictVisibilityScopeToTeam]);
+  }, [open, initialEventTypeId, restrictVisibilityScopeToTeam, singleRecordMode]);
 
   useEffect(() => {
     if (!newCodeTouched) {
@@ -273,6 +278,116 @@ export function ManageEventTypesModal({
     </div>
   );
 
+  const renderEditForm = (eventTypeId: string, canEditEventType: boolean) => (
+    <div key={eventTypeId} className="p-3 rounded-lg bg-muted/50 border border-primary/50 space-y-3">
+      <div className="flex gap-2">
+        <Input
+          value={editingEventTypeLabel}
+          onChange={(e) => setEditingEventTypeLabel(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleSaveEventTypeEdit();
+            if (e.key === 'Escape') handleCancelEventTypeEdit();
+          }}
+          autoFocus
+          className="flex-1"
+        />
+        <Input
+          value={editingEventTypeCode}
+          onChange={(e) => {
+            setEditingEventTypeCode(e.target.value);
+            setEditingCodeTouched(true);
+          }}
+          placeholder="CODE"
+          className="w-[180px]"
+        />
+      </div>
+      <div className="flex gap-2 items-center flex-wrap">
+        <Select value={editingEventTypeColor} onValueChange={setEditingEventTypeColor}>
+          <SelectTrigger className="w-[120px]">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: editingEventTypeColor }} />
+              <span>{colorOptions.find(c => c.value === editingEventTypeColor)?.label}</span>
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            {colorOptions.map((color) => (
+              <SelectItem key={color.value} value={color.value}>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color.value }} />
+                  {color.label}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={editingEventTypeTimelineScope} onValueChange={(v) => setEditingEventTypeTimelineScope(v as EventTypeTimelineScope)}>
+          <SelectTrigger className="w-[150px]">
+            <div className="flex items-center gap-2">
+              {timelineScopeLabels[editingEventTypeTimelineScope].icon}
+              <span>{timelineScopeLabels[editingEventTypeTimelineScope].label}</span>
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(timelineScopeLabels).map(([key, val]) => (
+              <SelectItem key={key} value={key}>
+                <div className="flex items-center gap-2">
+                  {val.icon}
+                  <span>{val.label}</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={editingEventTypeVisibilityScope}
+          onValueChange={(v) => setEditingEventTypeVisibilityScope(v as EventTypeVisibilityScope)}
+          disabled={restrictVisibilityScopeToTeam}
+        >
+          <SelectTrigger className="w-[150px]">
+            <div className="flex items-center gap-2">
+              {visibilityScopeLabels[editingEventTypeVisibilityScope].icon}
+              <span>{visibilityScopeLabels[editingEventTypeVisibilityScope].label}</span>
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(visibilityScopeLabels).map(([key, val]) => (
+              <SelectItem key={key} value={key}>
+                <div className="flex items-center gap-2">
+                  {val.icon}
+                  <span>{val.label}</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="edit-user-creatable"
+            checked={editingEventTypeUserCreatable}
+            onCheckedChange={(checked) => setEditingEventTypeUserCreatable(checked === true)}
+          />
+          <Label htmlFor="edit-user-creatable" className="text-sm cursor-pointer">
+            Allow users to create
+          </Label>
+        </div>
+      </div>
+
+      {editingEventTypeVisibilityScope === 'TEAM' && renderTeamSelector(
+        editingEventTypeTeamIds,
+        (teamId) => toggleTeamSelection(teamId, true)
+      )}
+
+      <div className="flex gap-2 justify-end">
+        <Button size="sm" variant="ghost" onClick={handleCancelEventTypeEdit}>
+          Cancel
+        </Button>
+        <Button size="sm" onClick={handleSaveEventTypeEdit} disabled={!canEditEventType}>
+          Save
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -285,15 +400,17 @@ export function ManageEventTypesModal({
             <div className="text-sm text-muted-foreground">
               Configure event types, visibility, and availability.
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setIsAddingEventType(true)}
-              disabled={isAddingEventType}
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Add Type
-            </Button>
+            {!singleRecordMode && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setIsAddingEventType(true)}
+                disabled={isAddingEventType}
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add Type
+              </Button>
+            )}
           </div>
 
           <div className="space-y-3">
@@ -410,7 +527,7 @@ export function ManageEventTypesModal({
               )}
 
               {/* Event type list */}
-              {eventTypeConfigs.map((eventType) => {
+              {!singleRecordMode && eventTypeConfigs.map((eventType) => {
                 const count = events.filter(e => e.eventTypeId === eventType.id || e.eventType?.id === eventType.id).length;
                 const isEditing = editingEventTypeId === eventType.id;
                 const canEditEventType = canManage(eventType);
@@ -438,115 +555,7 @@ export function ManageEventTypesModal({
                       </div>
                     );
                   }
-                  return (
-                    <div key={eventType.id} className="p-3 rounded-lg bg-muted/50 border border-primary/50 space-y-3">
-                      <div className="flex gap-2">
-                        <Input
-                          value={editingEventTypeLabel}
-                          onChange={(e) => setEditingEventTypeLabel(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleSaveEventTypeEdit();
-                            if (e.key === 'Escape') handleCancelEventTypeEdit();
-                          }}
-                          autoFocus
-                          className="flex-1"
-                        />
-                        <Input
-                          value={editingEventTypeCode}
-                          onChange={(e) => {
-                            setEditingEventTypeCode(e.target.value);
-                            setEditingCodeTouched(true);
-                          }}
-                          placeholder="CODE"
-                          className="w-[180px]"
-                        />
-                      </div>
-                      <div className="flex gap-2 items-center flex-wrap">
-                        <Select value={editingEventTypeColor} onValueChange={setEditingEventTypeColor}>
-                          <SelectTrigger className="w-[120px]">
-                          <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: editingEventTypeColor }} />
-                            <span>{colorOptions.find(c => c.value === editingEventTypeColor)?.label}</span>
-                          </div>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {colorOptions.map((color) => (
-                            <SelectItem key={color.value} value={color.value}>
-                              <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color.value }} />
-                                {color.label}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                        <Select value={editingEventTypeTimelineScope} onValueChange={(v) => setEditingEventTypeTimelineScope(v as EventTypeTimelineScope)}>
-                          <SelectTrigger className="w-[150px]">
-                            <div className="flex items-center gap-2">
-                              {timelineScopeLabels[editingEventTypeTimelineScope].icon}
-                              <span>{timelineScopeLabels[editingEventTypeTimelineScope].label}</span>
-                            </div>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(timelineScopeLabels).map(([key, val]) => (
-                              <SelectItem key={key} value={key}>
-                                <div className="flex items-center gap-2">
-                                  {val.icon}
-                                  <span>{val.label}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Select
-                          value={editingEventTypeVisibilityScope}
-                          onValueChange={(v) => setEditingEventTypeVisibilityScope(v as EventTypeVisibilityScope)}
-                          disabled={restrictVisibilityScopeToTeam}
-                        >
-                          <SelectTrigger className="w-[150px]">
-                            <div className="flex items-center gap-2">
-                              {visibilityScopeLabels[editingEventTypeVisibilityScope].icon}
-                              <span>{visibilityScopeLabels[editingEventTypeVisibilityScope].label}</span>
-                            </div>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(visibilityScopeLabels).map(([key, val]) => (
-                              <SelectItem key={key} value={key}>
-                                <div className="flex items-center gap-2">
-                                  {val.icon}
-                                  <span>{val.label}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <div className="flex items-center gap-2">
-                          <Checkbox
-                            id="edit-user-creatable"
-                            checked={editingEventTypeUserCreatable}
-                            onCheckedChange={(checked) => setEditingEventTypeUserCreatable(checked === true)}
-                          />
-                          <Label htmlFor="edit-user-creatable" className="text-sm cursor-pointer">
-                            Allow users to create
-                          </Label>
-                        </div>
-                      </div>
-
-                      {editingEventTypeVisibilityScope === 'TEAM' && renderTeamSelector(
-                        editingEventTypeTeamIds,
-                        (teamId) => toggleTeamSelection(teamId, true)
-                      )}
-
-                      <div className="flex gap-2 justify-end">
-                        <Button size="sm" variant="ghost" onClick={handleCancelEventTypeEdit}>
-                          Cancel
-                        </Button>
-                        <Button size="sm" onClick={handleSaveEventTypeEdit} disabled={!canEditEventType}>
-                          Save
-                        </Button>
-                      </div>
-                    </div>
-                  );
+                  return renderEditForm(eventType.id, canEditEventType);
                 }
 
                 return (
@@ -619,6 +628,19 @@ export function ManageEventTypesModal({
                   </div>
                 );
               })}
+              {singleRecordMode && !isAddingEventType && editingEventTypeId && (() => {
+                const eventType = eventTypeConfigs.find(type => type.id === editingEventTypeId);
+                if (!eventType) return null;
+                const canEditEventType = canManage(eventType);
+                if (!canEditEventType) {
+                  return (
+                    <div className="p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground">
+                      You do not have permission to manage this event type.
+                    </div>
+                  );
+                }
+                return renderEditForm(eventType.id, canEditEventType);
+              })()}
             </div>
           
 
