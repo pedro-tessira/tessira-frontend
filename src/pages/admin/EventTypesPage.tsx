@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQueries } from "@tanstack/react-query";
 import { Plus, Search, RefreshCw, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,10 +28,11 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useMe } from "@/queries/useMe";
 import { useTeams } from "@/queries/useTeams";
-import { useEventTypes } from "@/queries/useEventTypes";
+import { eventTypesQueryKey, useEventTypes } from "@/queries/useEventTypes";
 import { ManageEventTypesModal } from "@/components/ManageEventTypesModal";
 import { EventTypeConfig } from "@/lib/types";
 import { getEventColorClass } from "@/lib/eventColors";
+import { apiFetch } from "@/lib/api";
 import { useCreateEventType, useDeleteEventType, useUpdateEventType } from "@/queries/useEventTypeMutations";
 
 export default function AdminEventTypesPage() {
@@ -39,13 +41,10 @@ export default function AdminEventTypesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: teams = [] } = useTeams();
   const [selectedTeamId, setSelectedTeamId] = useState("");
-  const { data: allEventTypes = [], isLoading: isLoadingAll } = useEventTypes();
   const { data: teamEventTypes = [], isLoading: isLoadingTeam } = useEventTypes(
     selectedTeamId !== "all" ? selectedTeamId : undefined,
-    { enabled: selectedTeamId !== "all" }
+    { enabled: selectedTeamId !== "all" && !!selectedTeamId }
   );
-  const eventTypes = selectedTeamId === "all" ? allEventTypes : teamEventTypes;
-  const isLoading = selectedTeamId === "all" ? isLoadingAll : isLoadingTeam;
   const [showManageModal, setShowManageModal] = useState(false);
   const [managedEventTypeId, setManagedEventTypeId] = useState<string | null>(null);
   const [deleteEventTypeId, setDeleteEventTypeId] = useState<string | null>(null);
@@ -60,14 +59,50 @@ export default function AdminEventTypesPage() {
   const isAdmin = me?.role === "ADMIN";
   const isManager = me?.role === "MANAGER";
   const canCreateEventType = isAdmin || (isManager && managerTeamIds.length > 0);
-  const teamOptions = useMemo(() => {
-    const baseOptions = !isManager
-      ? teams.map((team) => ({ label: team.name, value: team.id }))
-      : teams
-          .filter((team) => managerTeamIds.includes(team.id))
-          .map((team) => ({ label: team.name, value: team.id }));
-    return [{ label: "All teams", value: "all" }, ...baseOptions];
+  const filterableTeams = useMemo(() => {
+    if (!isManager) return teams;
+    return teams.filter((team) => managerTeamIds.includes(team.id));
   }, [isManager, managerTeamIds, teams]);
+  const teamOptions = useMemo(() => {
+    const baseOptions = filterableTeams.map((team) => ({ label: team.name, value: team.id }));
+    return [{ label: "All teams", value: "all" }, ...baseOptions];
+  }, [filterableTeams]);
+
+  const allTeamsQueries = useQueries({
+    queries: filterableTeams.map((team) => ({
+      queryKey: eventTypesQueryKey(team.id),
+      queryFn: () => apiFetch(`/api/event-types?teamId=${team.id}`),
+      enabled: selectedTeamId === "all",
+    })),
+  });
+
+  const allTeamsEventTypes = useMemo(() => {
+    const merged = new Map<string, EventTypeConfig>();
+    allTeamsQueries.forEach((query, index) => {
+      const teamId = filterableTeams[index]?.id;
+      const data = (query.data ?? []) as EventTypeConfig[];
+      data.forEach((eventType) => {
+        const existing = merged.get(eventType.id);
+        const nextTeamIds = new Set<string>([
+          ...(existing?.teamIds ?? []),
+          ...(eventType.teamIds ?? []),
+        ]);
+        if (eventType.visibilityScope === "TEAM" && teamId) {
+          nextTeamIds.add(teamId);
+        }
+        merged.set(eventType.id, {
+          ...(existing ?? eventType),
+          ...eventType,
+          teamIds: nextTeamIds.size > 0 ? Array.from(nextTeamIds) : eventType.teamIds,
+        });
+      });
+    });
+    return Array.from(merged.values());
+  }, [allTeamsQueries, filterableTeams]);
+
+  const isLoadingAll = allTeamsQueries.some((query) => query.isLoading);
+  const eventTypes = selectedTeamId === "all" ? allTeamsEventTypes : teamEventTypes;
+  const isLoading = selectedTeamId === "all" ? isLoadingAll : isLoadingTeam;
 
   useEffect(() => {
     if (!selectedTeamId && teamOptions.length > 0) {
