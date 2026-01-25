@@ -39,7 +39,7 @@ export default function AdminEventTypesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: teams = [] } = useTeams();
   const [selectedTeamId, setSelectedTeamId] = useState("");
-  const { data: eventTypes = [], isLoading } = useEventTypes(selectedTeamId);
+  const { data: eventTypes = [], isLoading } = useEventTypes(selectedTeamId === "all" ? "" : selectedTeamId);
   const [showManageModal, setShowManageModal] = useState(false);
   const [managedEventTypeId, setManagedEventTypeId] = useState<string | null>(null);
   const [deleteEventTypeId, setDeleteEventTypeId] = useState<string | null>(null);
@@ -55,19 +55,19 @@ export default function AdminEventTypesPage() {
   const isManager = me?.role === "MANAGER";
   const canCreateEventType = isAdmin || (isManager && managerTeamIds.length > 0);
   const teamOptions = useMemo(() => {
-    if (!isManager) {
-      return teams.map((team) => ({ label: team.name, value: team.id }));
-    }
-    return teams
-      .filter((team) => managerTeamIds.includes(team.id))
-      .map((team) => ({ label: team.name, value: team.id }));
+    const baseOptions = !isManager
+      ? teams.map((team) => ({ label: team.name, value: team.id }))
+      : teams
+          .filter((team) => managerTeamIds.includes(team.id))
+          .map((team) => ({ label: team.name, value: team.id }));
+    return [{ label: "All teams", value: "all" }, ...baseOptions];
   }, [isManager, managerTeamIds, teams]);
 
   useEffect(() => {
-    if (!selectedTeamId && teams.length > 0) {
-      setSelectedTeamId(teams[0].id);
+    if (!selectedTeamId && teamOptions.length > 0) {
+      setSelectedTeamId("all");
     }
-  }, [selectedTeamId, teams]);
+  }, [selectedTeamId, teamOptions.length]);
 
   const filteredEventTypes = eventTypes.filter((eventType) => {
     const query = searchQuery.toLowerCase();
@@ -228,14 +228,13 @@ export default function AdminEventTypesPage() {
 
   const renderEventTypeRow = (eventType: EventTypeConfig) => {
     const canManage = canManageEventType(eventType);
-    const teamLabel = (() => {
-      if (eventType.visibilityScope === "GLOBAL") return "All teams";
+    const teamLabels = (() => {
+      if (eventType.visibilityScope === "GLOBAL") return ["All teams"];
       const teamNames = (eventType.teamIds ?? [])
         .map((teamId) => teams.find((team) => team.id === teamId)?.name)
         .filter(Boolean) as string[];
-      if (teamNames.length === 0) return "No teams";
-      if (teamNames.length <= 2) return teamNames.join(", ");
-      return `${teamNames.slice(0, 2).join(", ")} +${teamNames.length - 2}`;
+      if (teamNames.length === 0) return ["No teams"];
+      return teamNames;
     })();
     return (
       <TableRow key={eventType.id}>
@@ -252,7 +251,13 @@ export default function AdminEventTypesPage() {
           <Badge variant="secondary">{eventType.visibilityScope}</Badge>
         </TableCell>
         <TableCell>
-          <span className="text-sm text-muted-foreground">{teamLabel}</span>
+          <div className="flex flex-wrap gap-1">
+            {teamLabels.map((label) => (
+              <Badge key={label} variant="secondary" className="text-xs">
+                {label}
+              </Badge>
+            ))}
+          </div>
         </TableCell>
         <TableCell>
           <Badge variant="secondary" className={eventType.userCreatable ? "" : "bg-muted text-muted-foreground"}>
