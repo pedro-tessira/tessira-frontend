@@ -39,9 +39,7 @@ export default function AdminEventTypesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: teams = [] } = useTeams();
   const [selectedTeamId, setSelectedTeamId] = useState("");
-  const { data: eventTypes = [], isLoading } = useEventTypes(
-    selectedTeamId === "all" ? undefined : selectedTeamId
-  );
+  const { data: eventTypes = [], isLoading } = useEventTypes();
   const [showManageModal, setShowManageModal] = useState(false);
   const [managedEventTypeId, setManagedEventTypeId] = useState<string | null>(null);
   const [deleteEventTypeId, setDeleteEventTypeId] = useState<string | null>(null);
@@ -71,7 +69,15 @@ export default function AdminEventTypesPage() {
     }
   }, [selectedTeamId, teamOptions.length]);
 
-  const filteredEventTypes = eventTypes.filter((eventType) => {
+  const teamFilteredEventTypes = useMemo(() => {
+    if (selectedTeamId === "all") return eventTypes;
+    return eventTypes.filter((eventType) => {
+      if (eventType.visibilityScope === "GLOBAL") return true;
+      return eventType.teamIds?.includes(selectedTeamId) ?? false;
+    });
+  }, [eventTypes, selectedTeamId]);
+
+  const filteredEventTypes = teamFilteredEventTypes.filter((eventType) => {
     const query = searchQuery.toLowerCase();
     return (
       eventType.name?.toLowerCase().includes(query) ||
