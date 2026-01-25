@@ -39,7 +39,13 @@ export default function AdminEventTypesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: teams = [] } = useTeams();
   const [selectedTeamId, setSelectedTeamId] = useState("");
-  const { data: eventTypes = [], isLoading } = useEventTypes();
+  const { data: allEventTypes = [], isLoading: isLoadingAll } = useEventTypes();
+  const { data: teamEventTypes = [], isLoading: isLoadingTeam } = useEventTypes(
+    selectedTeamId !== "all" ? selectedTeamId : undefined,
+    { enabled: selectedTeamId !== "all" }
+  );
+  const eventTypes = selectedTeamId === "all" ? allEventTypes : teamEventTypes;
+  const isLoading = selectedTeamId === "all" ? isLoadingAll : isLoadingTeam;
   const [showManageModal, setShowManageModal] = useState(false);
   const [managedEventTypeId, setManagedEventTypeId] = useState<string | null>(null);
   const [deleteEventTypeId, setDeleteEventTypeId] = useState<string | null>(null);
@@ -69,15 +75,7 @@ export default function AdminEventTypesPage() {
     }
   }, [selectedTeamId, teamOptions.length]);
 
-  const teamFilteredEventTypes = useMemo(() => {
-    if (selectedTeamId === "all") return eventTypes;
-    return eventTypes.filter((eventType) => {
-      if (eventType.visibilityScope === "GLOBAL") return true;
-      return eventType.teamIds?.includes(selectedTeamId) ?? false;
-    });
-  }, [eventTypes, selectedTeamId]);
-
-  const filteredEventTypes = teamFilteredEventTypes.filter((eventType) => {
+  const filteredEventTypes = eventTypes.filter((eventType) => {
     const query = searchQuery.toLowerCase();
     return (
       eventType.name?.toLowerCase().includes(query) ||
@@ -241,8 +239,12 @@ export default function AdminEventTypesPage() {
       const teamNames = (eventType.teamIds ?? [])
         .map((teamId) => teams.find((team) => team.id === teamId)?.name)
         .filter(Boolean) as string[];
-      if (teamNames.length === 0) return ["No teams"];
-      return teamNames;
+      if (teamNames.length > 0) return teamNames;
+      if (selectedTeamId && selectedTeamId !== "all") {
+        const selectedTeam = teams.find((team) => team.id === selectedTeamId);
+        return selectedTeam ? [selectedTeam.name] : ["Selected team"];
+      }
+      return ["No teams"];
     })();
     return (
       <TableRow key={eventType.id}>
