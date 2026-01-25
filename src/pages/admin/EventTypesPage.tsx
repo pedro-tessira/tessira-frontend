@@ -39,7 +39,9 @@ export default function AdminEventTypesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: teams = [] } = useTeams();
   const [selectedTeamId, setSelectedTeamId] = useState("");
-  const { data: eventTypes = [], isLoading } = useEventTypes(selectedTeamId === "all" ? "" : selectedTeamId);
+  const { data: eventTypes = [], isLoading } = useEventTypes(
+    selectedTeamId === "all" ? undefined : selectedTeamId
+  );
   const [showManageModal, setShowManageModal] = useState(false);
   const [managedEventTypeId, setManagedEventTypeId] = useState<string | null>(null);
   const [deleteEventTypeId, setDeleteEventTypeId] = useState<string | null>(null);
