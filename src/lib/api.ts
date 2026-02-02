@@ -49,21 +49,26 @@ export const refreshSession = async (): Promise<boolean> => {
   return response.ok;
 };
 
-export async function apiFetch<T>(
-  path: string,
-  options: RequestInit & { skipAuthRedirect?: boolean } = {}
-): Promise<T> {
-  const { skipAuthRedirect, ...requestOptions } = options;
-  const headers = new Headers(requestOptions.headers);
-  if (!headers.has("Content-Type") && requestOptions.body) {
+const buildHeaders = (options: RequestInit): Headers => {
+  const headers = new Headers(options.headers);
+  if (!headers.has("Content-Type") && options.body) {
     headers.set("Content-Type", "application/json");
   }
-  if (!isSafeMethod(requestOptions.method)) {
+  if (!isSafeMethod(options.method)) {
     const csrfToken = getCsrfToken();
     if (csrfToken) {
       headers.set("X-XSRF-TOKEN", csrfToken);
     }
   }
+  return headers;
+};
+
+export async function apiFetch<T>(
+  path: string,
+  options: RequestInit & { skipAuthRedirect?: boolean } = {}
+): Promise<T> {
+  const { skipAuthRedirect, ...requestOptions } = options;
+  const headers = buildHeaders(requestOptions);
 
   const response = await fetch(buildUrl(path), {
     ...requestOptions,
@@ -74,9 +79,10 @@ export async function apiFetch<T>(
   if (!skipAuthRedirect && response.status === 401 && !path.startsWith("/api/auth/")) {
     const refreshed = await refreshSession();
     if (refreshed) {
+      const retryHeaders = buildHeaders(requestOptions);
       const retryResponse = await fetch(buildUrl(path), {
         ...requestOptions,
-        headers,
+        headers: retryHeaders,
         credentials: "include",
       });
       if (retryResponse.ok) {
