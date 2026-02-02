@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { AppHeader } from "./AppHeader";
 import { EventTypeDto, TeamDto, TeamEmployeeDto, TimelineEvent } from "@/lib/types";
-import { clearToken } from "@/lib/auth";
+import { logout } from "@/lib/auth";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -38,12 +38,12 @@ export function MainLayout({
   onRemoveTeam,
   onLogout,
 }: MainLayoutProps) {
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (onLogout) {
       onLogout();
       return;
     }
-    clearToken();
+    await logout();
     window.location.assign("/");
   };
 
