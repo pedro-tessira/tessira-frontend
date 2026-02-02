@@ -22,7 +22,7 @@ import { ManageEventTypesModal } from './ManageEventTypesModal';
 import { useRowHeights } from '@/hooks/useRowHeights';
 import { useToast } from '@/hooks/use-toast';
 import { getEventColorClass } from '@/lib/eventColors';
-import { clearToken } from '@/lib/auth';
+import { logout } from '@/lib/auth';
 import { useTeams } from '@/queries/useTeams';
 import { employeesQueryOptions, useEmployees } from '@/queries/useEmployees';
 import { useEventTypes } from '@/queries/useEventTypes';
@@ -352,8 +352,8 @@ export function AppShell() {
     });
   };
 
-  const handleLogout = () => {
-    clearToken();
+  const handleLogout = async () => {
+    await logout();
     window.location.assign('/');
   };
 

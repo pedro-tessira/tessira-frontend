@@ -1,12 +1,11 @@
 import { useMutation, useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
-import { clearToken } from "@/lib/auth";
 import { MeDto } from "@/lib/types";
 
 export const meQueryKey = ["me"];
 
-export const useMe = (options?: UseQueryOptions<MeDto>) => {
-  return useQuery<MeDto>({
+export const useMe = (options?: UseQueryOptions<MeDto | null>) => {
+  return useQuery<MeDto | null>({
     queryKey: meQueryKey,
     queryFn: async () => {
       try {
@@ -14,8 +13,7 @@ export const useMe = (options?: UseQueryOptions<MeDto>) => {
       } catch (error) {
         const status = typeof error === "object" && error && "status" in error ? Number(error.status) : null;
         if (status === 401 || status === 403) {
-          clearToken();
-          window.location.assign("/");
+          return null;
         }
         throw error;
       }

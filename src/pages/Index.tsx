@@ -1,22 +1,12 @@
 import { useState } from 'react';
 import { AppShell } from '@/components/AppShell';
 import { apiFetch } from '@/lib/api';
-import { getToken, setToken } from '@/lib/auth';
 import { useMe } from '@/queries/useMe';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePublicSsoProviders } from '@/queries/usePublicSsoProviders';
 
-interface DevLoginResponse {
-  token: string;
-}
-
-interface PasswordLoginResponse {
-  token: string;
-}
-
 const Index = () => {
   const queryClient = useQueryClient();
-  const [token, setTokenState] = useState(() => getToken());
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -28,7 +18,7 @@ const Index = () => {
       return null;
     }
   });
-  const { isLoading: isMeLoading } = useMe({ enabled: !!token });
+  const { data: me, isLoading: isMeLoading } = useMe();
   const { data: ssoProviders = [] } = usePublicSsoProviders();
   const hasSsoProviders = ssoProviders.length > 0;
 
@@ -49,13 +39,11 @@ const Index = () => {
     }
     try {
       const body: { email: string; password: string } = { email: email.trim(), password };
-      const response = await apiFetch<PasswordLoginResponse>('/api/auth/sessions', {
+      await apiFetch('/api/auth/sessions', {
         method: 'POST',
         body: JSON.stringify(body),
         skipAuthRedirect: true,
       });
-      setToken(response.token);
-      setTokenState(response.token);
       queryClient.invalidateQueries({ queryKey: ['me'] });
     } catch (error: unknown) {
       const message = typeof error === 'object' && error && 'message' in error ? String(error.message) : 'Login failed.';
@@ -65,7 +53,15 @@ const Index = () => {
     }
   };
 
-  if (!token) {
+  if (isMeLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center text-sm text-muted-foreground">
+        Loading your workspace...
+      </div>
+    );
+  }
+
+  if (!me) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <div className="w-full max-w-md bg-card border border-border rounded-2xl shadow-lg p-6 space-y-6">
@@ -160,14 +156,6 @@ const Index = () => {
             </form>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  if (isMeLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center text-sm text-muted-foreground">
-        Loading your workspace...
       </div>
     );
   }

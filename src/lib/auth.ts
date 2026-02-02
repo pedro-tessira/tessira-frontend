@@ -1,25 +1,9 @@
-const TOKEN_KEY = "th_token";
+import { apiFetch } from "@/lib/api";
 
-export const getToken = (): string | null => {
+export const logout = async (): Promise<void> => {
   try {
-    return localStorage.getItem(TOKEN_KEY);
+    await apiFetch<void>("/api/auth/logout", { method: "POST" });
   } catch {
-    return null;
-  }
-};
-
-export const setToken = (token: string): void => {
-  try {
-    localStorage.setItem(TOKEN_KEY, token);
-  } catch {
-    // Ignore write errors (e.g., storage disabled).
-  }
-};
-
-export const clearToken = (): void => {
-  try {
-    localStorage.removeItem(TOKEN_KEY);
-  } catch {
-    // Ignore removal errors.
+    // Ignore logout errors.
   }
 };

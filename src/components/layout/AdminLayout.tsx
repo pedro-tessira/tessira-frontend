@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { KeyRound, Users, Building2, Tags, Activity, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AppHeader } from "./AppHeader";
-import { clearToken } from "@/lib/auth";
+import { logout } from "@/lib/auth";
 
 const adminNavItems = [
   {
@@ -47,8 +47,8 @@ export function AdminLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <AppHeader
-        onLogout={() => {
-          clearToken();
+        onLogout={async () => {
+          await logout();
           navigate("/");
         }}
       />
