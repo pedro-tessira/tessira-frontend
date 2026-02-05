@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { subMonths, addMonths, differenceInDays, format } from 'date-fns';
+import { subMonths, addMonths, addDays, differenceInDays, format, startOfMonth, endOfMonth } from 'date-fns';
 import { useQueries } from '@tanstack/react-query';
 import {
   COMPANY_ROW_ID,
@@ -69,6 +69,8 @@ export function AppShell() {
   const [showManageEventTypes, setShowManageEventTypes] = useState(false);
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
   const [isTodayVisible, setIsTodayVisible] = useState(false);
+  const [anchorMonth, setAnchorMonth] = useState(() => startOfMonth(TODAY));
+  const [pendingJumpMonth, setPendingJumpMonth] = useState<Date | null>(null);
 
   const [rangeStart, setRangeStart] = useState(() => new Date(TODAY.getFullYear(), TODAY.getMonth() - INITIAL_MONTHS_BEFORE, 1));
   const [rangeEnd, setRangeEnd] = useState(() => new Date(TODAY.getFullYear(), TODAY.getMonth() + INITIAL_MONTHS_AFTER + 1, 0));
@@ -274,6 +276,30 @@ export function AppShell() {
       });
     }
   };
+
+  const jumpToMonth = (date: Date) => {
+    const targetMonth = startOfMonth(date);
+    setAnchorMonth(targetMonth);
+    if (targetMonth < rangeStart) {
+      setRangeStart(targetMonth);
+    }
+    if (targetMonth > rangeEnd) {
+      setRangeEnd(endOfMonth(targetMonth));
+    }
+    setPendingJumpMonth(targetMonth);
+  };
+
+  useEffect(() => {
+    if (!pendingJumpMonth || !timelineRef.current || columns.length === 0) return;
+    const daysFromStart = differenceInDays(pendingJumpMonth, rangeStart);
+    if (daysFromStart < 0) return;
+    const scrollPosition = daysFromStart * COL_WIDTH - timelineRef.current.clientWidth / 2 + COL_WIDTH / 2;
+    timelineRef.current.scrollTo({
+      left: Math.max(0, scrollPosition),
+      behavior: 'smooth',
+    });
+    setPendingJumpMonth(null);
+  }, [pendingJumpMonth, rangeStart, columns.length]);
 
   useEffect(() => {
     if (!hasScrolledToToday && timelineRef.current && columns.length > 0) {
@@ -737,6 +763,12 @@ export function AppShell() {
         const isVisible = todayRight > scrollLeft && todayLeft < viewportRight;
         setIsTodayVisible(isVisible);
 
+        const centerIndex = Math.round((scrollLeft + timelineEl.clientWidth / 2 - COL_WIDTH / 2) / COL_WIDTH);
+        const clampedIndex = Math.min(Math.max(centerIndex, 0), Math.max(columns.length - 1, 0));
+        const centerDate = addDays(rangeStart, clampedIndex);
+        const centerMonth = startOfMonth(centerDate);
+        setAnchorMonth(prev => (prev.getTime() === centerMonth.getTime() ? prev : centerMonth));
+
         if (!hasScrolledToToday) {
           return;
         }
@@ -876,6 +908,40 @@ export function AppShell() {
         </div>
 
         <div className="flex-1 flex flex-col overflow-hidden relative">
+          <div className="shrink-0 border-b border-border bg-card">
+            <div className="flex items-center gap-2 px-4 py-2">
+              <button
+                type="button"
+                onClick={() => jumpToMonth(subMonths(anchorMonth, 1))}
+                className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-border bg-background text-foreground hover:bg-muted transition-colors"
+                aria-label="Previous month"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div className="text-sm font-semibold text-foreground">
+                {format(anchorMonth, 'MMMM yyyy')}
+              </div>
+              <button
+                type="button"
+                onClick={() => jumpToMonth(addMonths(anchorMonth, 1))}
+                className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-border bg-background text-foreground hover:bg-muted transition-colors"
+                aria-label="Next month"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => jumpToMonth(TODAY)}
+                className="ml-2 h-8 px-3 inline-flex items-center justify-center rounded-md border border-border bg-background text-foreground text-xs font-medium hover:bg-muted transition-colors"
+              >
+                Today
+              </button>
+            </div>
+          </div>
           <div ref={timelineRef} className="flex-1 overflow-auto scrollbar-thin">
             <Timeline
               rowIds={allRowIds}
