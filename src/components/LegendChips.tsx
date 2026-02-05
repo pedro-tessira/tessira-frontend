@@ -16,6 +16,7 @@ interface LegendChipsProps {
   onAddEventClick: () => void;
   onManageEventTypesClick: () => void;
   canManageEventTypes?: boolean;
+  monthNavigator?: React.ReactNode;
 }
 
 export function LegendChips({ 
@@ -26,6 +27,7 @@ export function LegendChips({
   onAddEventClick,
   onManageEventTypesClick,
   canManageEventTypes = true,
+  monthNavigator,
 }: LegendChipsProps) {
   const allActive = eventTypes.length > 0 && activeFilters.size === eventTypes.length;
   
@@ -99,6 +101,13 @@ export function LegendChips({
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
+
+        {monthNavigator && (
+          <>
+            <span className="w-px h-6 bg-border" />
+            {monthNavigator}
+          </>
+        )}
       </div>
     </div>
   );

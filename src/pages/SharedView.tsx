@@ -1,7 +1,7 @@
 import { useParams, Navigate } from 'react-router-dom';
 import { useMemo, useState, useRef, useEffect } from 'react';
-import { subMonths, addMonths, differenceInDays, format } from 'date-fns';
-import { Eye, Calendar, Building2, User } from 'lucide-react';
+import { subMonths, addMonths, subYears, addYears, addDays, differenceInDays, format, startOfMonth, endOfMonth } from 'date-fns';
+import { Eye, Calendar, Calendar as CalendarIcon, Building2, User } from 'lucide-react';
 import { COMPANY_ROW_ID, EventTypeTimelineScope, TimelineEvent } from '@/lib/types';
 import { generateDayColumns } from '@/lib/dateUtils';
 import { getShareById } from '@/lib/shareUtils';
@@ -9,6 +9,7 @@ import { Timeline } from '@/components/Timeline';
 import { EmployeeRow } from '@/components/EmployeeRow';
 import { CompanyRow } from '@/components/CompanyRow';
 import { useRowHeights } from '@/hooks/useRowHeights';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { useTeams } from '@/queries/useTeams';
 import { useEmployees } from '@/queries/useEmployees';
 import { useEventTypes } from '@/queries/useEventTypes';
@@ -35,6 +36,9 @@ export default function SharedView() {
 
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const [anchorMonth, setAnchorMonth] = useState(() => startOfMonth(TODAY));
+  const [pendingJumpMonth, setPendingJumpMonth] = useState<Date | null>(null);
+  const [isTodayVisible, setIsTodayVisible] = useState(false);
 
   const [rangeStart, setRangeStart] = useState(() => new Date(TODAY.getFullYear(), TODAY.getMonth() - INITIAL_MONTHS_BEFORE, 1));
   const [rangeEnd, setRangeEnd] = useState(() => new Date(TODAY.getFullYear(), TODAY.getMonth() + INITIAL_MONTHS_AFTER + 1, 0));
@@ -204,6 +208,30 @@ export default function SharedView() {
     }
   };
 
+  const jumpToMonth = (date: Date) => {
+    const targetMonth = startOfMonth(date);
+    setAnchorMonth(targetMonth);
+    if (targetMonth < rangeStart) {
+      setRangeStart(targetMonth);
+    }
+    if (targetMonth > rangeEnd) {
+      setRangeEnd(endOfMonth(targetMonth));
+    }
+    setPendingJumpMonth(targetMonth);
+  };
+
+  useEffect(() => {
+    if (!pendingJumpMonth || !timelineRef.current || columns.length === 0) return;
+    const daysFromStart = differenceInDays(pendingJumpMonth, rangeStart);
+    if (daysFromStart < 0) return;
+    const scrollPosition = daysFromStart * COL_WIDTH;
+    timelineRef.current.scrollTo({
+      left: Math.max(0, scrollPosition),
+      behavior: 'smooth',
+    });
+    setPendingJumpMonth(null);
+  }, [pendingJumpMonth, rangeStart, columns.length]);
+
   useEffect(() => {
     if (!hasScrolledToToday && timelineRef.current && columns.length > 0) {
       const daysFromStart = differenceInDays(TODAY, rangeStart);
@@ -245,12 +273,27 @@ export default function SharedView() {
     if (!timelineEl) return;
 
     const handleScroll = () => {
+      const daysFromStart = differenceInDays(TODAY, rangeStart);
+      const todayLeft = daysFromStart * COL_WIDTH;
+      const todayRight = todayLeft + COL_WIDTH;
+      const scrollLeft = timelineEl.scrollLeft;
+      const viewportRight = scrollLeft + timelineEl.clientWidth;
+      const visible = todayRight > scrollLeft && todayLeft < viewportRight;
+      setIsTodayVisible(visible);
+
+      const centerIndex = Math.round((timelineEl.scrollLeft + timelineEl.clientWidth / 2 - COL_WIDTH / 2) / COL_WIDTH);
+      const clampedIndex = Math.min(Math.max(centerIndex, 0), Math.max(columns.length - 1, 0));
+      const centerDate = addDays(rangeStart, clampedIndex);
+      const centerMonth = startOfMonth(centerDate);
+      setAnchorMonth(prev => (prev.getTime() === centerMonth.getTime() ? prev : centerMonth));
+
       const scrollRight = timelineEl.scrollWidth - timelineEl.scrollLeft - timelineEl.clientWidth;
       if (scrollRight < SCROLL_THRESHOLD) loadMoreFuture();
       if (timelineEl.scrollLeft < SCROLL_THRESHOLD) loadMorePast();
     };
 
     timelineEl.addEventListener('scroll', handleScroll);
+    handleScroll();
     return () => timelineEl.removeEventListener('scroll', handleScroll);
   }, [rangeStart]);
 
@@ -293,6 +336,92 @@ export default function SharedView() {
             </div>
           );
         })}
+        <div className="ml-auto flex items-center gap-2">
+          <span className="w-px h-6 bg-border" />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => jumpToMonth(subMonths(anchorMonth, 1))}
+              className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-border bg-background text-foreground hover:bg-muted transition-colors"
+              aria-label="Previous month"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <div className="text-sm font-semibold text-foreground">
+              {format(anchorMonth, 'MMMM yyyy')}
+            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-border bg-background text-foreground hover:bg-muted transition-colors"
+                  aria-label="Pick month"
+                >
+                  <CalendarIcon className="h-4 w-4" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-auto p-3">
+                <div className="flex items-center justify-between gap-2 px-1 pb-2">
+                  <button
+                    type="button"
+                    onClick={() => setAnchorMonth(prev => subYears(prev, 1))}
+                    className="h-7 w-7 inline-flex items-center justify-center rounded-md border border-border bg-background text-foreground hover:bg-muted transition-colors"
+                    aria-label="Previous year"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <div className="text-sm font-semibold text-foreground">
+                    {format(anchorMonth, 'yyyy')}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAnchorMonth(prev => addYears(prev, 1))}
+                    className="h-7 w-7 inline-flex items-center justify-center rounded-md border border-border bg-background text-foreground hover:bg-muted transition-colors"
+                    aria-label="Next year"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 gap-2 p-1">
+                  {Array.from({ length: 12 }).map((_, index) => {
+                    const monthDate = new Date(anchorMonth.getFullYear(), index, 1);
+                    const isActive = monthDate.getFullYear() === anchorMonth.getFullYear() && monthDate.getMonth() === anchorMonth.getMonth();
+                    return (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => jumpToMonth(monthDate)}
+                        className={`h-8 px-2 rounded-md border text-xs font-medium transition-colors ${
+                          isActive
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : 'border-border bg-background text-foreground hover:bg-muted'
+                        }`}
+                      >
+                        {format(monthDate, 'MMM')}
+                      </button>
+                    );
+                  })}
+                </div>
+              </PopoverContent>
+            </Popover>
+            <button
+              type="button"
+              onClick={() => jumpToMonth(addMonths(anchorMonth, 1))}
+              className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-border bg-background text-foreground hover:bg-muted transition-colors"
+              aria-label="Next month"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="flex-1 flex overflow-hidden">
@@ -371,6 +500,18 @@ export default function SharedView() {
               onJumpToToday={scrollToToday}
             />
           </div>
+
+          {!isTodayVisible && (
+            <button
+              onClick={scrollToToday}
+              className="fixed bottom-4 right-4 z-30 flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-full text-sm font-medium shadow-lg hover:bg-primary/90 transition-all animate-in fade-in slide-in-from-bottom-2 duration-200 sm:bottom-6 sm:right-6"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Go to today
+            </button>
+          )}
         </div>
       </div>
     </div>

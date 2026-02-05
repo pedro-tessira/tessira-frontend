@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { differenceInDays, addMonths, subMonths, format } from "date-fns";
-import { Calendar, Eye } from "lucide-react";
+import { differenceInDays, addMonths, subMonths, subYears, addYears, addDays, format, startOfMonth, endOfMonth } from "date-fns";
+import { Calendar, Eye, Calendar as CalendarIcon } from "lucide-react";
 import { COMPANY_ROW_ID, TimelineEvent } from "@/lib/types";
 import { generateDayColumns } from "@/lib/dateUtils";
 import { Timeline } from "@/components/Timeline";
@@ -11,6 +11,7 @@ import { useRowHeights } from "@/hooks/useRowHeights";
 import { getEventColorClass } from "@/lib/eventColors";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useShare } from "@/queries/useShare";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
 const COL_WIDTH = 80;
 const TODAY = new Date();
@@ -28,6 +29,8 @@ export default function SharePage() {
   const { token } = useParams<{ token: string }>();
 
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const [anchorMonth, setAnchorMonth] = useState(() => startOfMonth(TODAY));
+  const [pendingJumpMonth, setPendingJumpMonth] = useState<Date | null>(null);
   const [rangeStart, setRangeStart] = useState(
     () => new Date(TODAY.getFullYear(), TODAY.getMonth() - INITIAL_MONTHS_BEFORE, 1)
   );
@@ -155,6 +158,30 @@ export default function SharePage() {
     }
   };
 
+  const jumpToMonth = (date: Date) => {
+    const targetMonth = startOfMonth(date);
+    setAnchorMonth(targetMonth);
+    if (targetMonth < rangeStart) {
+      setRangeStart(targetMonth);
+    }
+    if (targetMonth > rangeEnd) {
+      setRangeEnd(endOfMonth(targetMonth));
+    }
+    setPendingJumpMonth(targetMonth);
+  };
+
+  useEffect(() => {
+    if (!pendingJumpMonth || !timelineRef.current || columns.length === 0) return;
+    const daysFromStart = differenceInDays(pendingJumpMonth, rangeStart);
+    if (daysFromStart < 0) return;
+    const scrollPosition = daysFromStart * COL_WIDTH;
+    timelineRef.current.scrollTo({
+      left: Math.max(0, scrollPosition),
+      behavior: "smooth",
+    });
+    setPendingJumpMonth(null);
+  }, [pendingJumpMonth, rangeStart, columns.length]);
+
   useEffect(() => {
     if (!hasScrolledToToday && timelineRef.current && columns.length > 0) {
       const timelineEl = timelineRef.current;
@@ -221,6 +248,12 @@ export default function SharePage() {
         const viewportRight = scrollLeft + timelineEl.clientWidth;
         const isVisible = todayRight > scrollLeft && todayLeft < viewportRight;
         setIsTodayVisible(isVisible);
+
+        const centerIndex = Math.round((scrollLeft + timelineEl.clientWidth / 2 - COL_WIDTH / 2) / COL_WIDTH);
+        const clampedIndex = Math.min(Math.max(centerIndex, 0), Math.max(columns.length - 1, 0));
+        const centerDate = addDays(rangeStart, clampedIndex);
+        const centerMonth = startOfMonth(centerDate);
+        setAnchorMonth(prev => (prev.getTime() === centerMonth.getTime() ? prev : centerMonth));
 
         if (!hasScrolledToToday) {
           return;
@@ -313,6 +346,89 @@ export default function SharePage() {
               ))
             )}
           </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => jumpToMonth(subMonths(anchorMonth, 1))}
+            className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-border bg-background text-foreground hover:bg-muted transition-colors"
+            aria-label="Previous month"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <div className="text-sm font-semibold text-foreground">
+            {format(anchorMonth, "MMMM yyyy")}
+          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-border bg-background text-foreground hover:bg-muted transition-colors"
+                aria-label="Pick month"
+              >
+                <CalendarIcon className="h-4 w-4" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-auto p-3">
+              <div className="flex items-center justify-between gap-2 px-1 pb-2">
+                <button
+                  type="button"
+                  onClick={() => setAnchorMonth(prev => subYears(prev, 1))}
+                  className="h-7 w-7 inline-flex items-center justify-center rounded-md border border-border bg-background text-foreground hover:bg-muted transition-colors"
+                  aria-label="Previous year"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <div className="text-sm font-semibold text-foreground">
+                  {format(anchorMonth, "yyyy")}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAnchorMonth(prev => addYears(prev, 1))}
+                  className="h-7 w-7 inline-flex items-center justify-center rounded-md border border-border bg-background text-foreground hover:bg-muted transition-colors"
+                  aria-label="Next year"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-2 p-1">
+                {Array.from({ length: 12 }).map((_, index) => {
+                  const monthDate = new Date(anchorMonth.getFullYear(), index, 1);
+                  const isActive = monthDate.getFullYear() === anchorMonth.getFullYear() && monthDate.getMonth() === anchorMonth.getMonth();
+                  return (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => jumpToMonth(monthDate)}
+                      className={`h-8 px-2 rounded-md border text-xs font-medium transition-colors ${
+                        isActive
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-background text-foreground hover:bg-muted"
+                      }`}
+                    >
+                      {format(monthDate, "MMM")}
+                    </button>
+                  );
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
+          <button
+            type="button"
+            onClick={() => jumpToMonth(addMonths(anchorMonth, 1))}
+            className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-border bg-background text-foreground hover:bg-muted transition-colors"
+            aria-label="Next month"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
         </div>
         <div className="flex items-center gap-2 ml-auto px-3 py-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-full text-sm font-medium shrink-0">
           <Eye className="w-4 h-4" />
