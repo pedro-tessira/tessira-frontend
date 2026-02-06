@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { getEventColorClass } from '@/lib/eventColors';
+import { getEventColorClass, getEventColorStyle } from '@/lib/eventColors';
 
 interface AddEventModalProps {
   open: boolean;
@@ -130,9 +130,10 @@ export function AddEventModal({
                   onClick={() => setSelectedEventTypeId(eventType.id)}
                   className={`px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${
                     selectedEventTypeId === eventType.id
-                      ? getEventColorClass(eventType, eventType.id)
+                      ? (getEventColorStyle(eventType) ? '' : getEventColorClass(eventType, eventType.id))
                       : 'bg-muted/50 text-muted-foreground border-border opacity-60 hover:opacity-100'
                   }`}
+                  style={selectedEventTypeId === eventType.id ? getEventColorStyle(eventType) : undefined}
                 >
                   {eventType.name}
                 </button>

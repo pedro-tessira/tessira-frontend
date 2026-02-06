@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Building2, Lock, Pencil, Trash2, User } from 'lucide-react';
 import { EventTypeDto, TimelineEvent } from '@/lib/types';
 import { formatDateRange } from '@/lib/dateUtils';
-import { getEventColorClass } from '@/lib/eventColors';
+import { getEventColorClass, getEventColorStyle } from '@/lib/eventColors';
 import {
   Tooltip,
   TooltipContent,
@@ -37,7 +37,9 @@ export function EventChip({ event, eventTypes, style }: EventChipProps) {
   const isCompanyRow = event.employeeId === null;
   const scopeIcon = event.scope === 'GLOBAL' ? Building2 : User;
   const ScopeIcon = scopeIcon;
-  const colorClass = getEventColorClass(event.eventType, event.eventTypeId);
+  const resolvedEventType = eventTypes.find(type => type.id === event.eventTypeId) ?? event.eventType ?? null;
+  const colorStyle = getEventColorStyle(resolvedEventType);
+  const colorClass = colorStyle ? '' : getEventColorClass(resolvedEventType, event.eventTypeId);
 
   return (
     <>
@@ -50,6 +52,7 @@ export function EventChip({ event, eventTypes, style }: EventChipProps) {
           >
             <div
               className={`h-7 rounded-md border px-2.5 flex items-center gap-1.5 text-xs font-medium cursor-pointer transition-shadow hover:shadow-md overflow-hidden ${colorClass}`}
+              style={colorStyle}
             >
               <ScopeIcon className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">{event.title}</span>

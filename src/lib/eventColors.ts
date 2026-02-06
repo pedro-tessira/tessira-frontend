@@ -17,10 +17,30 @@ const hashString = (value: string): number => {
   return Math.abs(hash);
 };
 
+export const isHexColor = (value?: string | null): boolean => {
+  if (!value) return false;
+  return /^#([0-9a-fA-F]{6})$/.test(value);
+};
+
+export const getEventColorStyle = (
+  eventType?: EventTypeDto | EventTypeSummary | null
+): { backgroundColor: string; borderColor: string; color: string } | undefined => {
+  if (!isHexColor(eventType?.color)) return undefined;
+  const color = eventType?.color ?? "#3b82f6";
+  return {
+    backgroundColor: color,
+    borderColor: color,
+    color: "#ffffff",
+  };
+};
+
 export const getEventColorClass = (
   eventType?: EventTypeDto | EventTypeSummary | null,
   eventTypeId?: string | null
 ): string => {
+  if (isHexColor(eventType?.color)) {
+    return "";
+  }
   const key = eventType?.code ?? eventType?.id ?? eventTypeId ?? "default";
   const index = hashString(key) % PALETTE.length;
   return PALETTE[index];
