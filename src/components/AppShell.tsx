@@ -43,6 +43,7 @@ const INITIAL_MONTHS_BEFORE = 2;
 const INITIAL_MONTHS_AFTER = 4;
 const LOAD_MORE_MONTHS = 3;
 const SCROLL_THRESHOLD = 500; // pixels from edge to trigger load
+const MAX_VISIBLE_ROWS = 3;
 
 const defaultEventTypeSource = 'MANUAL';
 
@@ -120,10 +121,31 @@ export function AppShell() {
     }
   );
 
-  const expandedEmployeeIds = useMemo(
-    () => Array.from(expandedRows).filter(id => id !== COMPANY_ROW_ID),
-    [expandedRows]
-  );
+  const rawAggregationByRow = useMemo(() => {
+    const map = new Map<string, { hasMore: boolean; hiddenCount: number }>();
+    if (!timeline) return map;
+    map.set(COMPANY_ROW_ID, timeline.globalLane.aggregation);
+    timeline.rows.forEach(row => {
+      map.set(row.employee.id, row.aggregation);
+    });
+    return map;
+  }, [timeline]);
+
+  const autoExpandedEmployeeIds = useMemo(() => {
+    if (!timeline) return [];
+    return timeline.rows
+      .filter(row => rawAggregationByRow.get(row.employee.id)?.hasMore)
+      .map(row => row.employee.id);
+  }, [rawAggregationByRow, timeline]);
+
+  const expandedEmployeeIds = useMemo(() => {
+    const ids = new Set<string>();
+    expandedRows.forEach(id => {
+      if (id !== COMPANY_ROW_ID) ids.add(id);
+    });
+    autoExpandedEmployeeIds.forEach(id => ids.add(id));
+    return Array.from(ids);
+  }, [autoExpandedEmployeeIds, expandedRows]);
 
   const expandedEmployeeQueries = useQueries({
     queries: expandedEmployeeIds.map(employeeId => ({
@@ -157,6 +179,18 @@ export function AppShell() {
     });
     return map;
   }, [expandedEmployeeIds, expandedEmployeeQueries]);
+
+  const aggregationByRow = useMemo(() => {
+    if (rawAggregationByRow.size === 0) return rawAggregationByRow;
+    const map = new Map(rawAggregationByRow);
+    expandedEmployeeIds.forEach(id => {
+      const existing = map.get(id);
+      if (existing?.hasMore) {
+        map.set(id, { hasMore: false, hiddenCount: 0 });
+      }
+    });
+    return map;
+  }, [expandedEmployeeIds, rawAggregationByRow]);
 
   const { timelineEvents, eventsByRow } = useMemo(() => {
     const map = new Map<string, TimelineEvent[]>();
@@ -193,16 +227,6 @@ export function AppShell() {
     });
     return { timelineEvents: allEvents, eventsByRow: map };
   }, [activeFilters, expandedEventsByEmployee, timeline]);
-
-  const aggregationByRow = useMemo(() => {
-    const map = new Map<string, { hasMore: boolean; hiddenCount: number }>();
-    if (!timeline) return map;
-    map.set(COMPANY_ROW_ID, timeline.globalLane.aggregation);
-    timeline.rows.forEach(row => {
-      map.set(row.employee.id, row.aggregation);
-    });
-    return map;
-  }, [timeline]);
 
   const teamEmployees = useMemo(() => employees, [employees]);
 
