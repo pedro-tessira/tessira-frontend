@@ -765,11 +765,13 @@ export function AppShell() {
         const isVisible = todayRight > scrollLeft && todayLeft < viewportRight;
         setIsTodayVisible(isVisible);
 
-        const centerIndex = Math.round((scrollLeft + timelineEl.clientWidth / 2 - COL_WIDTH / 2) / COL_WIDTH);
-        const clampedIndex = Math.min(Math.max(centerIndex, 0), Math.max(columns.length - 1, 0));
-        const centerDate = addDays(rangeStart, clampedIndex);
-        const centerMonth = startOfMonth(centerDate);
-        setAnchorMonth(prev => (prev.getTime() === centerMonth.getTime() ? prev : centerMonth));
+        if (!pendingJumpMonth) {
+          const centerIndex = Math.round((scrollLeft + timelineEl.clientWidth / 2 - COL_WIDTH / 2) / COL_WIDTH);
+          const clampedIndex = Math.min(Math.max(centerIndex, 0), Math.max(columns.length - 1, 0));
+          const centerDate = addDays(rangeStart, clampedIndex);
+          const centerMonth = startOfMonth(centerDate);
+          setAnchorMonth(prev => (prev.getTime() === centerMonth.getTime() ? prev : centerMonth));
+        }
 
         if (!hasScrolledToToday) {
           return;
