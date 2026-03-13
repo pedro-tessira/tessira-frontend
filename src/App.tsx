@@ -12,6 +12,7 @@ import HorizonOverviewPage from "@/modules/horizon/pages/HorizonOverviewPage";
 import TimelinePage from "@/modules/horizon/pages/TimelinePage";
 import SharePage from "@/modules/horizon/pages/SharePage";
 import PeopleOverviewPage from "@/modules/people/pages/PeopleOverviewPage";
+import NineBoxPage from "@/modules/people/pages/NineBoxPage";
 import EmployeeListPage from "@/modules/people/pages/EmployeeListPage";
 import EmployeeDetailPage from "@/modules/people/pages/EmployeeDetailPage";
 import TeamsListPage from "@/modules/people/pages/TeamsListPage";
