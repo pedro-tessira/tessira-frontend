@@ -53,6 +53,18 @@ export default function PeopleOverviewPage() {
           </div>
           <ArrowRight size={16} className="text-muted-foreground group-hover:text-primary tessira-transition shrink-0 ml-4" />
         </Link>
+        <Link
+          to="/app/people/9-box"
+          className="group rounded-lg border border-border/50 bg-card p-5 hover:border-primary/20 tessira-transition flex items-center justify-between lg:col-span-2"
+        >
+          <div>
+            <h3 className="text-sm font-semibold">9-Box</h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Performance–potential positioning for succession planning and leadership visibility.
+            </p>
+          </div>
+          <ArrowRight size={16} className="text-muted-foreground group-hover:text-primary tessira-transition shrink-0 ml-4" />
+        </Link>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
