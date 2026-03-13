@@ -21,7 +21,13 @@ import SignalsOverviewPage from "@/modules/signals/pages/SignalsOverviewPage";
 import TeamSignalsPage from "@/modules/signals/pages/TeamSignalsPage";
 import CapacityPage from "@/modules/signals/pages/CapacityPage";
 import ResiliencePage from "@/modules/signals/pages/ResiliencePage";
-import AdminPage from "@/modules/admin/pages/AdminPage";
+import AdminLayout from "@/modules/admin/layouts/AdminLayout";
+import AdminOverviewPage from "@/modules/admin/pages/AdminOverviewPage";
+import AccessPage from "@/modules/admin/pages/AccessPage";
+import UsersPage from "@/modules/admin/pages/UsersPage";
+import LinkingPage from "@/modules/admin/pages/LinkingPage";
+import GovernancePage from "@/modules/admin/pages/GovernancePage";
+import AuditPage from "@/modules/admin/pages/AuditPage";
 import ProfilePage from "@/modules/profile/pages/ProfilePage";
 import HelpPage from "@/modules/help/pages/HelpPage";
 import NotFound from "./pages/NotFound";
@@ -53,7 +59,14 @@ const App = () => (
             <Route path="signals/teams" element={<TeamSignalsPage />} />
             <Route path="signals/capacity" element={<CapacityPage />} />
             <Route path="signals/resilience" element={<ResiliencePage />} />
-            <Route path="admin" element={<AdminPage />} />
+            <Route path="admin" element={<AdminLayout />}>
+              <Route index element={<AdminOverviewPage />} />
+              <Route path="access" element={<AccessPage />} />
+              <Route path="users" element={<UsersPage />} />
+              <Route path="linking" element={<LinkingPage />} />
+              <Route path="governance" element={<GovernancePage />} />
+              <Route path="audit" element={<AuditPage />} />
+            </Route>
             <Route path="profile" element={<ProfilePage />} />
             <Route path="help" element={<HelpPage />} />
           </Route>
