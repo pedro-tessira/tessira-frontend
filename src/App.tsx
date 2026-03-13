@@ -59,7 +59,14 @@ const App = () => (
             <Route path="signals/teams" element={<TeamSignalsPage />} />
             <Route path="signals/capacity" element={<CapacityPage />} />
             <Route path="signals/resilience" element={<ResiliencePage />} />
-            <Route path="admin" element={<AdminPage />} />
+            <Route path="admin" element={<AdminLayout />}>
+              <Route index element={<AdminOverviewPage />} />
+              <Route path="access" element={<AccessPage />} />
+              <Route path="users" element={<UsersPage />} />
+              <Route path="linking" element={<LinkingPage />} />
+              <Route path="governance" element={<GovernancePage />} />
+              <Route path="audit" element={<AuditPage />} />
+            </Route>
             <Route path="profile" element={<ProfilePage />} />
             <Route path="help" element={<HelpPage />} />
           </Route>
