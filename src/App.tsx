@@ -48,7 +48,11 @@ const App = () => (
           <Route path="/app" element={<AppShell />}>
             <Route index element={<Navigate to="/app/overview" replace />} />
             <Route path="overview" element={<OverviewPage />} />
-            <Route path="horizon/*" element={<HorizonPage />} />
+            <Route path="horizon" element={<HorizonLayout />}>
+              <Route index element={<HorizonOverviewPage />} />
+              <Route path="timeline" element={<TimelinePage />} />
+              <Route path="share" element={<SharePage />} />
+            </Route>
             <Route path="people" element={<PeopleOverviewPage />} />
             <Route path="people/employees" element={<EmployeeListPage />} />
             <Route path="people/employees/:employeeId" element={<EmployeeDetailPage />} />
