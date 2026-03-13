@@ -8,7 +8,11 @@ import { AppShell } from "@/shared/layouts/AppShell";
 import LandingPage from "@/modules/landing/pages/LandingPage";
 import OverviewPage from "@/modules/overview/pages/OverviewPage";
 import HorizonPage from "@/modules/horizon/pages/HorizonPage";
-import PeoplePage from "@/modules/people/pages/PeoplePage";
+import PeopleOverviewPage from "@/modules/people/pages/PeopleOverviewPage";
+import EmployeeListPage from "@/modules/people/pages/EmployeeListPage";
+import EmployeeDetailPage from "@/modules/people/pages/EmployeeDetailPage";
+import TeamsListPage from "@/modules/people/pages/TeamsListPage";
+import TeamDetailPage from "@/modules/people/pages/TeamDetailPage";
 import SkillsPage from "@/modules/skills/pages/SkillsPage";
 import SignalsPage from "@/modules/signals/pages/SignalsPage";
 import AdminPage from "@/modules/admin/pages/AdminPage";
@@ -30,7 +34,11 @@ const App = () => (
             <Route index element={<Navigate to="/app/overview" replace />} />
             <Route path="overview" element={<OverviewPage />} />
             <Route path="horizon/*" element={<HorizonPage />} />
-            <Route path="people" element={<PeoplePage />} />
+            <Route path="people" element={<PeopleOverviewPage />} />
+            <Route path="people/employees" element={<EmployeeListPage />} />
+            <Route path="people/employees/:employeeId" element={<EmployeeDetailPage />} />
+            <Route path="people/teams" element={<TeamsListPage />} />
+            <Route path="people/teams/:teamId" element={<TeamDetailPage />} />
             <Route path="skills" element={<SkillsPage />} />
             <Route path="signals" element={<SignalsPage />} />
             <Route path="admin" element={<AdminPage />} />
