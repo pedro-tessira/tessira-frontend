@@ -13,7 +13,10 @@ import EmployeeListPage from "@/modules/people/pages/EmployeeListPage";
 import EmployeeDetailPage from "@/modules/people/pages/EmployeeDetailPage";
 import TeamsListPage from "@/modules/people/pages/TeamsListPage";
 import TeamDetailPage from "@/modules/people/pages/TeamDetailPage";
-import SkillsPage from "@/modules/skills/pages/SkillsPage";
+import SkillsOverviewPage from "@/modules/skills/pages/SkillsOverviewPage";
+import SkillMatrixPage from "@/modules/skills/pages/SkillMatrixPage";
+import CoveragePage from "@/modules/skills/pages/CoveragePage";
+import RiskPage from "@/modules/skills/pages/RiskPage";
 import SignalsPage from "@/modules/signals/pages/SignalsPage";
 import AdminPage from "@/modules/admin/pages/AdminPage";
 import ProfilePage from "@/modules/profile/pages/ProfilePage";
@@ -39,7 +42,10 @@ const App = () => (
             <Route path="people/employees/:employeeId" element={<EmployeeDetailPage />} />
             <Route path="people/teams" element={<TeamsListPage />} />
             <Route path="people/teams/:teamId" element={<TeamDetailPage />} />
-            <Route path="skills" element={<SkillsPage />} />
+            <Route path="skills" element={<SkillsOverviewPage />} />
+            <Route path="skills/matrix" element={<SkillMatrixPage />} />
+            <Route path="skills/coverage" element={<CoveragePage />} />
+            <Route path="skills/risk" element={<RiskPage />} />
             <Route path="signals" element={<SignalsPage />} />
             <Route path="admin" element={<AdminPage />} />
             <Route path="profile" element={<ProfilePage />} />
