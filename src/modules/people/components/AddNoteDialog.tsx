@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { NoteCategory, EvaluationType } from "../types";
+import type { NoteCategory, EvaluationType, NoteVisibility } from "../types";
 
 const NOTE_CATEGORIES: NoteCategory[] = [
   "1:1",
