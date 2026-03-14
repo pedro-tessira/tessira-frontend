@@ -67,6 +67,7 @@ export function AddNoteDialog({ open, onOpenChange, onSave }: Props) {
 
   const reset = () => {
     setCategory("");
+    setVisibility("visible");
     setSelectedEvals([]);
     setText("");
   };
