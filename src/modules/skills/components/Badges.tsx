@@ -1,5 +1,6 @@
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
-import type { CoverageStatus, RiskSeverity, SkillLevel, SkillType, SkillCriticality } from "../types";
+import type { CoverageStatus, RiskSeverity, SkillLevel, SkillType, SkillCriticality, SkillMomentum } from "../types";
 
 const SEVERITY_CONFIG: Record<RiskSeverity, { label: string; className: string }> = {
   critical: { label: "Critical", className: "bg-destructive/10 text-destructive" },
