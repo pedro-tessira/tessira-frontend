@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Plus, StickyNote, Eye, Lock, CalendarClock, TrendingUp, AlertTriangle, BarChart3, Filter } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { Plus, StickyNote, Eye, Lock, CalendarClock, TrendingUp, TrendingDown, Minus as MinusIcon, AlertTriangle, BarChart3, Filter, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,13 +37,58 @@ function formatDate(iso: string) {
   });
 }
 
+// ── Momentum helpers ─────────────────────────────────────────────
+
+type Momentum = "Improving" | "Stable" | "Declining";
+
+function deriveMomentum(notes: FollowUpNote[]): Momentum {
+  if (notes.length < 2) return "Stable";
+  const sorted = [...notes].sort((a, b) => a.date.localeCompare(b.date));
+  const mid = Math.floor(sorted.length / 2);
+  const score = (slice: FollowUpNote[]) =>
+    slice.reduce((s, n) => s + (n.polarity === "positive" ? 1 : n.polarity === "negative" ? -1 : 0), 0);
+  const early = score(sorted.slice(0, mid));
+  const late = score(sorted.slice(mid));
+  if (late > early) return "Improving";
+  if (late < early) return "Declining";
+  return "Stable";
+}
+
+// ── Evidence Distribution ────────────────────────────────────────
+
+function EvidenceDistribution({ notes }: { notes: FollowUpNote[] }) {
+  const dimCounts: Record<string, number> = {};
+  notes.forEach((n) => n.evaluationTypes.forEach((d) => { dimCounts[d] = (dimCounts[d] || 0) + 1; }));
+  const sorted = Object.entries(dimCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+  if (sorted.length === 0) return null;
+
+  return (
+    <div>
+      <div className="text-xs text-muted-foreground mb-1.5">Evidence by dimension</div>
+      <div className="space-y-1">
+        {sorted.map(([dim, count]) => (
+          <div key={dim} className="flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground truncate min-w-0 flex-1">{dim}</span>
+            <span className="flex gap-0.5 shrink-0">
+              {Array.from({ length: count }).map((_, i) => (
+                <span key={i} className="h-1.5 w-1.5 rounded-full bg-primary" />
+              ))}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Signals Placeholder ──────────────────────────────────────────
 
 function LeadershipSignalsPlaceholder({ notes }: { notes: FollowUpNote[] }) {
   const positiveCount = notes.filter((n) => n.polarity === "positive").length;
   const negativeCount = notes.filter((n) => n.polarity === "negative").length;
 
-  // Gather top dimensions from positive notes
+  // Strength areas
   const dimCounts: Record<string, number> = {};
   notes.forEach((n) => {
     if (n.polarity === "positive") {
@@ -52,15 +97,30 @@ function LeadershipSignalsPlaceholder({ notes }: { notes: FollowUpNote[] }) {
   });
   const strengths = Object.entries(dimCounts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([d]) => d);
 
+  // Watch areas
   const watchDims: Record<string, number> = {};
   notes.forEach((n) => {
     if (n.polarity === "negative") {
       n.evaluationTypes.forEach((d) => { watchDims[d] = (watchDims[d] || 0) + 1; });
     }
   });
-  const watches = Object.entries(watchDims).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([d]) => d);
+  const watchEntries = Object.entries(watchDims).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  const watches = watchEntries.map(([d]) => d);
+  const totalNegObs = Object.values(watchDims).reduce((a, b) => a + b, 0);
 
   const confidence = notes.length >= 5 ? "High" : notes.length >= 3 ? "Medium" : "Low";
+  const momentum = deriveMomentum(notes);
+
+  // Last evidence date
+  const lastDate = notes.length > 0
+    ? [...notes].sort((a, b) => b.date.localeCompare(a.date))[0].date
+    : null;
+  const isOutdated = lastDate
+    ? (Date.now() - new Date(lastDate).getTime()) > 180 * 24 * 60 * 60 * 1000
+    : false;
+
+  const MomentumIcon = momentum === "Improving" ? TrendingUp : momentum === "Declining" ? TrendingDown : MinusIcon;
+  const momentumColor = momentum === "Improving" ? "text-chart-2" : momentum === "Declining" ? "text-destructive" : "text-muted-foreground";
 
   return (
     <div className="rounded-lg border border-border/50 bg-card p-5">
@@ -69,7 +129,8 @@ function LeadershipSignalsPlaceholder({ notes }: { notes: FollowUpNote[] }) {
         <h3 className="text-sm font-semibold">Leadership Signals</h3>
         <span className="ml-auto text-[10px] text-muted-foreground rounded-full bg-muted px-2 py-0.5">Signals Preview</span>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Strength Areas */}
         <div>
           <div className="text-xs text-muted-foreground mb-1">Strength Areas</div>
           <div className="flex flex-wrap gap-1">
@@ -78,14 +139,25 @@ function LeadershipSignalsPlaceholder({ notes }: { notes: FollowUpNote[] }) {
             )) : <span className="text-xs text-muted-foreground/60">—</span>}
           </div>
         </div>
+
+        {/* Watch Areas */}
         <div>
           <div className="text-xs text-muted-foreground mb-1">Watch Areas</div>
-          <div className="flex flex-wrap gap-1">
-            {watches.length > 0 ? watches.map((w) => (
-              <Badge key={w} variant="outline" className="text-[10px] px-1.5 py-0 border-destructive/30 text-destructive">{w}</Badge>
-            )) : <span className="text-xs text-muted-foreground/60">—</span>}
-          </div>
+          {watches.length > 0 ? (
+            <div>
+              <div className="flex flex-wrap gap-1">
+                {watches.map((w) => (
+                  <Badge key={w} variant="outline" className="text-[10px] px-1.5 py-0 border-destructive/30 text-destructive">{w}</Badge>
+                ))}
+              </div>
+              <div className="text-[10px] text-muted-foreground mt-1">{totalNegObs} negative observation{totalNegObs !== 1 ? "s" : ""}</div>
+            </div>
+          ) : (
+            <span className="text-xs text-chart-2/80">No current concerns</span>
+          )}
         </div>
+
+        {/* Evidence Count */}
         <div>
           <div className="text-xs text-muted-foreground mb-1">Evidence Count</div>
           <div className="flex items-center gap-2">
@@ -95,10 +167,41 @@ function LeadershipSignalsPlaceholder({ notes }: { notes: FollowUpNote[] }) {
             <span className="text-[10px] text-muted-foreground">pos / neg</span>
           </div>
         </div>
+
+        {/* Evidence Distribution */}
+        <EvidenceDistribution notes={notes} />
+
+        {/* Momentum */}
         <div>
-          <div className="text-xs text-muted-foreground mb-1">Confidence</div>
-          <div className="text-sm font-medium">{confidence}</div>
-          <div className="text-[10px] text-muted-foreground">{notes.length} notes total</div>
+          <div className="text-xs text-muted-foreground mb-1">Momentum</div>
+          <div className={`flex items-center gap-1.5 text-sm font-medium ${momentumColor}`}>
+            <MomentumIcon size={14} />
+            <span>{momentum}</span>
+          </div>
+        </div>
+
+        {/* Confidence + Last Evidence */}
+        <div className="space-y-2">
+          <div>
+            <div className="text-xs text-muted-foreground mb-1">Confidence</div>
+            <div className="text-sm font-medium">{confidence}</div>
+            <div className="text-[10px] text-muted-foreground">{notes.length} notes total</div>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground mb-1">Last Evidence</div>
+            {lastDate ? (
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-medium">{formatDate(lastDate)}</span>
+                {isOutdated && (
+                  <span className="inline-flex items-center gap-1 text-[10px] text-warning">
+                    <AlertTriangle size={10} /> Evidence outdated
+                  </span>
+                )}
+              </div>
+            ) : (
+              <span className="text-xs text-muted-foreground/60">—</span>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -184,7 +287,7 @@ export function FollowUpNotes({ employeeId }: { employeeId: string }) {
   const authors = useMemo(() => [...new Set(notes.map((n) => n.author))], [notes]);
 
   const filtered = useMemo(() => {
-    return notes.filter((n) => {
+    const result = notes.filter((n) => {
       if (filters.category !== ALL && n.category !== filters.category) return false;
       if (filters.dimension !== ALL && !n.evaluationTypes.includes(filters.dimension as EvaluationType)) return false;
       if (filters.polarity !== ALL && n.polarity !== filters.polarity) return false;
@@ -192,7 +295,19 @@ export function FollowUpNotes({ employeeId }: { employeeId: string }) {
       if (filters.author !== ALL && n.author !== filters.author) return false;
       return true;
     });
+    // Pinned notes first, then by date
+    return result.sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      return b.date.localeCompare(a.date);
+    });
   }, [notes, filters]);
+
+  const togglePin = useCallback((noteId: string) => {
+    setNotes((prev) =>
+      prev.map((n) => (n.id === noteId ? { ...n, pinned: !n.pinned } : n))
+    );
+  }, []);
 
   const handleAdd = (data: {
     category: NoteCategory;
@@ -232,9 +347,14 @@ export function FollowUpNotes({ employeeId }: { employeeId: string }) {
           <div className="divide-y divide-border/50">
             {filtered.map((note) => (
               <div key={note.id} className="px-5 py-4 space-y-2">
-                {/* Row 1: date · author · visibility */}
+                {/* Row 1: date · author · visibility · pin */}
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    {note.pinned && (
+                      <span className="inline-flex items-center gap-1 text-chart-4 font-medium">
+                        <Star size={10} className="fill-chart-4" /> Pinned
+                      </span>
+                    )}
                     <span>{formatDate(note.date)}</span>
                     <span>·</span>
                     <span>{note.author}</span>
@@ -249,18 +369,27 @@ export function FollowUpNotes({ employeeId }: { employeeId: string }) {
                       </span>
                     )}
                   </div>
+                  <button
+                    onClick={() => togglePin(note.id)}
+                    className="text-muted-foreground/40 hover:text-chart-4 transition-colors"
+                    title={note.pinned ? "Unpin note" : "Pin note"}
+                  >
+                    <Star size={12} className={note.pinned ? "fill-chart-4 text-chart-4" : ""} />
+                  </button>
                 </div>
 
-                {/* Row 2: category · polarity · impact */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${categoryColor[note.category] ?? "bg-accent text-accent-foreground"}`}>
-                    {note.category}
-                  </span>
+                {/* Row 2: polarity · category · impact */}
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium capitalize ${polarityStyle[note.polarity]}`}>
                     {note.polarity}
                   </span>
+                  <span className="text-muted-foreground/40 text-[11px]">•</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${categoryColor[note.category] ?? "bg-accent text-accent-foreground"}`}>
+                    {note.category}
+                  </span>
+                  <span className="text-muted-foreground/40 text-[11px]">•</span>
                   <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium capitalize ${impactStyle[note.impact]}`}>
-                    {note.impact}
+                    {note.impact} Impact
                   </span>
                 </div>
 
@@ -280,7 +409,7 @@ export function FollowUpNotes({ employeeId }: { employeeId: string }) {
                 {note.followUpRequired && (
                   <div className="flex items-center gap-1.5 text-xs text-chart-5">
                     <CalendarClock size={12} />
-                    <span>Follow-up{note.followUpDate ? ` by ${formatDate(note.followUpDate)}` : " required"}</span>
+                    <span>Follow-up{note.followUpDate ? ` ${formatDate(note.followUpDate)}` : " required"}</span>
                   </div>
                 )}
               </div>
