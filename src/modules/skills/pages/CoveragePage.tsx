@@ -221,6 +221,9 @@ export default function CoveragePage() {
                         <td className="px-4 py-3">
                           <CoverageBadge status={c.coverageStatus} />
                         </td>
+                        <td className="px-4 py-3 text-center">
+                          <MomentumBadge momentum={c.momentum} />
+                        </td>
                       </tr>
                       {isExpanded && (
                         <tr>
