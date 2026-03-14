@@ -100,3 +100,20 @@ export function CoverageScoreBadge({ score, status }: { score: number; status: C
     </span>
   );
 }
+
+const MOMENTUM_CONFIG: Record<SkillMomentum, { label: string; icon: typeof TrendingUp; className: string }> = {
+  improving: { label: "Improving", icon: TrendingUp, className: "text-success" },
+  stable: { label: "Stable", icon: Minus, className: "text-muted-foreground" },
+  declining: { label: "Declining", icon: TrendingDown, className: "text-destructive" },
+};
+
+export function MomentumBadge({ momentum }: { momentum: SkillMomentum }) {
+  const c = MOMENTUM_CONFIG[momentum];
+  const Icon = c.icon;
+  return (
+    <span className={cn("inline-flex items-center gap-1 text-[11px] font-medium", c.className)}>
+      <Icon size={12} />
+      {c.label}
+    </span>
+  );
+}

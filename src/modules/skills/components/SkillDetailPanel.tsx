@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
-import { X, Shield, Users, BookOpen, AlertTriangle } from "lucide-react";
+import { X, Shield, Users, BookOpen, AlertTriangle, TrendingUp, TrendingDown, Minus, Zap } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { getSkill, getDomain, getSkillAssignments, getSkillSystems, getSkillCoverage } from "../data";
 import { SkillTypeBadge, CriticalityBadge, CoverageBadge, CoverageScoreBadge } from "./Badges";
+import { MomentumBadge } from "./Badges";
 
 interface SkillDetailPanelProps {
   skillId: string;
@@ -51,6 +52,19 @@ export default function SkillDetailPanel({ skillId, onClose }: SkillDetailPanelP
           </div>
         </div>
 
+        {/* Business Impact */}
+        {skill.businessImpact && (
+          <div className="space-y-2">
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Business Impact</h3>
+            <div className="rounded-lg border border-border/50 bg-muted/20 p-3">
+              <div className="flex items-start gap-2">
+                <Zap size={13} className="text-warning mt-0.5 shrink-0" />
+                <p className="text-sm text-muted-foreground">{skill.businessImpact}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Coverage */}
         {coverage && (
           <div className="space-y-3">
@@ -76,6 +90,10 @@ export default function SkillDetailPanel({ skillId, onClose }: SkillDetailPanelP
             <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
               <span className="text-sm text-muted-foreground">Status</span>
               <CoverageBadge status={coverage.coverageStatus} />
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
+              <span className="text-sm text-muted-foreground">Momentum</span>
+              <MomentumBadge momentum={coverage.momentum} />
             </div>
           </div>
         )}
@@ -126,10 +144,10 @@ export default function SkillDetailPanel({ skillId, onClose }: SkillDetailPanelP
           ))}
         </div>
 
-        {/* Related Systems */}
+        {/* Dependencies — Related Systems */}
         {systems.length > 0 && (
           <div className="space-y-3">
-            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Related Systems</h3>
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Used by Systems</h3>
             <div className="space-y-2">
               {systems.map((sys) => (
                 <div key={sys.id} className="rounded-lg border border-border/50 p-3">

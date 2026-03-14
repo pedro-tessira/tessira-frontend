@@ -227,7 +227,7 @@ export default function CoveragePage() {
                       </tr>
                       {isExpanded && (
                         <tr>
-                          <td colSpan={9} className="bg-muted/20 px-8 py-3">
+                          <td colSpan={10} className="bg-muted/20 px-8 py-3">
                             <div className="space-y-1.5">
                               {assignments.map((a, i) => (
                                 <div key={i} className="flex items-center gap-4 text-xs">
