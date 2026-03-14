@@ -69,11 +69,14 @@ export type EvaluationType =
   | "Delivery Impact"
   | "Negative Behaviour";
 
+export type NoteVisibility = "personal" | "visible";
+
 export interface FollowUpNote {
   id: string;
   employeeId: string;
   date: string;
   author: string;
+  visibility: NoteVisibility;
   category: NoteCategory;
   evaluationTypes: EvaluationType[];
   text: string;
