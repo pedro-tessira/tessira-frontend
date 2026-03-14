@@ -275,3 +275,46 @@ export function getEmployeeSkillLevel(employeeId: string, skillId: string) {
   const a = MOCK_ASSIGNMENTS.find((a) => a.employeeId === employeeId && a.skillId === skillId);
   return a ? { level: a.level, role: a.role } : null;
 }
+
+export function getTeamExposure(): TeamExposure[] {
+  const exposures: TeamExposure[] = [];
+  
+  // For each domain, check if all owner assignments belong to a single team
+  MOCK_DOMAINS.forEach((domain) => {
+    const domainSkills = MOCK_SKILLS.filter((s) => s.domainId === domain.id);
+    const domainOwnerAssignments = MOCK_ASSIGNMENTS.filter(
+      (a) => a.role === "owner" && domainSkills.some((s) => s.id === a.skillId)
+    );
+    
+    if (domainOwnerAssignments.length === 0) return;
+    
+    // Group by team
+    const teamMap = new Map<string, { teamId: string; teamName: string; skillIds: Set<string> }>();
+    domainOwnerAssignments.forEach((a) => {
+      const existing = teamMap.get(a.teamId);
+      if (existing) {
+        existing.skillIds.add(a.skillId);
+      } else {
+        teamMap.set(a.teamId, { teamId: a.teamId, teamName: a.teamName, skillIds: new Set([a.skillId]) });
+      }
+    });
+
+    teamMap.forEach((teamData) => {
+      const pct = Math.round((teamData.skillIds.size / domainSkills.length) * 100);
+      if (pct >= 75) {
+        exposures.push({
+          teamId: teamData.teamId,
+          teamName: teamData.teamName,
+          domainName: domain.name,
+          domainId: domain.id,
+          skillCount: teamData.skillIds.size,
+          skillNames: [...teamData.skillIds].map((sid) => MOCK_SKILLS.find((s) => s.id === sid)!.name),
+          totalSkillsInDomain: domainSkills.length,
+          concentrationPct: pct,
+        });
+      }
+    });
+  });
+
+  return exposures.sort((a, b) => b.concentrationPct - a.concentrationPct);
+}
