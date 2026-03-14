@@ -2,15 +2,22 @@ import { useState, useMemo } from "react";
 import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { MOCK_SKILLS, MOCK_DOMAINS, getMatrixEmployees, getEmployeeSkillLevel } from "../data";
 import { LevelCell } from "../components/Badges";
+import SkillDetailPanel from "../components/SkillDetailPanel";
+import type { SkillType } from "../types";
 
 export default function SkillMatrixPage() {
   const [domainFilter, setDomainFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState<SkillType | "all">("all");
+  const [detailSkillId, setDetailSkillId] = useState<string | null>(null);
   const employees = getMatrixEmployees();
 
   const filteredSkills = useMemo(() => {
-    if (domainFilter === "all") return MOCK_SKILLS;
-    return MOCK_SKILLS.filter((s) => s.domainId === domainFilter);
-  }, [domainFilter]);
+    return MOCK_SKILLS.filter((s) => {
+      if (domainFilter !== "all" && s.domainId !== domainFilter) return false;
+      if (typeFilter !== "all" && s.skillType !== typeFilter) return false;
+      return true;
+    });
+  }, [domainFilter, typeFilter]);
 
   return (
     <div className="space-y-5">
@@ -35,7 +42,19 @@ export default function SkillMatrixPage() {
             <option key={d.id} value={d.id}>{d.name}</option>
           ))}
         </select>
+        <select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value as SkillType | "all")}
+          className="rounded-md border border-border/50 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary tessira-transition"
+        >
+          <option value="all">All Types</option>
+          <option value="technology">Technology</option>
+          <option value="system">System</option>
+          <option value="domain">Domain</option>
+          <option value="operational">Operational</option>
+        </select>
         <div className="flex items-center gap-3 text-xs text-muted-foreground ml-auto">
+          <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-primary/15 border border-primary/20" /> Expert ★ Owner</span>
           <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-primary/15 border border-primary/20" /> Expert</span>
           <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-success/10 border border-success/20" /> Proficient</span>
           <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-warning/10 border border-warning/20" /> Learning</span>
@@ -56,13 +75,22 @@ export default function SkillMatrixPage() {
                   return (
                     <th
                       key={skill.id}
-                      className="px-2 py-2.5 text-center min-w-[72px]"
+                      className="px-2 py-2.5 text-center min-w-[72px] cursor-pointer hover:bg-accent/10 tessira-transition"
+                      onClick={() => setDetailSkillId(skill.id)}
                     >
                       <div className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider truncate">
                         {domain?.name}
                       </div>
                       <div className="text-[11px] font-medium text-foreground truncate mt-0.5" title={skill.name}>
                         {skill.name.length > 16 ? skill.name.slice(0, 14) + "…" : skill.name}
+                      </div>
+                      <div className={`text-[9px] mt-0.5 ${
+                        skill.skillType === "technology" ? "text-primary" :
+                        skill.skillType === "system" ? "text-info" :
+                        skill.skillType === "domain" ? "text-warning" :
+                        "text-success"
+                      }`}>
+                        {skill.skillType}
                       </div>
                     </th>
                   );
@@ -94,6 +122,20 @@ export default function SkillMatrixPage() {
           </table>
         </div>
       </div>
+
+      {/* Skill Detail Panel */}
+      {detailSkillId && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm"
+            onClick={() => setDetailSkillId(null)}
+          />
+          <SkillDetailPanel
+            skillId={detailSkillId}
+            onClose={() => setDetailSkillId(null)}
+          />
+        </>
+      )}
     </div>
   );
 }

@@ -1,15 +1,16 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Shield, AlertTriangle, User } from "lucide-react";
+import { Shield, AlertTriangle, User, Target } from "lucide-react";
 import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { StatCard } from "@/shared/components/StatCard";
-import { SeverityBadge } from "../components/Badges";
-import { getSPOFRisks, MOCK_DOMAINS } from "../data";
+import { SeverityBadge, SkillTypeBadge, CriticalityBadge } from "../components/Badges";
+import { getSPOFRisks, getOwnerConcentration, MOCK_DOMAINS } from "../data";
 import type { RiskSeverity } from "../types";
 
 export default function RiskPage() {
   const [severityFilter, setSeverityFilter] = useState<RiskSeverity | "all">("all");
   const allRisks = getSPOFRisks();
+  const concentration = getOwnerConcentration();
 
   const filtered = useMemo(() => {
     if (severityFilter === "all") return allRisks;
@@ -18,23 +19,6 @@ export default function RiskPage() {
 
   const critical = allRisks.filter((r) => r.severity === "critical").length;
   const high = allRisks.filter((r) => r.severity === "high").length;
-
-  // Concentration: employees who are sole owner on multiple skills
-  const ownerConcentration = (() => {
-    const map = new Map<string, { name: string; team: string; count: number }>();
-    allRisks.forEach((r) => {
-      const existing = map.get(r.ownerEmployeeId);
-      if (existing) {
-        existing.count++;
-      } else {
-        map.set(r.ownerEmployeeId, { name: r.ownerName, team: r.ownerTeam, count: 1 });
-      }
-    });
-    return [...map.entries()]
-      .map(([id, data]) => ({ employeeId: id, ...data }))
-      .filter((e) => e.count > 1)
-      .sort((a, b) => b.count - a.count);
-  })();
 
   return (
     <div className="space-y-5">
@@ -47,34 +31,51 @@ export default function RiskPage() {
         ]}
       />
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-4">
         <StatCard label="Total SPOF Risks" value={allRisks.length} icon={Shield} detail="Single-owner skills" />
         <StatCard label="Critical" value={critical} icon={AlertTriangle} detail="Immediate attention needed" className={critical > 0 ? "border-destructive/30" : ""} />
         <StatCard label="High" value={high} icon={AlertTriangle} detail="Should be addressed soon" className={high > 0 ? "border-warning/30" : ""} />
+        <StatCard label="Concentrated Owners" value={concentration.length} icon={Target} detail="Multi-skill sole owners" className={concentration.length > 0 ? "border-warning/30" : ""} />
       </div>
 
-      {/* Concentration alert */}
-      {ownerConcentration.length > 0 && (
+      {/* Ownership Concentration */}
+      {concentration.length > 0 && (
         <div className="rounded-lg border border-warning/30 bg-warning/5 p-5">
           <div className="flex items-center gap-2 mb-3">
             <User size={16} className="text-warning" />
             <h3 className="text-sm font-semibold">Ownership Concentration</h3>
           </div>
-          <p className="text-xs text-muted-foreground mb-3">
-            These individuals are the sole owner on multiple skills with no backup — creating compounding organizational risk.
+          <p className="text-xs text-muted-foreground mb-4">
+            These individuals are the sole owner of multiple critical/high skills — creating compounding organizational risk.
           </p>
-          <div className="space-y-2">
-            {ownerConcentration.map((e) => (
-              <div key={e.employeeId} className="flex items-center justify-between">
-                <Link
-                  to={`/app/people/employees/${e.employeeId}`}
-                  className="text-sm font-medium text-primary hover:underline"
-                >
-                  {e.name}
-                </Link>
-                <span className="text-xs text-muted-foreground">
-                  {e.team} · <span className="font-medium text-warning">{e.count} sole-owner skills</span>
-                </span>
+          <div className="space-y-3">
+            {concentration.map((e) => (
+              <div key={e.employeeId} className="rounded-lg border border-border/50 bg-card p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Link
+                    to={`/app/people/employees/${e.employeeId}`}
+                    className="text-sm font-semibold text-primary hover:underline"
+                  >
+                    {e.employeeName}
+                  </Link>
+                  <span className="text-xs text-muted-foreground">
+                    {e.teamName} · <span className="font-medium text-warning">{e.criticalSkillCount} critical/high skills</span>
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {e.skills.map((s) => (
+                    <span
+                      key={s.id}
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                        s.criticality === "critical" ? "bg-destructive/10 text-destructive" :
+                        s.criticality === "high" ? "bg-warning/10 text-warning" :
+                        "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {s.name}
+                    </span>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
@@ -105,6 +106,7 @@ export default function RiskPage() {
             <tr className="border-b border-border/50 bg-muted/30">
               <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">Severity</th>
               <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">Skill</th>
+              <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">Type</th>
               <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">Domain</th>
               <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">Sole Owner</th>
               <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">Team</th>
@@ -116,6 +118,7 @@ export default function RiskPage() {
               <tr key={r.id} className="hover:bg-accent/10 tessira-transition">
                 <td className="px-4 py-3"><SeverityBadge severity={r.severity} /></td>
                 <td className="px-4 py-3 font-medium">{r.skillName}</td>
+                <td className="px-4 py-3"><SkillTypeBadge type={r.skillType} /></td>
                 <td className="px-4 py-3 text-muted-foreground">{r.domainName}</td>
                 <td className="px-4 py-3">
                   <Link

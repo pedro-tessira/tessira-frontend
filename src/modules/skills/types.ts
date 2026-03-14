@@ -1,6 +1,9 @@
 export type SkillLevel = "expert" | "proficient" | "learning" | "none";
 export type CoverageStatus = "healthy" | "at_risk" | "critical";
 export type RiskSeverity = "critical" | "high" | "medium" | "low";
+export type SkillType = "technology" | "system" | "domain" | "operational";
+export type SkillCriticality = "critical" | "high" | "standard" | "low";
+export type OwnershipRole = "owner" | "backup" | "learner";
 
 export interface SkillDomain {
   id: string;
@@ -8,12 +11,21 @@ export interface SkillDomain {
   category: "system" | "platform" | "practice" | "tooling";
 }
 
+export interface SkillSystem {
+  id: string;
+  name: string;
+  description: string;
+  skillIds: string[];
+}
+
 export interface Skill {
   id: string;
   name: string;
   domainId: string;
   description: string;
-  criticality: "critical" | "high" | "standard";
+  criticality: SkillCriticality;
+  skillType: SkillType;
+  systemIds?: string[];
 }
 
 export interface SkillAssignment {
@@ -21,7 +33,7 @@ export interface SkillAssignment {
   employeeId: string;
   employeeName: string;
   level: SkillLevel;
-  role: "owner" | "backup" | "contributor";
+  role: OwnershipRole;
   teamId: string;
   teamName: string;
 }
@@ -30,10 +42,13 @@ export interface SkillCoverage {
   skillId: string;
   skillName: string;
   domainId: string;
-  criticality: Skill["criticality"];
+  criticality: SkillCriticality;
+  skillType: SkillType;
   ownerCount: number;
   backupCount: number;
+  learnerCount: number;
   totalKnowers: number;
+  coverageScore: number;
   coverageStatus: CoverageStatus;
 }
 
@@ -48,6 +63,17 @@ export interface SPOFRisk {
   ownerTeam: string;
   backupCount: number;
   description: string;
+  skillType: SkillType;
+  criticality: SkillCriticality;
+}
+
+export interface OwnerConcentration {
+  employeeId: string;
+  employeeName: string;
+  teamName: string;
+  criticalSkillCount: number;
+  totalOwnedSkills: number;
+  skills: { id: string; name: string; criticality: SkillCriticality }[];
 }
 
 export interface SkillsStats {
@@ -57,4 +83,6 @@ export interface SkillsStats {
   criticalCoverage: number;
   spofCount: number;
   domainsTracked: number;
+  systemsTracked: number;
+  avgCoverageScore: number;
 }
