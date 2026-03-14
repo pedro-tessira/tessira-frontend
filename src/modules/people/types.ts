@@ -71,12 +71,15 @@ export type EvaluationType =
 
 export type NoteVisibility = "personal" | "visible";
 
+export type NoteImpact = "irrelevant" | "low" | "medium" | "high" | "critical";
+
 export interface FollowUpNote {
   id: string;
   employeeId: string;
   date: string;
   author: string;
   visibility: NoteVisibility;
+  impact: NoteImpact;
   category: NoteCategory;
   evaluationTypes: EvaluationType[];
   text: string;

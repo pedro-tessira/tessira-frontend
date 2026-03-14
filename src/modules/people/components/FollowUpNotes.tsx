@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Plus, StickyNote, Eye, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { FollowUpNote, NoteCategory, EvaluationType, NoteVisibility } from "../types";
+import type { FollowUpNote, NoteCategory, EvaluationType, NoteVisibility, NoteImpact } from "../types";
 import { getNotesForEmployee, addNote } from "../data";
 import { AddNoteDialog } from "./AddNoteDialog";
 
@@ -14,6 +14,14 @@ const categoryColor: Record<NoteCategory, string> = {
   Concern: "bg-destructive/10 text-destructive",
   "Follow-up": "bg-chart-5/20 text-chart-5",
   Performance: "bg-accent text-accent-foreground",
+};
+
+const impactStyle: Record<NoteImpact, string> = {
+  irrelevant: "bg-muted text-muted-foreground",
+  low: "bg-chart-2/15 text-chart-2",
+  medium: "bg-chart-4/15 text-chart-4",
+  high: "bg-orange-500/15 text-orange-600",
+  critical: "bg-destructive/15 text-destructive",
 };
 
 function formatDate(iso: string) {
@@ -34,6 +42,7 @@ export function FollowUpNotes({ employeeId }: { employeeId: string }) {
     category: NoteCategory;
     evaluationTypes: EvaluationType[];
     visibility: NoteVisibility;
+    impact: NoteImpact;
     text: string;
   }) => {
     const created = addNote({
@@ -80,12 +89,19 @@ export function FollowUpNotes({ employeeId }: { employeeId: string }) {
                       </span>
                     )}
                   </div>
-                  <span
+                   <span
                     className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
                       categoryColor[note.category] ?? "bg-accent text-accent-foreground"
                     }`}
                   >
                     {note.category}
+                  </span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[11px] font-medium capitalize ${
+                      impactStyle[note.impact]
+                    }`}
+                  >
+                    {note.impact}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">

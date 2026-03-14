@@ -17,7 +17,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { NoteCategory, EvaluationType, NoteVisibility } from "../types";
+import type { NoteCategory, EvaluationType, NoteVisibility, NoteImpact } from "../types";
+
+const IMPACT_OPTIONS: { value: NoteImpact; label: string }[] = [
+  { value: "irrelevant", label: "Irrelevant" },
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
+  { value: "critical", label: "Critical" },
+];
 
 const NOTE_CATEGORIES: NoteCategory[] = [
   "1:1",
@@ -49,6 +57,7 @@ interface Props {
     category: NoteCategory;
     evaluationTypes: EvaluationType[];
     visibility: NoteVisibility;
+    impact: NoteImpact;
     text: string;
   }) => void;
 }
@@ -56,6 +65,7 @@ interface Props {
 export function AddNoteDialog({ open, onOpenChange, onSave }: Props) {
   const [category, setCategory] = useState<NoteCategory | "">("");
   const [visibility, setVisibility] = useState<NoteVisibility>("visible");
+  const [impact, setImpact] = useState<NoteImpact>("medium");
   const [selectedEvals, setSelectedEvals] = useState<EvaluationType[]>([]);
   const [text, setText] = useState("");
 
@@ -68,13 +78,14 @@ export function AddNoteDialog({ open, onOpenChange, onSave }: Props) {
   const reset = () => {
     setCategory("");
     setVisibility("visible");
+    setImpact("medium");
     setSelectedEvals([]);
     setText("");
   };
 
   const handleSave = () => {
     if (!category || !text.trim() || selectedEvals.length === 0) return;
-    onSave({ category: category as NoteCategory, evaluationTypes: selectedEvals, visibility, text: text.trim() });
+    onSave({ category: category as NoteCategory, evaluationTypes: selectedEvals, visibility, impact, text: text.trim() });
     reset();
     onOpenChange(false);
   };
@@ -116,6 +127,23 @@ export function AddNoteDialog({ open, onOpenChange, onSave }: Props) {
               <SelectContent>
                 <SelectItem value="visible">Visible — shared with other leaders</SelectItem>
                 <SelectItem value="personal">Personal — only you can see this</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Impact */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">Impact</Label>
+            <Select value={impact} onValueChange={(v) => setImpact(v as NoteImpact)}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {IMPACT_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
