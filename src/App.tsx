@@ -26,6 +26,8 @@ import SignalsOverviewPage from "@/modules/signals/pages/SignalsOverviewPage";
 import TeamSignalsPage from "@/modules/signals/pages/TeamSignalsPage";
 import CapacityPage from "@/modules/signals/pages/CapacityPage";
 import ResiliencePage from "@/modules/signals/pages/ResiliencePage";
+import EngineeringOverviewPage from "@/modules/insights/pages/EngineeringOverviewPage";
+import TeamInsightsPage from "@/modules/insights/pages/TeamInsightsPage";
 import AdminLayout from "@/modules/admin/layouts/AdminLayout";
 import AdminOverviewPage from "@/modules/admin/pages/AdminOverviewPage";
 import AccessPage from "@/modules/admin/pages/AccessPage";
