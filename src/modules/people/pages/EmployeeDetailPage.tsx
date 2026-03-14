@@ -5,6 +5,7 @@ import {
 import { ModulePageHeader } from "../components/ModulePageHeader";
 import { StatusBadge } from "../components/StatusBadge";
 import { AvatarInitials } from "../components/AvatarInitials";
+import { FollowUpNotes } from "../components/FollowUpNotes";
 import { getEmployee, getEmployeeMemberships } from "../data";
 
 export default function EmployeeDetailPage() {
@@ -127,6 +128,9 @@ export default function EmployeeDetailPage() {
               </div>
             )}
           </div>
+
+          {/* Follow-up Notes */}
+          <FollowUpNotes employeeId={employeeId!} />
 
           {/* Future integrations placeholder */}
           <div className="grid gap-4 sm:grid-cols-2">
