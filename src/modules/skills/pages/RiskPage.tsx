@@ -11,6 +11,7 @@ export default function RiskPage() {
   const [severityFilter, setSeverityFilter] = useState<RiskSeverity | "all">("all");
   const allRisks = getSPOFRisks();
   const concentration = getOwnerConcentration();
+  const teamExposure = getTeamExposure();
 
   const filtered = useMemo(() => {
     if (severityFilter === "all") return allRisks;
