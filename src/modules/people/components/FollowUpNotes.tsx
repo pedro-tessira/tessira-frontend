@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Plus, StickyNote, Eye, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { FollowUpNote, NoteCategory, EvaluationType, NoteVisibility } from "../types";
+import type { FollowUpNote, NoteCategory, EvaluationType, NoteVisibility, NoteImpact } from "../types";
 import { getNotesForEmployee, addNote } from "../data";
 import { AddNoteDialog } from "./AddNoteDialog";
 
