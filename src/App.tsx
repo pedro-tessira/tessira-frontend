@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { TenantProvider } from "@/shared/contexts/TenantContext";
 
 import { AppShell } from "@/shared/layouts/AppShell";
 import LandingPage from "@/modules/landing/pages/LandingPage";
@@ -32,56 +33,99 @@ import UsersPage from "@/modules/admin/pages/UsersPage";
 import LinkingPage from "@/modules/admin/pages/LinkingPage";
 import GovernancePage from "@/modules/admin/pages/GovernancePage";
 import AuditPage from "@/modules/admin/pages/AuditPage";
-import ProfilePage from "@/modules/profile/pages/ProfilePage";
 import HelpPage from "@/modules/help/pages/HelpPage";
 import NotFound from "./pages/NotFound";
+
+// Account
+import AccountPage from "@/modules/account/pages/AccountPage";
+import AccountProfileTab from "@/modules/account/pages/AccountProfileTab";
+import AccountSecurityTab from "@/modules/account/pages/AccountSecurityTab";
+import AccountSessionsTab from "@/modules/account/pages/AccountSessionsTab";
+import AccountNotificationsTab from "@/modules/account/pages/AccountNotificationsTab";
+import AccountTokensTab from "@/modules/account/pages/AccountTokensTab";
+
+// Platform Admin
+import PlatformLayout from "@/modules/platform/layouts/PlatformLayout";
+import PlatformTenantsPage from "@/modules/platform/pages/PlatformTenantsPage";
+import PlatformUsersPage from "@/modules/platform/pages/PlatformUsersPage";
+import PlatformSubscriptionsPage from "@/modules/platform/pages/PlatformSubscriptionsPage";
+import PlatformUsagePage from "@/modules/platform/pages/PlatformUsagePage";
+import PlatformFlagsPage from "@/modules/platform/pages/PlatformFlagsPage";
+import PlatformAuditPage from "@/modules/platform/pages/PlatformAuditPage";
+import PlatformSupportPage from "@/modules/platform/pages/PlatformSupportPage";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/app" element={<AppShell />}>
-            <Route index element={<Navigate to="/app/overview" replace />} />
-            <Route path="overview" element={<OverviewPage />} />
-            <Route path="horizon" element={<HorizonLayout />}>
-              <Route index element={<HorizonOverviewPage />} />
-              <Route path="timeline" element={<TimelinePage />} />
-              <Route path="share" element={<SharePage />} />
+      <TenantProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+
+            {/* Platform Admin — separate control plane */}
+            <Route path="/platform" element={<PlatformLayout />}>
+              <Route index element={<PlatformTenantsPage />} />
+              <Route path="users" element={<PlatformUsersPage />} />
+              <Route path="subscriptions" element={<PlatformSubscriptionsPage />} />
+              <Route path="usage" element={<PlatformUsagePage />} />
+              <Route path="flags" element={<PlatformFlagsPage />} />
+              <Route path="audit" element={<PlatformAuditPage />} />
+              <Route path="support" element={<PlatformSupportPage />} />
             </Route>
-            <Route path="people" element={<PeopleOverviewPage />} />
-            <Route path="people/9-box" element={<NineBoxPage />} />
-            <Route path="people/employees" element={<EmployeeListPage />} />
-            <Route path="people/employees/:employeeId" element={<EmployeeDetailPage />} />
-            <Route path="people/teams" element={<TeamsListPage />} />
-            <Route path="people/teams/:teamId" element={<TeamDetailPage />} />
-            <Route path="skills" element={<SkillsOverviewPage />} />
-            <Route path="skills/matrix" element={<SkillMatrixPage />} />
-            <Route path="skills/coverage" element={<CoveragePage />} />
-            <Route path="skills/risk" element={<RiskPage />} />
-            <Route path="signals" element={<SignalsOverviewPage />} />
-            <Route path="signals/teams" element={<TeamSignalsPage />} />
-            <Route path="signals/capacity" element={<CapacityPage />} />
-            <Route path="signals/resilience" element={<ResiliencePage />} />
-            <Route path="admin" element={<AdminLayout />}>
-              <Route index element={<AdminOverviewPage />} />
-              <Route path="access" element={<AccessPage />} />
-              <Route path="users" element={<UsersPage />} />
-              <Route path="linking" element={<LinkingPage />} />
-              <Route path="governance" element={<GovernancePage />} />
-              <Route path="audit" element={<AuditPage />} />
+
+            {/* Tenant App */}
+            <Route path="/app" element={<AppShell />}>
+              <Route index element={<Navigate to="/app/overview" replace />} />
+              <Route path="overview" element={<OverviewPage />} />
+              <Route path="horizon" element={<HorizonLayout />}>
+                <Route index element={<HorizonOverviewPage />} />
+                <Route path="timeline" element={<TimelinePage />} />
+                <Route path="share" element={<SharePage />} />
+              </Route>
+              <Route path="people" element={<PeopleOverviewPage />} />
+              <Route path="people/9-box" element={<NineBoxPage />} />
+              <Route path="people/employees" element={<EmployeeListPage />} />
+              <Route path="people/employees/:employeeId" element={<EmployeeDetailPage />} />
+              <Route path="people/teams" element={<TeamsListPage />} />
+              <Route path="people/teams/:teamId" element={<TeamDetailPage />} />
+              <Route path="skills" element={<SkillsOverviewPage />} />
+              <Route path="skills/matrix" element={<SkillMatrixPage />} />
+              <Route path="skills/coverage" element={<CoveragePage />} />
+              <Route path="skills/risk" element={<RiskPage />} />
+              <Route path="signals" element={<SignalsOverviewPage />} />
+              <Route path="signals/teams" element={<TeamSignalsPage />} />
+              <Route path="signals/capacity" element={<CapacityPage />} />
+              <Route path="signals/resilience" element={<ResiliencePage />} />
+
+              {/* Org Settings (tenant admin) */}
+              <Route path="admin" element={<AdminLayout />}>
+                <Route index element={<AdminOverviewPage />} />
+                <Route path="access" element={<AccessPage />} />
+                <Route path="users" element={<UsersPage />} />
+                <Route path="linking" element={<LinkingPage />} />
+                <Route path="governance" element={<GovernancePage />} />
+                <Route path="audit" element={<AuditPage />} />
+              </Route>
+
+              {/* Personal Account */}
+              <Route path="account" element={<AccountPage />}>
+                <Route index element={<AccountProfileTab />} />
+                <Route path="security" element={<AccountSecurityTab />} />
+                <Route path="sessions" element={<AccountSessionsTab />} />
+                <Route path="notifications" element={<AccountNotificationsTab />} />
+                <Route path="tokens" element={<AccountTokensTab />} />
+              </Route>
+
+              <Route path="help" element={<HelpPage />} />
             </Route>
-            <Route path="profile" element={<ProfilePage />} />
-            <Route path="help" element={<HelpPage />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TenantProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
