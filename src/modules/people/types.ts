@@ -67,11 +67,14 @@ export type EvaluationType =
   | "Execution"
   | "Mentorship"
   | "Delivery Impact"
+  | "Reliability"
   | "Negative Behaviour";
 
 export type NoteVisibility = "personal" | "visible";
 
-export type NoteImpact = "irrelevant" | "low" | "medium" | "high" | "critical";
+export type NotePolarity = "positive" | "neutral" | "negative";
+
+export type NoteImpact = "low" | "medium" | "high";
 
 export interface FollowUpNote {
   id: string;
@@ -79,8 +82,11 @@ export interface FollowUpNote {
   date: string;
   author: string;
   visibility: NoteVisibility;
+  polarity: NotePolarity;
   impact: NoteImpact;
   category: NoteCategory;
   evaluationTypes: EvaluationType[];
   text: string;
+  followUpRequired: boolean;
+  followUpDate: string | null;
 }
