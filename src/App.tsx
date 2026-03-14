@@ -102,6 +102,8 @@ const App = () => (
               <Route path="signals/teams" element={<TeamSignalsPage />} />
               <Route path="signals/capacity" element={<CapacityPage />} />
               <Route path="signals/resilience" element={<ResiliencePage />} />
+              <Route path="insights" element={<EngineeringOverviewPage />} />
+              <Route path="insights/team/:teamId" element={<TeamInsightsPage />} />
 
               {/* Org Settings (tenant admin) */}
               <Route path="admin" element={<AdminLayout />}>
