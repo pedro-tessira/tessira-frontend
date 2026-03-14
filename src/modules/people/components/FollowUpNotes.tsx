@@ -66,15 +66,15 @@ function EvidenceDistribution({ notes }: { notes: FollowUpNote[] }) {
   return (
     <div>
       <div className="text-xs text-muted-foreground mb-1.5">Evidence by dimension</div>
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         {sorted.map(([dim, count]) => (
-          <div key={dim} className="flex items-center gap-2 text-xs">
-            <span className="text-muted-foreground truncate min-w-0 flex-1">{dim}</span>
-            <span className="flex gap-0.5 shrink-0">
+          <div key={dim} className="space-y-1">
+            <div className="text-xs text-muted-foreground">{dim}</div>
+            <div className="flex gap-0.5">
               {Array.from({ length: count }).map((_, i) => (
-                <span key={i} className="h-1.5 w-1.5 rounded-full bg-primary" />
+                <span key={i} className="h-2 w-4 rounded-sm bg-primary" />
               ))}
-            </span>
+            </div>
           </div>
         ))}
       </div>
