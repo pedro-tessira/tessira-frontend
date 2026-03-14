@@ -3,7 +3,7 @@ import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { SignalBadge, TrendIndicator, CapacityBar, ScoreGauge } from "../components/SignalIndicators";
 import { MOCK_TEAM_SIGNALS } from "../data";
 import { cn } from "@/shared/lib/utils";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Shield } from "lucide-react";
 
 export default function TeamSignalsPage() {
   const sorted = [...MOCK_TEAM_SIGNALS].sort((a, b) => a.healthScore - b.healthScore);
@@ -33,7 +33,18 @@ export default function TeamSignalsPage() {
                 </Link>
                 <span className="text-xs text-muted-foreground">{team.memberCount} members</span>
               </div>
-              <SignalBadge status={team.deliveryLoad} />
+              <div className="flex items-center gap-2">
+                <SignalBadge status={team.deliveryLoad} />
+                {team.busFactor != null && team.busFactor < 3 && (
+                  <span className={cn(
+                    "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+                    team.busFactor < 2 ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning"
+                  )}>
+                    <Shield size={10} />
+                    Bus Factor: {team.busFactor}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Metrics */}

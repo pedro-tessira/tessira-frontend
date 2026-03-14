@@ -1,10 +1,12 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Shield, AlertTriangle } from "lucide-react";
+import {
+  Shield, AlertTriangle, Users2, UserX, Calendar, ArrowRight,
+} from "lucide-react";
 import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { StatCard } from "@/shared/components/StatCard";
 import { SignalBadge } from "../components/SignalIndicators";
-import { MOCK_RESILIENCE } from "../data";
+import { MOCK_RESILIENCE, getDomainRisks, getOwnershipLoad, getRiskForecasts, MOCK_TEAM_SIGNALS } from "../data";
 import type { SignalStatus } from "../types";
 import { cn } from "@/shared/lib/utils";
 
@@ -20,6 +22,10 @@ export default function ResiliencePage() {
   const warning = MOCK_RESILIENCE.filter((r) => r.status === "warning").length;
   const healthy = MOCK_RESILIENCE.filter((r) => r.status === "healthy").length;
   const avgCoverage = Math.round(MOCK_RESILIENCE.reduce((s, r) => s + r.coverageScore, 0) / MOCK_RESILIENCE.length);
+
+  const domainRisks = getDomainRisks();
+  const ownershipLoad = getOwnershipLoad();
+  const riskForecasts = getRiskForecasts();
 
   return (
     <div className="space-y-5">
@@ -55,6 +61,174 @@ export default function ResiliencePage() {
               <div key={r.area} className="flex items-center justify-between text-xs">
                 <span className="font-medium">{r.area}</span>
                 <span className="text-muted-foreground">{r.linkedTeam}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Domain Risk Map */}
+      <div className="rounded-lg border border-border/50 bg-card">
+        <div className="border-b border-border/50 px-5 py-3">
+          <h3 className="text-sm font-semibold">Domain Risk Map</h3>
+          <p className="text-[11px] text-muted-foreground">Risk distribution across knowledge domains</p>
+        </div>
+        <div className="p-5 space-y-3">
+          {domainRisks.map((dr) => (
+            <div key={dr.domain} className="flex items-center gap-4">
+              <div className="w-36 shrink-0">
+                <div className="text-sm font-medium">{dr.domain}</div>
+                <div className="text-[11px] text-muted-foreground">
+                  {dr.spofCount > 0 && <span className="text-destructive font-medium">{dr.spofCount} SPOF{dr.spofCount > 1 ? "s" : ""}</span>}
+                  {dr.spofCount === 0 && "No SPOFs"}
+                </div>
+              </div>
+              <div className="flex-1">
+                <div className="h-3 w-full rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={cn(
+                      "h-full rounded-full tessira-transition",
+                      dr.riskLevel === "critical" ? "bg-destructive" :
+                      dr.riskLevel === "warning" ? "bg-warning" : "bg-success"
+                    )}
+                    style={{ width: `${dr.coveragePct}%` }}
+                  />
+                </div>
+              </div>
+              <div className="w-12 text-right text-xs tabular-nums text-muted-foreground">
+                {dr.coveragePct}%
+              </div>
+              <div className="w-20 shrink-0">
+                <SignalBadge status={dr.riskLevel} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Ownership Concentration */}
+        {ownershipLoad.length > 0 && (
+          <div className="rounded-lg border border-border/50 bg-card">
+            <div className="border-b border-border/50 px-5 py-3">
+              <h3 className="text-sm font-semibold">Ownership Load</h3>
+              <p className="text-[11px] text-muted-foreground">Engineers with excessive critical ownership</p>
+            </div>
+            <div className="divide-y divide-border/50">
+              {ownershipLoad.map((o) => (
+                <div key={o.employeeId} className="px-5 py-3">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div>
+                      <span className="text-sm font-medium">{o.employeeName}</span>
+                      <span className="text-xs text-muted-foreground ml-2">{o.teamName}</span>
+                    </div>
+                    <span className={cn(
+                      "text-xs font-bold tabular-nums px-2 py-0.5 rounded-full",
+                      o.criticalOwnerships >= 4 ? "bg-destructive/10 text-destructive" :
+                      o.criticalOwnerships >= 3 ? "bg-warning/10 text-warning" :
+                      "bg-muted text-muted-foreground"
+                    )}>
+                      {o.criticalOwnerships} critical
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {o.skills.map((skill) => (
+                      <span key={skill} className="inline-block text-[10px] bg-muted rounded px-1.5 py-0.5 text-muted-foreground">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Bus Factor */}
+        <div className="rounded-lg border border-border/50 bg-card">
+          <div className="border-b border-border/50 px-5 py-3">
+            <h3 className="text-sm font-semibold">Bus Factor by Team</h3>
+            <p className="text-[11px] text-muted-foreground">People that can be unavailable before a domain becomes inoperable</p>
+          </div>
+          <div className="divide-y divide-border/50">
+            {MOCK_TEAM_SIGNALS.map((t) => {
+              const bf = t.busFactor ?? 0;
+              return (
+                <div key={t.teamId} className="px-5 py-3 flex items-center justify-between">
+                  <div>
+                    <Link to={`/app/people/teams/${t.teamId}`} className="text-sm font-medium hover:text-primary tessira-transition">
+                      {t.teamName}
+                    </Link>
+                    <div className="text-xs text-muted-foreground">{t.memberCount} members</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-0.5">
+                      {Array.from({ length: Math.min(bf, 5) }).map((_, i) => (
+                        <div key={i} className={cn(
+                          "h-4 w-2 rounded-sm",
+                          bf < 2 ? "bg-destructive" : bf < 3 ? "bg-warning" : "bg-success"
+                        )} />
+                      ))}
+                      {Array.from({ length: Math.max(0, 5 - bf) }).map((_, i) => (
+                        <div key={`empty-${i}`} className="h-4 w-2 rounded-sm bg-muted" />
+                      ))}
+                    </div>
+                    <span className={cn(
+                      "text-sm font-bold tabular-nums",
+                      bf < 2 ? "text-destructive" : bf < 3 ? "text-warning" : "text-success"
+                    )}>
+                      {bf}
+                    </span>
+                    {bf < 3 && (
+                      <AlertTriangle size={12} className={bf < 2 ? "text-destructive" : "text-warning"} />
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Risk Forecasting */}
+      {riskForecasts.length > 0 && (
+        <div className="rounded-lg border border-warning/30 bg-warning/5">
+          <div className="border-b border-warning/20 px-5 py-3">
+            <div className="flex items-center gap-2">
+              <Calendar size={14} className="text-warning" />
+              <h3 className="text-sm font-semibold">Projected Risk — Next 2 Weeks</h3>
+            </div>
+            <p className="text-[11px] text-muted-foreground">Based on upcoming PTO and staffing changes from Horizon</p>
+          </div>
+          <div className="divide-y divide-warning/10">
+            {riskForecasts.map((forecast, i) => (
+              <div key={i} className="px-5 py-3">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <UserX size={14} className="text-warning" />
+                    <span className="text-sm font-medium">{forecast.employeeName}</span>
+                    <span className="text-xs text-muted-foreground">{forecast.teamName}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">{forecast.dateRange}</span>
+                </div>
+                <p className="text-xs text-muted-foreground mb-1.5">
+                  {forecast.reason} — projected coverage drops to{" "}
+                  <span className={cn(
+                    "font-bold",
+                    forecast.projectedCoverage < 50 ? "text-destructive" : "text-warning"
+                  )}>
+                    {forecast.projectedCoverage}%
+                  </span>
+                </p>
+                {forecast.impactedAreas.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {forecast.impactedAreas.map((area) => (
+                      <span key={area} className="inline-block text-[10px] bg-warning/10 text-warning rounded px-1.5 py-0.5">
+                        {area}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
