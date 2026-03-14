@@ -27,6 +27,7 @@ export interface Skill {
   criticality: SkillCriticality;
   skillType: SkillType;
   systemIds?: string[];
+  businessImpact?: string;
 }
 
 export interface SkillAssignment {
