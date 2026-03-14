@@ -42,6 +42,7 @@ export function FollowUpNotes({ employeeId }: { employeeId: string }) {
     category: NoteCategory;
     evaluationTypes: EvaluationType[];
     visibility: NoteVisibility;
+    impact: NoteImpact;
     text: string;
   }) => {
     const created = addNote({
