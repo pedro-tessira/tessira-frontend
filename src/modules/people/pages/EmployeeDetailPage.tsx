@@ -5,6 +5,7 @@ import {
 import { ModulePageHeader } from "../components/ModulePageHeader";
 import { StatusBadge } from "../components/StatusBadge";
 import { AvatarInitials } from "../components/AvatarInitials";
+import { FollowUpNotes } from "../components/FollowUpNotes";
 import { getEmployee, getEmployeeMemberships } from "../data";
 
 export default function EmployeeDetailPage() {
