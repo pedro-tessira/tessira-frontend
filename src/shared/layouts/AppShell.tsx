@@ -5,6 +5,7 @@ import {
   Users2,
   Zap,
   Activity,
+  BarChart3,
   Settings,
   Search,
   HelpCircle,
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   { label: "People", href: "/app/people", icon: Users2 },
   { label: "Skills", href: "/app/skills", icon: Zap },
   { label: "Signals", href: "/app/signals", icon: Activity },
+  { label: "Insights", href: "/app/insights", icon: BarChart3 },
 ];
 
 const BOTTOM_ITEMS = [

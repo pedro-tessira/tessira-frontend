@@ -26,6 +26,8 @@ import SignalsOverviewPage from "@/modules/signals/pages/SignalsOverviewPage";
 import TeamSignalsPage from "@/modules/signals/pages/TeamSignalsPage";
 import CapacityPage from "@/modules/signals/pages/CapacityPage";
 import ResiliencePage from "@/modules/signals/pages/ResiliencePage";
+import EngineeringOverviewPage from "@/modules/insights/pages/EngineeringOverviewPage";
+import TeamInsightsPage from "@/modules/insights/pages/TeamInsightsPage";
 import AdminLayout from "@/modules/admin/layouts/AdminLayout";
 import AdminOverviewPage from "@/modules/admin/pages/AdminOverviewPage";
 import AccessPage from "@/modules/admin/pages/AccessPage";
@@ -100,6 +102,8 @@ const App = () => (
               <Route path="signals/teams" element={<TeamSignalsPage />} />
               <Route path="signals/capacity" element={<CapacityPage />} />
               <Route path="signals/resilience" element={<ResiliencePage />} />
+              <Route path="insights" element={<EngineeringOverviewPage />} />
+              <Route path="insights/team/:teamId" element={<TeamInsightsPage />} />
 
               {/* Org Settings (tenant admin) */}
               <Route path="admin" element={<AdminLayout />}>
