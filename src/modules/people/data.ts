@@ -1,4 +1,4 @@
-import type { Employee, Team, TeamMembership, PeopleStats, FollowUpNote, NoteCategory, EvaluationType, NoteVisibility } from "./types";
+import type { Employee, Team, TeamMembership, PeopleStats, FollowUpNote, NoteCategory, EvaluationType, NoteVisibility, NoteImpact } from "./types";
 
 export const MOCK_EMPLOYEES: Employee[] = [
   {
