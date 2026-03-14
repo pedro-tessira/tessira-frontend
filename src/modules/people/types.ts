@@ -89,4 +89,5 @@ export interface FollowUpNote {
   text: string;
   followUpRequired: boolean;
   followUpDate: string | null;
+  pinned?: boolean;
 }
