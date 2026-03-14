@@ -57,6 +57,7 @@ interface Props {
     category: NoteCategory;
     evaluationTypes: EvaluationType[];
     visibility: NoteVisibility;
+    impact: NoteImpact;
     text: string;
   }) => void;
 }
