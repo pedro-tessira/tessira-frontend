@@ -1,6 +1,6 @@
 import type {
   SkillDomain, Skill, SkillAssignment, SkillCoverage, SPOFRisk, SkillsStats,
-  SkillSystem, OwnerConcentration,
+  SkillSystem, OwnerConcentration, SkillMomentum, TeamExposure,
 } from "./types";
 
 // ── Domains ──
