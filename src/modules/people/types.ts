@@ -47,3 +47,34 @@ export interface PeopleStats {
   onLeave: number;
   countriesRepresented: number;
 }
+
+export type NoteCategory =
+  | "1:1"
+  | "Feedback"
+  | "Career Discussion"
+  | "Recognition"
+  | "Concern"
+  | "Follow-up"
+  | "Performance";
+
+export type EvaluationType =
+  | "Decision Making"
+  | "Leadership Mindset"
+  | "Technical Excellence"
+  | "Ownership"
+  | "Collaboration"
+  | "Communication"
+  | "Execution"
+  | "Mentorship"
+  | "Delivery Impact"
+  | "Negative Behaviour";
+
+export interface FollowUpNote {
+  id: string;
+  employeeId: string;
+  date: string;
+  author: string;
+  category: NoteCategory;
+  evaluationTypes: EvaluationType[];
+  text: string;
+}
