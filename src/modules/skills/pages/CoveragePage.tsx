@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
-import { CoverageBadge, CoverageScoreBadge, SkillTypeBadge, CriticalityBadge } from "../components/Badges";
+import { CoverageBadge, CoverageScoreBadge, SkillTypeBadge, CriticalityBadge, MomentumBadge } from "../components/Badges";
 import SkillDetailPanel from "../components/SkillDetailPanel";
 import { getSkillCoverage, MOCK_DOMAINS, MOCK_SYSTEMS, getSkillAssignments, MOCK_SKILLS } from "../data";
 import type { CoverageStatus, SkillType } from "../types";
