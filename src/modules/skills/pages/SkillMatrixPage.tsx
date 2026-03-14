@@ -86,7 +86,7 @@ export default function SkillMatrixPage() {
                       </div>
                       <div className={`text-[9px] mt-0.5 ${
                         skill.skillType === "technology" ? "text-primary" :
-                        skill.skillType === "system" ? "text-info" :
+                        skill.skillType === "system" ? "text-secondary-foreground" :
                         skill.skillType === "domain" ? "text-warning" :
                         "text-success"
                       }`}>

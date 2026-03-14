@@ -58,7 +58,7 @@ export function LevelCell({ level, role }: { level: SkillLevel; role?: string })
 
 const SKILL_TYPE_CONFIG: Record<SkillType, { label: string; className: string }> = {
   technology: { label: "Technology", className: "bg-primary/10 text-primary" },
-  system: { label: "System", className: "bg-info/10 text-info" },
+  system: { label: "System", className: "bg-secondary text-secondary-foreground" },
   domain: { label: "Domain", className: "bg-warning/10 text-warning" },
   operational: { label: "Operational", className: "bg-success/10 text-success" },
 };
