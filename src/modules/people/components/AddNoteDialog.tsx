@@ -85,7 +85,7 @@ export function AddNoteDialog({ open, onOpenChange, onSave }: Props) {
 
   const handleSave = () => {
     if (!category || !text.trim() || selectedEvals.length === 0) return;
-    onSave({ category: category as NoteCategory, evaluationTypes: selectedEvals, visibility, text: text.trim() });
+    onSave({ category: category as NoteCategory, evaluationTypes: selectedEvals, visibility, impact, text: text.trim() });
     reset();
     onOpenChange(false);
   };
