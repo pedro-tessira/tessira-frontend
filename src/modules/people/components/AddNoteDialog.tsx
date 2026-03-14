@@ -65,6 +65,7 @@ interface Props {
 export function AddNoteDialog({ open, onOpenChange, onSave }: Props) {
   const [category, setCategory] = useState<NoteCategory | "">("");
   const [visibility, setVisibility] = useState<NoteVisibility>("visible");
+  const [impact, setImpact] = useState<NoteImpact>("medium");
   const [selectedEvals, setSelectedEvals] = useState<EvaluationType[]>([]);
   const [text, setText] = useState("");
 
