@@ -93,6 +93,29 @@ export const MOCK_ASSIGNMENTS: SkillAssignment[] = [
   { skillId: "sk-19", employeeId: "emp-009", employeeName: "Lin Zhou", level: "proficient", role: "backup", teamId: "team-005", teamName: "Engineering Leadership" },
 ];
 
+// ── Momentum mock data (simulates historical trend) ──
+const MOCK_MOMENTUM: Record<string, SkillMomentum> = {
+  "sk-01": "declining",  // OAuth — single owner, no new learners
+  "sk-02": "stable",
+  "sk-03": "declining",  // Stripe — single owner
+  "sk-04": "declining",  // PCI — single owner
+  "sk-05": "stable",     // Kafka — has backup
+  "sk-06": "improving",  // ETL — new backup added
+  "sk-07": "improving",  // React — learner progressing
+  "sk-08": "improving",  // Design System — learner
+  "sk-09": "declining",  // Datadog — single owner
+  "sk-10": "declining",  // Tracing — single owner
+  "sk-11": "stable",     // GH Actions — has backup
+  "sk-12": "stable",
+  "sk-13": "improving",  // On-call — learner added
+  "sk-14": "stable",
+  "sk-15": "declining",  // Service Mesh — single owner
+  "sk-16": "declining",  // Settlement — single owner
+  "sk-17": "stable",
+  "sk-18": "improving",  // Prod Debugging — has backup
+  "sk-19": "stable",
+};
+
 // ── Coverage Score Calculation ──
 function computeCoverageScore(owners: number, backups: number, learners: number): number {
   return owners * 1.0 + backups * 0.6 + learners * 0.3;
@@ -129,6 +152,7 @@ export function getSkillCoverage(): SkillCoverage[] {
       totalKnowers: total,
       coverageScore: Math.round(score * 10) / 10,
       coverageStatus,
+      momentum: MOCK_MOMENTUM[skill.id] ?? "stable",
     };
   });
 }
