@@ -1,16 +1,17 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Shield, AlertTriangle, User, Target } from "lucide-react";
+import { Shield, AlertTriangle, User, Target, Layers } from "lucide-react";
 import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { StatCard } from "@/shared/components/StatCard";
 import { SeverityBadge, SkillTypeBadge, CriticalityBadge } from "../components/Badges";
-import { getSPOFRisks, getOwnerConcentration, MOCK_DOMAINS } from "../data";
+import { getSPOFRisks, getOwnerConcentration, getTeamExposure, MOCK_DOMAINS } from "../data";
 import type { RiskSeverity } from "../types";
 
 export default function RiskPage() {
   const [severityFilter, setSeverityFilter] = useState<RiskSeverity | "all">("all");
   const allRisks = getSPOFRisks();
   const concentration = getOwnerConcentration();
+  const teamExposure = getTeamExposure();
 
   const filtered = useMemo(() => {
     if (severityFilter === "all") return allRisks;
@@ -73,6 +74,44 @@ export default function RiskPage() {
                       }`}
                     >
                       {s.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Team Exposure */}
+      {teamExposure.length > 0 && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Layers size={16} className="text-destructive" />
+            <h3 className="text-sm font-semibold">Team Exposure</h3>
+          </div>
+          <p className="text-xs text-muted-foreground mb-4">
+            These teams own a disproportionate share of skills within a domain — creating team-level concentration risk.
+          </p>
+          <div className="space-y-3">
+            {teamExposure.map((te, i) => (
+              <div key={i} className="rounded-lg border border-border/50 bg-card p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-semibold">{te.teamName}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {te.domainName} · <span className="font-medium text-destructive">{te.concentrationPct}% ownership</span>
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Owns {te.skillCount} of {te.totalSkillsInDomain} skills in {te.domainName}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {te.skillNames.map((name) => (
+                    <span
+                      key={name}
+                      className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-destructive/10 text-destructive"
+                    >
+                      {name}
                     </span>
                   ))}
                 </div>

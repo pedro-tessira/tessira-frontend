@@ -1,5 +1,6 @@
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
-import type { CoverageStatus, RiskSeverity, SkillLevel, SkillType, SkillCriticality } from "../types";
+import type { CoverageStatus, RiskSeverity, SkillLevel, SkillType, SkillCriticality, SkillMomentum } from "../types";
 
 const SEVERITY_CONFIG: Record<RiskSeverity, { label: string; className: string }> = {
   critical: { label: "Critical", className: "bg-destructive/10 text-destructive" },
@@ -96,6 +97,23 @@ export function CoverageScoreBadge({ score, status }: { score: number; status: C
   return (
     <span className={cn("tabular-nums font-semibold text-xs", className)}>
       {score.toFixed(1)}
+    </span>
+  );
+}
+
+const MOMENTUM_CONFIG: Record<SkillMomentum, { label: string; icon: typeof TrendingUp; className: string }> = {
+  improving: { label: "Improving", icon: TrendingUp, className: "text-success" },
+  stable: { label: "Stable", icon: Minus, className: "text-muted-foreground" },
+  declining: { label: "Declining", icon: TrendingDown, className: "text-destructive" },
+};
+
+export function MomentumBadge({ momentum }: { momentum: SkillMomentum }) {
+  const c = MOMENTUM_CONFIG[momentum];
+  const Icon = c.icon;
+  return (
+    <span className={cn("inline-flex items-center gap-1 text-[11px] font-medium", c.className)}>
+      <Icon size={12} />
+      {c.label}
     </span>
   );
 }

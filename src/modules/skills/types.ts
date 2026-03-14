@@ -4,6 +4,7 @@ export type RiskSeverity = "critical" | "high" | "medium" | "low";
 export type SkillType = "technology" | "system" | "domain" | "operational";
 export type SkillCriticality = "critical" | "high" | "standard" | "low";
 export type OwnershipRole = "owner" | "backup" | "learner";
+export type SkillMomentum = "improving" | "stable" | "declining";
 
 export interface SkillDomain {
   id: string;
@@ -26,6 +27,7 @@ export interface Skill {
   criticality: SkillCriticality;
   skillType: SkillType;
   systemIds?: string[];
+  businessImpact?: string;
 }
 
 export interface SkillAssignment {
@@ -50,6 +52,18 @@ export interface SkillCoverage {
   totalKnowers: number;
   coverageScore: number;
   coverageStatus: CoverageStatus;
+  momentum: SkillMomentum;
+}
+
+export interface TeamExposure {
+  teamId: string;
+  teamName: string;
+  domainName: string;
+  domainId: string;
+  skillCount: number;
+  skillNames: string[];
+  totalSkillsInDomain: number;
+  concentrationPct: number;
 }
 
 export interface SPOFRisk {

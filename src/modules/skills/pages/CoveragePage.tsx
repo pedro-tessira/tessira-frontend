@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
-import { CoverageBadge, CoverageScoreBadge, SkillTypeBadge, CriticalityBadge } from "../components/Badges";
+import { CoverageBadge, CoverageScoreBadge, SkillTypeBadge, CriticalityBadge, MomentumBadge } from "../components/Badges";
 import SkillDetailPanel from "../components/SkillDetailPanel";
 import { getSkillCoverage, MOCK_DOMAINS, MOCK_SYSTEMS, getSkillAssignments, MOCK_SKILLS } from "../data";
 import type { CoverageStatus, SkillType } from "../types";
@@ -178,8 +178,9 @@ export default function CoveragePage() {
                   <th className="text-center px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">Owners</th>
                   <th className="text-center px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">Backups</th>
                   <th className="text-center px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">Learners</th>
-                  <th className="text-center px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">Score</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                   <th className="text-center px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">Score</th>
+                   <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                   <th className="text-center px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">Momentum</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
@@ -220,10 +221,13 @@ export default function CoveragePage() {
                         <td className="px-4 py-3">
                           <CoverageBadge status={c.coverageStatus} />
                         </td>
+                        <td className="px-4 py-3 text-center">
+                          <MomentumBadge momentum={c.momentum} />
+                        </td>
                       </tr>
                       {isExpanded && (
                         <tr>
-                          <td colSpan={9} className="bg-muted/20 px-8 py-3">
+                          <td colSpan={10} className="bg-muted/20 px-8 py-3">
                             <div className="space-y-1.5">
                               {assignments.map((a, i) => (
                                 <div key={i} className="flex items-center gap-4 text-xs">
