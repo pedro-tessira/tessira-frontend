@@ -8,13 +8,14 @@ import {
   Settings,
   Search,
   HelpCircle,
-  User,
   ChevronRight,
   PanelLeftClose,
   PanelLeft,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useState } from "react";
+import { TenantSwitcher } from "@/shared/components/TenantSwitcher";
+import { UserMenu } from "@/shared/components/UserMenu";
 
 const NAV_ITEMS = [
   { label: "Overview", href: "/app/overview", icon: LayoutDashboard },
@@ -25,8 +26,7 @@ const NAV_ITEMS = [
 ];
 
 const BOTTOM_ITEMS = [
-  { label: "Admin", href: "/app/admin", icon: Settings },
-  { label: "Profile", href: "/app/profile", icon: User },
+  { label: "Org Settings", href: "/app/admin", icon: Settings },
   { label: "Help", href: "/app/help", icon: HelpCircle },
 ];
 
@@ -155,15 +155,8 @@ export function AppShell() {
             </NavLink>
           ))}
 
-          {/* User */}
-          <div className={cn("flex items-center gap-3 px-3 py-2 mt-1", collapsed && "justify-center px-0")}>
-            <div className="h-6 w-6 shrink-0 rounded-full bg-primary/20 border border-primary/30" />
-            {!collapsed && (
-              <span className="text-xs font-medium text-muted-foreground truncate">
-                Engineering Lead
-              </span>
-            )}
-          </div>
+          {/* User Menu */}
+          <UserMenu collapsed={collapsed} />
         </div>
       </aside>
 
@@ -171,6 +164,7 @@ export function AppShell() {
       <main className="relative flex flex-1 flex-col overflow-y-auto">
         <header className="sticky top-0 z-10 flex h-12 items-center justify-between border-b border-border/50 bg-background/80 px-6 backdrop-blur-md">
           <Breadcrumb />
+          <TenantSwitcher />
         </header>
 
         <div className="flex-1 p-6 max-w-[1440px] w-full mx-auto animate-fade-in">

@@ -1,35 +1,27 @@
-import { NavLink, Outlet, useLocation } from "react-router-dom";
-import {
-  LayoutDashboard,
-  ShieldCheck,
-  Users,
-  Link2,
-  Building2,
-  ScrollText,
-} from "lucide-react";
+import { NavLink, Outlet } from "react-router-dom";
+import { User, ShieldCheck, Monitor, Bell, Key } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 
-const ADMIN_NAV = [
-  { label: "Overview", href: "/app/admin", icon: LayoutDashboard, end: true },
-  { label: "Access & Auth", href: "/app/admin/access", icon: ShieldCheck },
-  { label: "Users", href: "/app/admin/users", icon: Users },
-  { label: "Linking", href: "/app/admin/linking", icon: Link2 },
-  { label: "Governance", href: "/app/admin/governance", icon: Building2 },
-  { label: "Audit", href: "/app/admin/audit", icon: ScrollText },
+const ACCOUNT_NAV = [
+  { label: "Profile", href: "/app/account", icon: User, end: true },
+  { label: "Security", href: "/app/account/security", icon: ShieldCheck },
+  { label: "Sessions", href: "/app/account/sessions", icon: Monitor },
+  { label: "Notifications", href: "/app/account/notifications", icon: Bell },
+  { label: "API Tokens", href: "/app/account/tokens", icon: Key },
 ];
 
-export default function AdminLayout() {
+export default function AccountPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Organization Settings</h1>
+        <h1 className="text-xl font-semibold tracking-tight">My Account</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Tenant settings, access control, governance, and audit.
+          Personal settings and security.
         </p>
       </div>
 
       <nav className="flex gap-1 border-b border-border/50 overflow-x-auto">
-        {ADMIN_NAV.map((item) => (
+        {ACCOUNT_NAV.map((item) => (
           <NavLink
             key={item.href}
             to={item.href}
