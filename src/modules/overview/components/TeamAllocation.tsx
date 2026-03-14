@@ -5,8 +5,15 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TEAM_ALLOCATION, allocationColor } from "../data";
 
-export default function TeamAllocation() {
+interface Props {
+  teamFilter?: string;
+}
+
+export default function TeamAllocation({ teamFilter }: Props) {
   const navigate = useNavigate();
+  const data = teamFilter && teamFilter !== "all"
+    ? TEAM_ALLOCATION.filter((t) => t.team === teamFilter)
+    : TEAM_ALLOCATION;
 
   return (
     <Card
@@ -21,7 +28,7 @@ export default function TeamAllocation() {
         <div className="h-[200px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={TEAM_ALLOCATION}
+              data={data}
               layout="vertical"
               margin={{ top: 4, right: 16, bottom: 0, left: 0 }}
             >
@@ -52,7 +59,7 @@ export default function TeamAllocation() {
                 formatter={(v: number) => [`${v}%`, "Allocation"]}
               />
               <Bar dataKey="allocation" radius={[0, 4, 4, 0]} barSize={18}>
-                {TEAM_ALLOCATION.map((entry, i) => (
+                {data.map((entry, i) => (
                   <Cell key={i} fill={allocationColor(entry.allocation)} />
                 ))}
               </Bar>

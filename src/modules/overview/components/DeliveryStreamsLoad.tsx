@@ -5,8 +5,15 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { STREAM_LOAD, streamLoadColor } from "../data";
 
-export default function DeliveryStreamsLoad() {
+interface Props {
+  streamFilter?: string;
+}
+
+export default function DeliveryStreamsLoad({ streamFilter }: Props) {
   const navigate = useNavigate();
+  const data = streamFilter && streamFilter !== "all"
+    ? STREAM_LOAD.filter((s) => s.stream === streamFilter)
+    : STREAM_LOAD;
 
   return (
     <Card
@@ -21,7 +28,7 @@ export default function DeliveryStreamsLoad() {
         <div className="h-[220px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={STREAM_LOAD}
+              data={data}
               layout="vertical"
               margin={{ top: 4, right: 16, bottom: 0, left: 0 }}
             >
@@ -52,7 +59,7 @@ export default function DeliveryStreamsLoad() {
                 formatter={(v: number) => [`${v} FTE`, "Allocation"]}
               />
               <Bar dataKey="fte" radius={[0, 4, 4, 0]} barSize={18}>
-                {STREAM_LOAD.map((entry, i) => (
+                {data.map((entry, i) => (
                   <Cell key={i} fill={streamLoadColor(entry.status)} />
                 ))}
               </Bar>

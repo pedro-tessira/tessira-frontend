@@ -5,8 +5,15 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DELIVERY_RISK, riskColor } from "../data";
 
-export default function DeliveryRisk() {
+interface Props {
+  streamFilter?: string;
+}
+
+export default function DeliveryRisk({ streamFilter }: Props) {
   const navigate = useNavigate();
+  const data = streamFilter && streamFilter !== "all"
+    ? DELIVERY_RISK.filter((d) => d.stream === streamFilter)
+    : DELIVERY_RISK;
 
   return (
     <Card
@@ -21,7 +28,7 @@ export default function DeliveryRisk() {
         <div className="h-[200px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={DELIVERY_RISK}
+              data={data}
               layout="vertical"
               margin={{ top: 4, right: 16, bottom: 0, left: 0 }}
             >
@@ -51,7 +58,7 @@ export default function DeliveryRisk() {
                 formatter={(v: number) => [v, "Risk Score"]}
               />
               <Bar dataKey="risk" radius={[0, 4, 4, 0]} barSize={18}>
-                {DELIVERY_RISK.map((entry, i) => (
+                {data.map((entry, i) => (
                   <Cell key={i} fill={riskColor(entry.risk)} />
                 ))}
               </Bar>
