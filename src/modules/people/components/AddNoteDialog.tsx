@@ -48,6 +48,7 @@ interface Props {
   onSave: (data: {
     category: NoteCategory;
     evaluationTypes: EvaluationType[];
+    visibility: NoteVisibility;
     text: string;
   }) => void;
 }
