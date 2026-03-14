@@ -17,7 +17,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { NoteCategory, EvaluationType, NoteVisibility } from "../types";
+import type { NoteCategory, EvaluationType, NoteVisibility, NoteImpact } from "../types";
+
+const IMPACT_OPTIONS: { value: NoteImpact; label: string }[] = [
+  { value: "irrelevant", label: "Irrelevant" },
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
+  { value: "critical", label: "Critical" },
+];
 
 const NOTE_CATEGORIES: NoteCategory[] = [
   "1:1",
