@@ -1,15 +1,18 @@
-import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { useState, useMemo, useCallback } from "react";
 import { ModulePageHeader } from "../components/ModulePageHeader";
-import { AvatarInitials } from "../components/AvatarInitials";
 import { StatCard } from "../components/StatCard";
+import { NineBoxCard, type MovementRecord } from "../components/NineBoxCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/shared/lib/utils";
-import { MOCK_EMPLOYEES, MOCK_TEAMS, MOCK_MEMBERSHIPS } from "../data";
+import { MOCK_TEAMS, MOCK_MEMBERSHIPS } from "../data";
 import { Users2, AlertTriangle, Star, TrendingUp } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
-// ── 9-box domain types & mock data ──────────────────────
+// ── 9-box domain types ──────────────────────────────────────
 type PerformanceLevel = "low" | "moderate" | "high";
 type PotentialLevel = "low" | "moderate" | "high";
 
@@ -20,24 +23,69 @@ interface NineBoxPlacement {
   note?: string;
 }
 
-const PLACEMENTS: NineBoxPlacement[] = [
-  { employeeId: "emp-001", performance: "high", potential: "high", note: "Key technical leader" },
-  { employeeId: "emp-002", performance: "high", potential: "moderate" },
-  { employeeId: "emp-003", performance: "high", potential: "high", note: "Strong people leader" },
-  { employeeId: "emp-004", performance: "moderate", potential: "moderate" },
-  { employeeId: "emp-005", performance: "moderate", potential: "high", note: "Fast growth trajectory" },
-  { employeeId: "emp-006", performance: "high", potential: "moderate" },
-  { employeeId: "emp-007", performance: "moderate", potential: "moderate" },
-  { employeeId: "emp-008", performance: "high", potential: "high" },
-  { employeeId: "emp-009", performance: "high", potential: "high" },
-  { employeeId: "emp-010", performance: "moderate", potential: "high", note: "Emerging leader" },
-  { employeeId: "emp-011", performance: "low", potential: "high", note: "New hire, ramping" },
-  { employeeId: "emp-012", performance: "low", potential: "low", note: "Offboarding" },
+// ── Review rounds ───────────────────────────────────────────
+interface ReviewRound {
+  id: string;
+  label: string;
+  placements: NineBoxPlacement[];
+}
+
+const REVIEW_ROUNDS: ReviewRound[] = [
+  {
+    id: "q1-2026",
+    label: "Q1 2026",
+    placements: [
+      { employeeId: "emp-001", performance: "high", potential: "high", note: "Key technical leader" },
+      { employeeId: "emp-002", performance: "high", potential: "moderate" },
+      { employeeId: "emp-003", performance: "high", potential: "high", note: "Strong people leader" },
+      { employeeId: "emp-004", performance: "moderate", potential: "moderate" },
+      { employeeId: "emp-005", performance: "moderate", potential: "high", note: "Fast growth trajectory" },
+      { employeeId: "emp-006", performance: "high", potential: "moderate" },
+      { employeeId: "emp-007", performance: "moderate", potential: "moderate" },
+      { employeeId: "emp-008", performance: "high", potential: "high" },
+      { employeeId: "emp-009", performance: "high", potential: "high" },
+      { employeeId: "emp-010", performance: "moderate", potential: "high", note: "Emerging leader" },
+      { employeeId: "emp-011", performance: "low", potential: "high", note: "New hire, ramping" },
+      { employeeId: "emp-012", performance: "low", potential: "low", note: "Offboarding" },
+    ],
+  },
+  {
+    id: "q3-2025",
+    label: "Q3 2025",
+    placements: [
+      { employeeId: "emp-001", performance: "high", potential: "moderate", note: "Growing into leadership" },
+      { employeeId: "emp-002", performance: "moderate", potential: "moderate" },
+      { employeeId: "emp-003", performance: "high", potential: "high", note: "Strong people leader" },
+      { employeeId: "emp-004", performance: "moderate", potential: "low" },
+      { employeeId: "emp-005", performance: "low", potential: "high", note: "Recently joined" },
+      { employeeId: "emp-006", performance: "moderate", potential: "moderate" },
+      { employeeId: "emp-007", performance: "low", potential: "moderate" },
+      { employeeId: "emp-008", performance: "high", potential: "high" },
+      { employeeId: "emp-009", performance: "high", potential: "moderate" },
+      { employeeId: "emp-010", performance: "moderate", potential: "moderate" },
+      { employeeId: "emp-012", performance: "low", potential: "moderate", note: "Performance plan" },
+    ],
+  },
+  {
+    id: "q1-2025",
+    label: "Q1 2025",
+    placements: [
+      { employeeId: "emp-001", performance: "moderate", potential: "high" },
+      { employeeId: "emp-002", performance: "moderate", potential: "moderate" },
+      { employeeId: "emp-003", performance: "high", potential: "moderate" },
+      { employeeId: "emp-004", performance: "moderate", potential: "moderate" },
+      { employeeId: "emp-006", performance: "moderate", potential: "moderate" },
+      { employeeId: "emp-008", performance: "high", potential: "high" },
+      { employeeId: "emp-009", performance: "high", potential: "moderate" },
+      { employeeId: "emp-010", performance: "low", potential: "moderate" },
+      { employeeId: "emp-012", performance: "moderate", potential: "moderate" },
+    ],
+  },
 ];
 
-// Grid config
+// ── Grid config ─────────────────────────────────────────────
 const PERF_LEVELS: PerformanceLevel[] = ["low", "moderate", "high"];
-const POT_LEVELS: PotentialLevel[] = ["high", "moderate", "low"]; // top-to-bottom
+const POT_LEVELS: PotentialLevel[] = ["high", "moderate", "low"];
 
 const BOX_LABELS: Record<string, { label: string; color: string }> = {
   "high-high": { label: "Star", color: "bg-emerald-500/10 border-emerald-500/30" },
@@ -53,21 +101,87 @@ const BOX_LABELS: Record<string, { label: string; color: string }> = {
 
 const PERF_LABEL: Record<PerformanceLevel, string> = { low: "Low", moderate: "Moderate", high: "High" };
 
+function getBoxLabel(perf: PerformanceLevel, pot: PotentialLevel) {
+  return BOX_LABELS[`${perf}-${pot}`]?.label ?? "";
+}
+
 export default function NineBoxPage() {
   const [teamFilter, setTeamFilter] = useState<string>("all");
+  const [selectedRound, setSelectedRound] = useState<string>("q1-2026");
+  const [placementsMap, setPlacementsMap] = useState<Record<string, NineBoxPlacement[]>>(() => {
+    const map: Record<string, NineBoxPlacement[]> = {};
+    REVIEW_ROUNDS.forEach((r) => { map[r.id] = [...r.placements]; });
+    return map;
+  });
+  const [movements, setMovements] = useState<MovementRecord[]>([]);
+  const [dragOverKey, setDragOverKey] = useState<string | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+
+  const currentPlacements = placementsMap[selectedRound] ?? [];
+  const currentRound = REVIEW_ROUNDS.find((r) => r.id === selectedRound);
 
   const filteredPlacements = useMemo(() => {
-    if (teamFilter === "all") return PLACEMENTS;
+    if (teamFilter === "all") return currentPlacements;
     const memberIds = MOCK_MEMBERSHIPS
       .filter((m) => m.teamId === teamFilter)
       .map((m) => m.employeeId);
-    return PLACEMENTS.filter((p) => memberIds.includes(p.employeeId));
-  }, [teamFilter]);
+    return currentPlacements.filter((p) => memberIds.includes(p.employeeId));
+  }, [teamFilter, currentPlacements]);
 
   // Stats
   const stars = filteredPlacements.filter((p) => p.performance === "high" && p.potential === "high").length;
   const risks = filteredPlacements.filter((p) => p.performance === "low").length;
   const highPotential = filteredPlacements.filter((p) => p.potential === "high").length;
+
+  // DnD handlers
+  const handleDrop = useCallback((targetPerf: PerformanceLevel, targetPot: PotentialLevel, e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverKey(null);
+    setDraggingId(null);
+    const empId = e.dataTransfer.getData("text/plain");
+    if (!empId) return;
+
+    setPlacementsMap((prev) => {
+      const roundPlacements = [...(prev[selectedRound] ?? [])];
+      const idx = roundPlacements.findIndex((p) => p.employeeId === empId);
+      if (idx === -1) return prev;
+
+      const existing = roundPlacements[idx];
+      if (existing.performance === targetPerf && existing.potential === targetPot) return prev;
+
+      const prevLabel = getBoxLabel(existing.performance, existing.potential);
+      const newLabel = getBoxLabel(targetPerf, targetPot);
+
+      roundPlacements[idx] = { ...existing, performance: targetPerf, potential: targetPot };
+
+      // Track movement
+      const movement: MovementRecord = {
+        employeeId: empId,
+        previousLabel: prevLabel,
+        newLabel: newLabel,
+        timestamp: new Date().toISOString(),
+        reviewRound: currentRound?.label ?? selectedRound,
+      };
+      setMovements((prev) => [movement, ...prev.filter((m) => m.employeeId !== empId)]);
+
+      toast({
+        title: "Placement updated",
+        description: `Moved to ${newLabel}`,
+      });
+
+      return { ...prev, [selectedRound]: roundPlacements };
+    });
+  }, [selectedRound, currentRound]);
+
+  const handleDragOver = useCallback((key: string, e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverKey(key);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setDragOverKey(null);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -88,29 +202,45 @@ export default function NineBoxPage() {
         <StatCard label="Action Needed" value={risks} icon={AlertTriangle} detail="Low performance" />
       </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground font-medium">Team:</span>
-        <div className="flex gap-1">
-          <Button
-            variant={teamFilter === "all" ? "secondary" : "ghost"}
-            size="sm"
-            className="h-7 text-xs"
-            onClick={() => setTeamFilter("all")}
-          >
-            All
-          </Button>
-          {MOCK_TEAMS.map((t) => (
+      {/* Filters & Review Round */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground font-medium">Team:</span>
+          <div className="flex gap-1">
             <Button
-              key={t.id}
-              variant={teamFilter === t.id ? "secondary" : "ghost"}
+              variant={teamFilter === "all" ? "secondary" : "ghost"}
               size="sm"
               className="h-7 text-xs"
-              onClick={() => setTeamFilter(t.id)}
+              onClick={() => setTeamFilter("all")}
             >
-              {t.name}
+              All
             </Button>
-          ))}
+            {MOCK_TEAMS.map((t) => (
+              <Button
+                key={t.id}
+                variant={teamFilter === t.id ? "secondary" : "ghost"}
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setTeamFilter(t.id)}
+              >
+                {t.name}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground font-medium">Review Round:</span>
+          <Select value={selectedRound} onValueChange={setSelectedRound}>
+            <SelectTrigger className="h-7 w-auto min-w-[110px] text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {REVIEW_ROUNDS.map((r) => (
+                <SelectItem key={r.id} value={r.id}>{r.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -131,13 +261,18 @@ export default function NineBoxPage() {
                 const people = filteredPlacements.filter(
                   (p) => p.performance === perf && p.potential === pot
                 );
+                const isDragOver = dragOverKey === key;
 
                 return (
                   <div
                     key={key}
+                    onDragOver={(e) => handleDragOver(key, e)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(perf, pot, e)}
                     className={cn(
-                      "rounded-lg border p-3 min-h-[120px] flex flex-col",
-                      box.color
+                      "rounded-lg border p-3 min-h-[120px] flex flex-col transition-all duration-150",
+                      box.color,
+                      isDragOver && "ring-2 ring-primary/40 border-primary/40 bg-primary/5"
                     )}
                   >
                     <div className="flex items-center justify-between mb-2">
@@ -147,27 +282,16 @@ export default function NineBoxPage() {
                       )}
                     </div>
                     <div className="flex-1 space-y-1.5">
-                      {people.map((p) => {
-                        const emp = MOCK_EMPLOYEES.find((e) => e.id === p.employeeId);
-                        if (!emp) return null;
-                        return (
-                          <Link
-                            key={p.employeeId}
-                            to={`/app/people/employees/${emp.id}`}
-                            className="flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-background/60 tessira-transition group"
-                          >
-                            <AvatarInitials firstName={emp.firstName} lastName={emp.lastName} size="sm" />
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs font-medium truncate group-hover:text-primary tessira-transition">
-                                {emp.firstName} {emp.lastName}
-                              </p>
-                              {p.note && (
-                                <p className="text-[10px] text-muted-foreground truncate">{p.note}</p>
-                              )}
-                            </div>
-                          </Link>
-                        );
-                      })}
+                      {people.map((p) => (
+                        <NineBoxCard
+                          key={p.employeeId}
+                          employeeId={p.employeeId}
+                          note={p.note}
+                          movement={movements.find((m) => m.employeeId === p.employeeId)}
+                          boxLabels={BOX_LABELS}
+                          onDragStart={setDraggingId}
+                        />
+                      ))}
                       {people.length === 0 && (
                         <p className="text-[11px] text-muted-foreground/40 pt-2">No placements</p>
                       )}
