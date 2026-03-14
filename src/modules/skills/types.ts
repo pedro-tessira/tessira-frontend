@@ -52,6 +52,18 @@ export interface SkillCoverage {
   totalKnowers: number;
   coverageScore: number;
   coverageStatus: CoverageStatus;
+  momentum: SkillMomentum;
+}
+
+export interface TeamExposure {
+  teamId: string;
+  teamName: string;
+  domainName: string;
+  domainId: string;
+  skillCount: number;
+  skillNames: string[];
+  totalSkillsInDomain: number;
+  concentrationPct: number;
 }
 
 export interface SPOFRisk {
