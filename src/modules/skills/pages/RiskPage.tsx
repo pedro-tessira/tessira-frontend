@@ -1,10 +1,10 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Shield, AlertTriangle, User, Target } from "lucide-react";
+import { Shield, AlertTriangle, User, Target, Layers } from "lucide-react";
 import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { StatCard } from "@/shared/components/StatCard";
 import { SeverityBadge, SkillTypeBadge, CriticalityBadge } from "../components/Badges";
-import { getSPOFRisks, getOwnerConcentration, MOCK_DOMAINS } from "../data";
+import { getSPOFRisks, getOwnerConcentration, getTeamExposure, MOCK_DOMAINS } from "../data";
 import type { RiskSeverity } from "../types";
 
 export default function RiskPage() {
