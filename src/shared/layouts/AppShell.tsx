@@ -5,6 +5,7 @@ import {
   Users2,
   Zap,
   Activity,
+  BarChart3,
   Settings,
   Search,
   HelpCircle,
