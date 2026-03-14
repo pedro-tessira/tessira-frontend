@@ -128,6 +128,9 @@ export default function EmployeeDetailPage() {
             )}
           </div>
 
+          {/* Follow-up Notes */}
+          <FollowUpNotes employeeId={employeeId!} />
+
           {/* Future integrations placeholder */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-lg border border-dashed border-border/50 bg-card/50 p-5">
