@@ -1,4 +1,4 @@
-import type { Employee, Team, TeamMembership, PeopleStats, FollowUpNote, NoteCategory, EvaluationType } from "./types";
+import type { Employee, Team, TeamMembership, PeopleStats, FollowUpNote, NoteCategory, EvaluationType, NoteVisibility } from "./types";
 
 export const MOCK_EMPLOYEES: Employee[] = [
   {
@@ -180,31 +180,31 @@ export function getEmployeeMemberships(employeeId: string) {
 const MOCK_NOTES: FollowUpNote[] = [
   {
     id: "note-001", employeeId: "emp-001", date: "2026-03-14",
-    author: "Aisha Patel", category: "Feedback",
+    author: "Aisha Patel", visibility: "visible", category: "Feedback",
     evaluationTypes: ["Decision Making", "Leadership Mindset"],
     text: "Sarah made a strong decision during the API Gateway redesign and aligned teams quickly.",
   },
   {
     id: "note-002", employeeId: "emp-001", date: "2026-03-07",
-    author: "David Okafor", category: "1:1",
+    author: "David Okafor", visibility: "personal", category: "1:1",
     evaluationTypes: ["Ownership", "Execution"],
     text: "Discussed her ownership of the migration timeline. She proactively identified two blockers and resolved them before escalation.",
   },
   {
     id: "note-003", employeeId: "emp-001", date: "2026-02-20",
-    author: "Aisha Patel", category: "Recognition",
+    author: "Aisha Patel", visibility: "visible", category: "Recognition",
     evaluationTypes: ["Collaboration", "Mentorship"],
     text: "Sarah paired with two junior engineers on the caching layer refactor. Both shipped their first PRs ahead of schedule.",
   },
   {
     id: "note-004", employeeId: "emp-002", date: "2026-03-10",
-    author: "David Okafor", category: "Career Discussion",
+    author: "David Okafor", visibility: "visible", category: "Career Discussion",
     evaluationTypes: ["Technical Excellence", "Leadership Mindset"],
     text: "Marcus is interested in moving toward a staff track. We discussed what technical leadership looks like in the Backend Services domain.",
   },
   {
     id: "note-005", employeeId: "emp-003", date: "2026-03-12",
-    author: "Lin Zhou", category: "Performance",
+    author: "Lin Zhou", visibility: "visible", category: "Performance",
     evaluationTypes: ["Delivery Impact", "Communication"],
     text: "Aisha's team shipped the new design system on schedule. Her stakeholder communication throughout was exemplary.",
   },
@@ -221,6 +221,7 @@ export function getNotesForEmployee(employeeId: string): FollowUpNote[] {
 export function addNote(input: {
   employeeId: string;
   author: string;
+  visibility: NoteVisibility;
   category: NoteCategory;
   evaluationTypes: EvaluationType[];
   text: string;

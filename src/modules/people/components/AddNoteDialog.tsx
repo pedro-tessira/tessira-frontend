@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { NoteCategory, EvaluationType } from "../types";
+import type { NoteCategory, EvaluationType, NoteVisibility } from "../types";
 
 const NOTE_CATEGORIES: NoteCategory[] = [
   "1:1",
@@ -48,12 +48,14 @@ interface Props {
   onSave: (data: {
     category: NoteCategory;
     evaluationTypes: EvaluationType[];
+    visibility: NoteVisibility;
     text: string;
   }) => void;
 }
 
 export function AddNoteDialog({ open, onOpenChange, onSave }: Props) {
   const [category, setCategory] = useState<NoteCategory | "">("");
+  const [visibility, setVisibility] = useState<NoteVisibility>("visible");
   const [selectedEvals, setSelectedEvals] = useState<EvaluationType[]>([]);
   const [text, setText] = useState("");
 
@@ -65,13 +67,14 @@ export function AddNoteDialog({ open, onOpenChange, onSave }: Props) {
 
   const reset = () => {
     setCategory("");
+    setVisibility("visible");
     setSelectedEvals([]);
     setText("");
   };
 
   const handleSave = () => {
     if (!category || !text.trim() || selectedEvals.length === 0) return;
-    onSave({ category: category as NoteCategory, evaluationTypes: selectedEvals, text: text.trim() });
+    onSave({ category: category as NoteCategory, evaluationTypes: selectedEvals, visibility, text: text.trim() });
     reset();
     onOpenChange(false);
   };
@@ -99,6 +102,20 @@ export function AddNoteDialog({ open, onOpenChange, onSave }: Props) {
                     {c}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Visibility */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">Visibility</Label>
+            <Select value={visibility} onValueChange={(v) => setVisibility(v as NoteVisibility)}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="visible">Visible — shared with other leaders</SelectItem>
+                <SelectItem value="personal">Personal — only you can see this</SelectItem>
               </SelectContent>
             </Select>
           </div>

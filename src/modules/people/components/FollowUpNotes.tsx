@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Plus, StickyNote } from "lucide-react";
+import { Plus, StickyNote, Eye, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { FollowUpNote, NoteCategory, EvaluationType } from "../types";
+import type { FollowUpNote, NoteCategory, EvaluationType, NoteVisibility } from "../types";
 import { getNotesForEmployee, addNote } from "../data";
 import { AddNoteDialog } from "./AddNoteDialog";
 
@@ -33,6 +33,7 @@ export function FollowUpNotes({ employeeId }: { employeeId: string }) {
   const handleAdd = (data: {
     category: NoteCategory;
     evaluationTypes: EvaluationType[];
+    visibility: NoteVisibility;
     text: string;
   }) => {
     const created = addNote({
@@ -68,6 +69,16 @@ export function FollowUpNotes({ employeeId }: { employeeId: string }) {
                     <span>{formatDate(note.date)}</span>
                     <span>·</span>
                     <span>{note.author}</span>
+                    <span>·</span>
+                    {note.visibility === "personal" ? (
+                      <span className="inline-flex items-center gap-1 text-muted-foreground/70">
+                        <Lock size={10} /> Personal
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-muted-foreground/70">
+                        <Eye size={10} /> Visible
+                      </span>
+                    )}
                   </div>
                   <span
                     className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
