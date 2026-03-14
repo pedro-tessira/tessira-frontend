@@ -4,8 +4,15 @@ import {
   TEAMS, SKILL_CATEGORIES, HEATMAP_DATA, heatmapBg, heatmapText,
 } from "../data";
 
-export default function SkillCoverageHeatmap() {
+interface Props {
+  teamFilter?: string;
+}
+
+export default function SkillCoverageHeatmap({ teamFilter }: Props) {
   const navigate = useNavigate();
+  const teams = teamFilter && teamFilter !== "all"
+    ? TEAMS.filter((t) => t === teamFilter)
+    : TEAMS;
 
   return (
     <Card
@@ -33,7 +40,7 @@ export default function SkillCoverageHeatmap() {
               </tr>
             </thead>
             <tbody>
-              {TEAMS.map((team) => (
+              {teams.map((team) => (
                 <tr key={team}>
                   <td className="pr-2 py-1 text-xs font-medium text-foreground whitespace-nowrap">
                     {team}
