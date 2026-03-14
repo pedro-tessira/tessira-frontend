@@ -131,6 +131,23 @@ export function AddNoteDialog({ open, onOpenChange, onSave }: Props) {
             </Select>
           </div>
 
+          {/* Impact */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">Impact</Label>
+            <Select value={impact} onValueChange={(v) => setImpact(v as NoteImpact)}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {IMPACT_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Evaluation Types (multi-select via toggle chips) */}
           <div className="space-y-1.5">
             <Label className="text-xs font-medium">Evaluation Type</Label>

@@ -89,12 +89,19 @@ export function FollowUpNotes({ employeeId }: { employeeId: string }) {
                       </span>
                     )}
                   </div>
-                  <span
+                   <span
                     className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
                       categoryColor[note.category] ?? "bg-accent text-accent-foreground"
                     }`}
                   >
                     {note.category}
+                  </span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[11px] font-medium capitalize ${
+                      impactStyle[note.impact]
+                    }`}
+                  >
+                    {note.impact}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">

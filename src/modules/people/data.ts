@@ -222,6 +222,7 @@ export function addNote(input: {
   employeeId: string;
   author: string;
   visibility: NoteVisibility;
+  impact: NoteImpact;
   category: NoteCategory;
   evaluationTypes: EvaluationType[];
   text: string;
