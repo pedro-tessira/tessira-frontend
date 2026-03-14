@@ -10,20 +10,23 @@ export interface OrgSignal {
   trend: TrendDirection;
   trendValue: string;
   description: string;
+  history?: number[]; // last 6-8 sprint values
+  delta?: string; // e.g. "+0.5"
 }
 
 export interface TeamSignal {
   teamId: string;
   teamName: string;
   memberCount: number;
-  allocation: number; // 0-100
+  allocation: number;
   deliveryLoad: SignalStatus;
   sprintVelocityTrend: TrendDirection;
-  healthScore: number; // 0-10
+  healthScore: number;
   openEscalations: number;
   spofCount: number;
-  coverageScore: number; // 0-100
+  coverageScore: number;
   alerts: string[];
+  busFactor?: number;
 }
 
 export interface CapacityEntry {
@@ -33,7 +36,7 @@ export interface CapacityEntry {
   allocated: number;
   available: number;
   onLeave: number;
-  overloaded: number; // people above 100% allocation
+  overloaded: number;
   trend: TrendDirection;
   riskLevel: SignalStatus;
 }
@@ -43,7 +46,7 @@ export interface ResilienceEntry {
   domain: string;
   ownerCount: number;
   backupCount: number;
-  coverageScore: number; // 0-100
+  coverageScore: number;
   status: SignalStatus;
   riskDetail: string;
   linkedTeam: string;
@@ -55,4 +58,31 @@ export interface AlertItem {
   message: string;
   source: string;
   timestamp: string;
+  rootCauses?: string[];
+  recommendedActions?: string[];
+}
+
+export interface DomainRisk {
+  domain: string;
+  spofCount: number;
+  coveragePct: number;
+  riskLevel: SignalStatus;
+  skills: string[];
+}
+
+export interface OwnershipLoad {
+  employeeId: string;
+  employeeName: string;
+  teamName: string;
+  criticalOwnerships: number;
+  skills: string[];
+}
+
+export interface RiskForecast {
+  employeeName: string;
+  teamName: string;
+  reason: string;
+  dateRange: string;
+  impactedAreas: string[];
+  projectedCoverage: number;
 }
