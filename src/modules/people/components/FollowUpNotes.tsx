@@ -69,6 +69,16 @@ export function FollowUpNotes({ employeeId }: { employeeId: string }) {
                     <span>{formatDate(note.date)}</span>
                     <span>·</span>
                     <span>{note.author}</span>
+                    <span>·</span>
+                    {note.visibility === "personal" ? (
+                      <span className="inline-flex items-center gap-1 text-muted-foreground/70">
+                        <Lock size={10} /> Personal
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-muted-foreground/70">
+                        <Eye size={10} /> Visible
+                      </span>
+                    )}
                   </div>
                   <span
                     className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${

@@ -106,6 +106,20 @@ export function AddNoteDialog({ open, onOpenChange, onSave }: Props) {
             </Select>
           </div>
 
+          {/* Visibility */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">Visibility</Label>
+            <Select value={visibility} onValueChange={(v) => setVisibility(v as NoteVisibility)}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="visible">Visible — shared with other leaders</SelectItem>
+                <SelectItem value="personal">Personal — only you can see this</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Evaluation Types (multi-select via toggle chips) */}
           <div className="space-y-1.5">
             <Label className="text-xs font-medium">Evaluation Type</Label>
