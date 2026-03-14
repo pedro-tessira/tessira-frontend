@@ -4,6 +4,7 @@ export type RiskSeverity = "critical" | "high" | "medium" | "low";
 export type SkillType = "technology" | "system" | "domain" | "operational";
 export type SkillCriticality = "critical" | "high" | "standard" | "low";
 export type OwnershipRole = "owner" | "backup" | "learner";
+export type SkillMomentum = "improving" | "stable" | "declining";
 
 export interface SkillDomain {
   id: string;
