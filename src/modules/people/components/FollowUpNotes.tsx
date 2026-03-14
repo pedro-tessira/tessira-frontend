@@ -16,6 +16,14 @@ const categoryColor: Record<NoteCategory, string> = {
   Performance: "bg-accent text-accent-foreground",
 };
 
+const impactStyle: Record<NoteImpact, string> = {
+  irrelevant: "bg-muted text-muted-foreground",
+  low: "bg-chart-2/15 text-chart-2",
+  medium: "bg-chart-4/15 text-chart-4",
+  high: "bg-orange-500/15 text-orange-600",
+  critical: "bg-destructive/15 text-destructive",
+};
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", {
     month: "short",
