@@ -1,14 +1,15 @@
 import { Link } from "react-router-dom";
-import { Zap, Shield, AlertTriangle, CheckCircle2, ArrowRight, Grid3X3 } from "lucide-react";
+import { Zap, Shield, AlertTriangle, CheckCircle2, ArrowRight, Grid3X3, Layers, Target } from "lucide-react";
 import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { StatCard } from "@/shared/components/StatCard";
-import { getSkillsStats, getSPOFRisks, getSkillCoverage } from "../data";
-import { SeverityBadge, CoverageBadge } from "../components/Badges";
+import { getSkillsStats, getSPOFRisks, getSkillCoverage, getOwnerConcentration } from "../data";
+import { SeverityBadge, CoverageBadge, CoverageScoreBadge, SkillTypeBadge } from "../components/Badges";
 
 export default function SkillsOverviewPage() {
   const stats = getSkillsStats();
   const risks = getSPOFRisks().slice(0, 4);
   const criticalCoverage = getSkillCoverage().filter((c) => c.coverageStatus !== "healthy").slice(0, 5);
+  const concentration = getOwnerConcentration().slice(0, 3);
 
   return (
     <div className="space-y-6">
@@ -17,11 +18,12 @@ export default function SkillsOverviewPage() {
         description="Skill coverage, ownership concentration, and organizational resilience."
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total Skills" value={stats.totalSkills} icon={Zap} detail={`${stats.domainsTracked} domains`} />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <StatCard label="Total Skills" value={stats.totalSkills} icon={Zap} detail={`${stats.domainsTracked} domains · ${stats.systemsTracked} systems`} />
         <StatCard label="Healthy Coverage" value={stats.healthyCoverage} icon={CheckCircle2} detail={`of ${stats.totalSkills} skills`} />
         <StatCard label="At Risk" value={stats.atRiskCoverage} icon={AlertTriangle} detail="Insufficient backup" />
         <StatCard label="SPOF Risks" value={stats.spofCount} icon={Shield} detail="Single-owner dependencies" className={stats.spofCount > 0 ? "border-destructive/30" : ""} />
+        <StatCard label="Avg Coverage" value={stats.avgCoverageScore} icon={Target} detail="Weighted score" />
       </div>
 
       {/* Quick links */}
@@ -62,7 +64,10 @@ export default function SkillsOverviewPage() {
               <div key={r.id} className="px-5 py-3 flex items-start gap-3">
                 <SeverityBadge severity={r.severity} />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">{r.skillName}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium truncate">{r.skillName}</span>
+                    <SkillTypeBadge type={r.skillType} />
+                  </div>
                   <div className="text-xs text-muted-foreground">
                     Sole owner: {r.ownerName} · {r.ownerTeam}
                   </div>
@@ -85,9 +90,12 @@ export default function SkillsOverviewPage() {
             {criticalCoverage.map((c) => (
               <div key={c.skillId} className="px-5 py-3 flex items-center justify-between">
                 <div className="min-w-0">
-                  <div className="text-sm font-medium truncate">{c.skillName}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium truncate">{c.skillName}</span>
+                    <SkillTypeBadge type={c.skillType} />
+                  </div>
                   <div className="text-xs text-muted-foreground tabular-nums">
-                    {c.ownerCount} owner{c.ownerCount !== 1 ? "s" : ""} · {c.backupCount} backup{c.backupCount !== 1 ? "s" : ""}
+                    {c.ownerCount} owner{c.ownerCount !== 1 ? "s" : ""} · {c.backupCount} backup{c.backupCount !== 1 ? "s" : ""} · Score: {c.coverageScore.toFixed(1)}
                   </div>
                 </div>
                 <CoverageBadge status={c.coverageStatus} />
@@ -99,6 +107,34 @@ export default function SkillsOverviewPage() {
           </div>
         </div>
       </div>
+
+      {/* Ownership Concentration */}
+      {concentration.length > 0 && (
+        <div className="rounded-lg border border-border/50 bg-card">
+          <div className="flex items-center justify-between border-b border-border/50 px-5 py-3">
+            <h3 className="text-sm font-semibold">Ownership Concentration</h3>
+            <Link to="/app/skills/risk" className="text-xs text-primary hover:underline">View all</Link>
+          </div>
+          <div className="divide-y divide-border/50">
+            {concentration.map((e) => (
+              <div key={e.employeeId} className="px-5 py-3 flex items-center justify-between">
+                <div>
+                  <Link
+                    to={`/app/people/employees/${e.employeeId}`}
+                    className="text-sm font-medium text-primary hover:underline"
+                  >
+                    {e.employeeName}
+                  </Link>
+                  <div className="text-xs text-muted-foreground">{e.teamName}</div>
+                </div>
+                <span className="text-xs font-medium text-warning">
+                  Owner of {e.criticalSkillCount} critical/high skills
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
