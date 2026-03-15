@@ -9,6 +9,8 @@ import {
   UserPlus,
   UserMinus,
   CalendarDays,
+  Users,
+  Megaphone,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
