@@ -156,23 +156,34 @@ export default function TimelinePage() {
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
+    const todayPx = ((today.getTime() - rangeStart.getTime()) / 86400000) * DAY_WIDTH + 192;
     const check = () => {
-      const todayPx = ((today.getTime() - rangeStart.getTime()) / 86400000) * DAY_WIDTH + 192;
       const scrollLeft = el.scrollLeft;
       const viewWidth = el.clientWidth;
-      setTodayVisible(todayPx >= scrollLeft && todayPx <= scrollLeft + viewWidth);
+      // Today is visible if its pixel position is within the scrolled viewport AND within the rendered range
+      const inRange = todayPx >= 192 && todayPx <= 192 + gridWidth;
+      const inView = inRange && todayPx >= scrollLeft && todayPx <= scrollLeft + viewWidth;
+      setTodayVisible(inView);
     };
     check();
     el.addEventListener("scroll", check, { passive: true });
     return () => el.removeEventListener("scroll", check);
-  }, [rangeStart, rangeDays, offset]);
+  }, [rangeStart, rangeDays, offset, gridWidth]);
 
   const scrollToToday = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const todayPx = ((today.getTime() - rangeStart.getTime()) / 86400000) * DAY_WIDTH + 192;
-    el.scrollTo({ left: todayPx - el.clientWidth / 2, behavior: "smooth" });
-  }, [rangeStart]);
+    // Reset offset to 0 to ensure today is in the rendered range, then scroll
+    setOffset(0);
+    // After state update and re-render, scroll to center today
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        const newRangeStart = addDays(today, -3);
+        const todayPx = ((today.getTime() - newRangeStart.getTime()) / 86400000) * DAY_WIDTH + 192;
+        el.scrollTo({ left: todayPx - el.clientWidth / 2, behavior: "smooth" });
+      });
+    });
+  }, []);
 
   const toggleRow = useCallback((id: string) => {
     setExpandedRows((prev) => {
