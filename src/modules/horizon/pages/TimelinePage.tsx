@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/shared/lib/utils";
@@ -141,6 +141,8 @@ export default function TimelinePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [offset, setOffset] = useState(0);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [todayVisible, setTodayVisible] = useState(true);
 
   const rangeDays = range === "2w" ? 14 : range === "4w" ? 28 : 56;
   const today = new Date();
@@ -149,6 +151,28 @@ export default function TimelinePage() {
   const rangeEnd = addDays(rangeStart, rangeDays);
   const todayISO = toISO(today);
   const gridWidth = rangeDays * DAY_WIDTH;
+
+  // Track whether today column is visible in the scroll container
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const check = () => {
+      const todayPx = ((today.getTime() - rangeStart.getTime()) / 86400000) * DAY_WIDTH + 192;
+      const scrollLeft = el.scrollLeft;
+      const viewWidth = el.clientWidth;
+      setTodayVisible(todayPx >= scrollLeft && todayPx <= scrollLeft + viewWidth);
+    };
+    check();
+    el.addEventListener("scroll", check, { passive: true });
+    return () => el.removeEventListener("scroll", check);
+  }, [rangeStart, rangeDays, offset]);
+
+  const scrollToToday = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const todayPx = ((today.getTime() - rangeStart.getTime()) / 86400000) * DAY_WIDTH + 192;
+    el.scrollTo({ left: todayPx - el.clientWidth / 2, behavior: "smooth" });
+  }, [rangeStart]);
 
   const toggleRow = useCallback((id: string) => {
     setExpandedRows((prev) => {
@@ -256,8 +280,18 @@ export default function TimelinePage() {
         </div>
 
         {/* ── Calendar Grid ── */}
-        <div className="rounded-lg border border-border/50 bg-card overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="rounded-lg border border-border/50 bg-card overflow-hidden relative">
+          {/* Floating "Go to today" button */}
+          {!todayVisible && (
+            <Button
+              size="sm"
+              className="absolute bottom-3 right-3 z-40 h-7 text-[11px] gap-1.5 shadow-lg"
+              onClick={scrollToToday}
+            >
+              Go to today
+            </Button>
+          )}
+          <div className="overflow-x-auto relative" ref={scrollRef}>
             <div style={{ minWidth: 192 + gridWidth }}>
               {/* Header */}
               <div className="flex border-b border-border/50 sticky top-0 z-20 bg-card">
