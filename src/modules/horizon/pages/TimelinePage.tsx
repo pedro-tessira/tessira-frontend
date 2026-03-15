@@ -281,7 +281,7 @@ export default function TimelinePage() {
 
         {/* ── Calendar Grid ── */}
         <div className="rounded-lg border border-border/50 bg-card overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto relative" ref={scrollRef}>
             <div style={{ minWidth: 192 + gridWidth }}>
               {/* Header */}
               <div className="flex border-b border-border/50 sticky top-0 z-20 bg-card">
