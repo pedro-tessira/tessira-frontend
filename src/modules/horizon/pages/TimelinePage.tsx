@@ -141,6 +141,30 @@ export default function TimelinePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [offset, setOffset] = useState(0);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [todayVisible, setTodayVisible] = useState(true);
+
+  // Track whether today column is visible in the scroll container
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const check = () => {
+      const todayPx = ((today.getTime() - rangeStart.getTime()) / 86400000) * DAY_WIDTH + 192; // 192 = sidebar width
+      const scrollLeft = el.scrollLeft;
+      const viewWidth = el.clientWidth;
+      setTodayVisible(todayPx >= scrollLeft && todayPx <= scrollLeft + viewWidth);
+    };
+    check();
+    el.addEventListener("scroll", check, { passive: true });
+    return () => el.removeEventListener("scroll", check);
+  }, [rangeStart, rangeDays, offset]);
+
+  const scrollToToday = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const todayPx = ((today.getTime() - rangeStart.getTime()) / 86400000) * DAY_WIDTH + 192;
+    el.scrollTo({ left: todayPx - el.clientWidth / 2, behavior: "smooth" });
+  }, [rangeStart]);
 
   const rangeDays = range === "2w" ? 14 : range === "4w" ? 28 : 56;
   const today = new Date();
