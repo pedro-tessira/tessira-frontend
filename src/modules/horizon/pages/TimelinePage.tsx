@@ -144,12 +144,20 @@ export default function TimelinePage() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [todayVisible, setTodayVisible] = useState(true);
 
+  const rangeDays = range === "2w" ? 14 : range === "4w" ? 28 : 56;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const rangeStart = addDays(today, offset * 7 - 3);
+  const rangeEnd = addDays(rangeStart, rangeDays);
+  const todayISO = toISO(today);
+  const gridWidth = rangeDays * DAY_WIDTH;
+
   // Track whether today column is visible in the scroll container
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     const check = () => {
-      const todayPx = ((today.getTime() - rangeStart.getTime()) / 86400000) * DAY_WIDTH + 192; // 192 = sidebar width
+      const todayPx = ((today.getTime() - rangeStart.getTime()) / 86400000) * DAY_WIDTH + 192;
       const scrollLeft = el.scrollLeft;
       const viewWidth = el.clientWidth;
       setTodayVisible(todayPx >= scrollLeft && todayPx <= scrollLeft + viewWidth);
@@ -165,14 +173,6 @@ export default function TimelinePage() {
     const todayPx = ((today.getTime() - rangeStart.getTime()) / 86400000) * DAY_WIDTH + 192;
     el.scrollTo({ left: todayPx - el.clientWidth / 2, behavior: "smooth" });
   }, [rangeStart]);
-
-  const rangeDays = range === "2w" ? 14 : range === "4w" ? 28 : 56;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const rangeStart = addDays(today, offset * 7 - 3);
-  const rangeEnd = addDays(rangeStart, rangeDays);
-  const todayISO = toISO(today);
-  const gridWidth = rangeDays * DAY_WIDTH;
 
   const toggleRow = useCallback((id: string) => {
     setExpandedRows((prev) => {
