@@ -351,10 +351,10 @@ export default function TimelinePage() {
 
       {/* Legend */}
       {view === "availability" && (
-        <div className="flex gap-4 text-[11px] text-muted-foreground">
-          <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-emerald-500/30" /> Available</span>
-          <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-amber-500/30" /> Partial</span>
-          <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-red-500/30" /> Unavailable</span>
+      <div className="flex gap-4 text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-emerald-500/30 dark:bg-emerald-500/30" /> Available</span>
+          <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-amber-500/30 dark:bg-amber-500/30" /> Partial</span>
+          <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-destructive/30" /> Unavailable</span>
         </div>
       )}
     </div>
