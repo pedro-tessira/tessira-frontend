@@ -280,7 +280,17 @@ export default function TimelinePage() {
         </div>
 
         {/* ── Calendar Grid ── */}
-        <div className="rounded-lg border border-border/50 bg-card overflow-hidden">
+        <div className="rounded-lg border border-border/50 bg-card overflow-hidden relative">
+          {/* Floating "Go to today" button */}
+          {!todayVisible && (
+            <Button
+              size="sm"
+              className="absolute bottom-3 right-3 z-40 h-7 text-[11px] gap-1.5 shadow-lg"
+              onClick={scrollToToday}
+            >
+              Go to today
+            </Button>
+          )}
           <div className="overflow-x-auto relative" ref={scrollRef}>
             <div style={{ minWidth: 192 + gridWidth }}>
               {/* Header */}
