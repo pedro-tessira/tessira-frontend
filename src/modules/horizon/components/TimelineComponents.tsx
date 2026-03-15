@@ -9,11 +9,16 @@ import {
   UserPlus,
   UserMinus,
   CalendarDays,
+  Users,
+  Megaphone,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 // ── Event type config ────────────────────────────────────
 const eventConfig: Record<EventType, { icon: typeof CalendarRange; color: string; bg: string }> = {
+  all_hands: { icon: Megaphone, color: "text-primary", bg: "bg-primary/10" },
+  team_sync: { icon: Users, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500/10" },
+  vacation: { icon: Palmtree, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/10" },
   sprint: { icon: CalendarRange, color: "text-primary", bg: "bg-primary/10" },
   release: { icon: Rocket, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10" },
   pto: { icon: Palmtree, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/10" },

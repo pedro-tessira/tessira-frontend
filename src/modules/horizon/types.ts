@@ -1,4 +1,16 @@
-export type EventType = "sprint" | "release" | "pto" | "milestone" | "incident" | "onboarding" | "offboarding" | "custom";
+export type EventType =
+  | "all_hands"
+  | "team_sync"
+  | "vacation"
+  | "pto"
+  | "milestone"
+  | "incident"
+  | "onboarding"
+  | "offboarding"
+  | "sprint"
+  | "release"
+  | "custom";
+
 export type EventStatus = "planned" | "active" | "completed" | "cancelled";
 
 export interface TimelineEvent {
@@ -8,12 +20,16 @@ export interface TimelineEvent {
   status: EventStatus;
   startDate: string;
   endDate: string;
-  ownerId?: string;
-  ownerName?: string;
+  /** If set, event appears in this employee's lane */
+  employeeId?: string;
+  employeeName?: string;
+  /** If set without employeeId, event appears in global lane */
   teamId?: string;
   teamName?: string;
   description?: string;
   isManual?: boolean;
+  /** true → shows in global lane regardless */
+  isGlobal?: boolean;
 }
 
 export interface TimelineStream {
@@ -52,4 +68,11 @@ export interface ShareLink {
   createdAt: string;
   expiresAt: string | null;
   isActive: boolean;
+}
+
+export interface HorizonEmployee {
+  id: string;
+  name: string;
+  teamId: string;
+  teamName: string;
 }
