@@ -319,22 +319,6 @@ export default function CapacityIntelligencePage() {
           />
         </div>
 
-        {/* ── Team Capacity Summary ── */}
-        <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
-          {teamCapacity.map((t) => (
-            <div key={t.id} className="rounded-lg border border-border/50 bg-card p-3 space-y-1.5">
-              <p className="text-[11px] font-medium text-muted-foreground truncate">{t.name}</p>
-              <div className="flex items-center gap-2">
-                <Progress value={t.capacity} className="h-1.5 flex-1" />
-                <span className={cn(
-                  "text-xs font-bold tabular-nums",
-                  t.capacity >= 80 ? "text-emerald-600 dark:text-emerald-400" : t.capacity >= 60 ? "text-amber-600 dark:text-amber-400" : "text-destructive"
-                )}>{t.capacity}%</span>
-              </div>
-            </div>
-          ))}
-        </div>
-
         {/* ── Stream Capacity ── */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
