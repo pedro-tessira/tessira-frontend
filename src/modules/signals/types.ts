@@ -20,9 +20,8 @@ export interface TeamSignal {
   memberCount: number;
   allocation: number;
   deliveryLoad: SignalStatus;
-  sprintVelocityTrend: TrendDirection;
+  capacityTrend: TrendDirection;
   healthScore: number;
-  openEscalations: number;
   spofCount: number;
   coverageScore: number;
   alerts: string[];

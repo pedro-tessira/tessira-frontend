@@ -1,86 +1,11 @@
 import type {
   OrgSignal, TeamSignal, CapacityEntry, ResilienceEntry, AlertItem,
-  DomainRisk, OwnershipLoad, RiskForecast,
+  DomainRisk, OwnershipLoad, RiskForecast, SignalStatus, TrendDirection,
 } from "./types";
 import { getSkillCoverage, getSPOFRisks, getOwnerConcentration, MOCK_DOMAINS, MOCK_SKILLS, MOCK_ASSIGNMENTS } from "@/modules/skills/data";
 import { availabilityWindows } from "@/modules/horizon/data";
 
-export const MOCK_ORG_SIGNALS: OrgSignal[] = [
-  {
-    id: "sig-01", label: "Org Health Score", value: 7.4, unit: "/10",
-    status: "healthy", trend: "up", trendValue: "+0.5 vs last sprint",
-    description: "Composite score across delivery, capacity, and resilience.",
-    history: [6.8, 6.9, 7.0, 6.9, 7.1, 7.2, 7.4], delta: "+0.5",
-  },
-  {
-    id: "sig-02", label: "Delivery On-Track", value: 78, unit: "%",
-    status: "warning", trend: "down", trendValue: "−4% vs last sprint",
-    description: "Percentage of active streams meeting planned milestones.",
-    history: [85, 84, 82, 83, 80, 82, 78], delta: "−4",
-  },
-  {
-    id: "sig-03", label: "Avg Allocation", value: 84, unit: "%",
-    status: "warning", trend: "up", trendValue: "+6% vs last sprint",
-    description: "Average engineer allocation across all teams.",
-    history: [72, 74, 76, 78, 78, 80, 84], delta: "+6",
-  },
-  {
-    id: "sig-04", label: "Open Escalations", value: 3, unit: "",
-    status: "warning", trend: "up", trendValue: "+2 this week",
-    description: "Unresolved escalations requiring leadership attention.",
-    history: [1, 0, 1, 2, 1, 1, 3], delta: "+2",
-  },
-  {
-    id: "sig-05", label: "SPOF Exposure", value: 7, unit: " skills",
-    status: "critical", trend: "stable", trendValue: "No change",
-    description: "Skills with a single owner and zero backup coverage.",
-    history: [5, 6, 6, 7, 7, 7, 7], delta: "0",
-  },
-  {
-    id: "sig-06", label: "Team Coverage", value: 91, unit: "%",
-    status: "healthy", trend: "stable", trendValue: "Stable",
-    description: "Percentage of critical skills with at least one backup.",
-    history: [88, 89, 89, 90, 90, 91, 91], delta: "+1",
-  },
-];
-
-export const MOCK_TEAM_SIGNALS: TeamSignal[] = [
-  {
-    teamId: "team-001", teamName: "Platform Core", memberCount: 4,
-    allocation: 92, deliveryLoad: "warning", sprintVelocityTrend: "stable",
-    healthScore: 7.1, openEscalations: 1, spofCount: 3, coverageScore: 68,
-    alerts: ["Auth SPOF — Sarah Chen is sole owner", "Jonas Eriksson on leave — reduced capacity"],
-    busFactor: 2,
-  },
-  {
-    teamId: "team-002", teamName: "Backend Services", memberCount: 5,
-    allocation: 88, deliveryLoad: "warning", sprintVelocityTrend: "down",
-    healthScore: 6.8, openEscalations: 1, spofCount: 2, coverageScore: 72,
-    alerts: ["Payment integration sole-owner risk", "Sprint velocity declining 3 consecutive sprints"],
-    busFactor: 2,
-  },
-  {
-    teamId: "team-003", teamName: "Product Frontend", memberCount: 4,
-    allocation: 76, deliveryLoad: "healthy", sprintVelocityTrend: "up",
-    healthScore: 8.2, openEscalations: 0, spofCount: 0, coverageScore: 95,
-    alerts: [],
-    busFactor: 4,
-  },
-  {
-    teamId: "team-004", teamName: "Data & Observability", memberCount: 3,
-    allocation: 94, deliveryLoad: "critical", sprintVelocityTrend: "down",
-    healthScore: 5.9, openEscalations: 1, spofCount: 1, coverageScore: 78,
-    alerts: ["Team at 94% allocation — near capacity ceiling", "Tomasz Kowalski offboarding — IaC knowledge transfer needed"],
-    busFactor: 1,
-  },
-  {
-    teamId: "team-005", teamName: "Engineering Leadership", memberCount: 4,
-    allocation: 65, deliveryLoad: "healthy", sprintVelocityTrend: "stable",
-    healthScore: 8.5, openEscalations: 0, spofCount: 0, coverageScore: 100,
-    alerts: [],
-    busFactor: 4,
-  },
-];
+// ── Capacity data (static — represents current team allocation snapshot) ──
 
 export const MOCK_CAPACITY: CapacityEntry[] = [
   { teamId: "team-001", teamName: "Platform Core", totalCapacity: 4, allocated: 3.7, available: 0.3, onLeave: 1, overloaded: 1, trend: "up", riskLevel: "warning" },
@@ -89,6 +14,8 @@ export const MOCK_CAPACITY: CapacityEntry[] = [
   { teamId: "team-004", teamName: "Data & Observability", totalCapacity: 3, allocated: 2.8, available: 0.2, onLeave: 0, overloaded: 1, trend: "up", riskLevel: "critical" },
   { teamId: "team-005", teamName: "Engineering Leadership", totalCapacity: 4, allocated: 2.6, available: 1.4, onLeave: 0, overloaded: 0, trend: "stable", riskLevel: "healthy" },
 ];
+
+// ── Resilience data (static — area-level coverage) ──
 
 export const MOCK_RESILIENCE: ResilienceEntry[] = [
   { area: "Auth & Identity", domain: "System", ownerCount: 1, backupCount: 0, coverageScore: 35, status: "critical", riskDetail: "Single owner (Sarah Chen), no backup. PTO or attrition creates immediate delivery risk.", linkedTeam: "Platform Core" },
@@ -103,84 +30,307 @@ export const MOCK_RESILIENCE: ResilienceEntry[] = [
   { area: "Rate Limiting", domain: "System", ownerCount: 1, backupCount: 0, coverageScore: 55, status: "warning", riskDetail: "Marcus Rivera owns, Mei Tanaka is learning but not yet backup-ready.", linkedTeam: "Backend Services" },
 ];
 
-export const MOCK_ALERTS: AlertItem[] = [
-  {
-    id: "a-01", severity: "critical",
-    message: "Data & Observability team at 94% allocation — approaching capacity ceiling",
-    source: "Capacity", timestamp: "2h ago",
-    rootCauses: [
-      "3 team members covering 6 critical skill areas",
-      "Tomasz Kowalski offboarding reduces effective capacity",
-      "No capacity buffer for unplanned work",
-    ],
-    recommendedActions: [
-      "Reduce Data & Observability allocation below 85%",
-      "Defer lower-priority observability initiatives",
-      "Accelerate IaC knowledge transfer before offboarding completes",
-    ],
-  },
-  {
-    id: "a-02", severity: "critical",
-    message: "Auth service SPOF: Sarah Chen is sole owner with no backup",
-    source: "Resilience", timestamp: "4h ago",
-    rootCauses: [
-      "OAuth / OIDC implementation owned by 1 person",
-      "Service Mesh configuration owned by 1 person",
-      "No cross-training plan established for auth domain",
-    ],
-    recommendedActions: [
-      "Assign backup owner for OAuth / OIDC implementation",
-      "Start cross-training program for Service Mesh Config",
-      "Document auth system runbooks for emergency use",
-    ],
-  },
-  {
-    id: "a-03", severity: "warning",
-    message: "Backend Services sprint velocity declining for 3 consecutive sprints",
-    source: "Delivery", timestamp: "1d ago",
-    rootCauses: [
-      "Marcus Rivera context-switching across 5 critical skill areas",
-      "Payment domain complexity increasing without backup coverage",
-      "Technical debt in settlement logic slowing development",
-    ],
-    recommendedActions: [
-      "Investigate velocity drop in Backend Services team",
-      "Reduce Marcus Rivera's ownership load — assign backups for Fraud Rules",
-      "Allocate sprint capacity for settlement logic refactoring",
-    ],
-  },
-  {
-    id: "a-04", severity: "warning",
-    message: "Tomasz Kowalski offboarding — IaC knowledge transfer incomplete",
-    source: "People", timestamp: "1d ago",
-    rootCauses: [
-      "Infrastructure as Code skill has no backup",
-      "Knowledge transfer started late in offboarding process",
-    ],
-    recommendedActions: [
-      "Prioritize IaC knowledge transfer sessions this sprint",
-      "Assign Alex Novak as IaC backup with dedicated pairing time",
-    ],
-  },
-  {
-    id: "a-05", severity: "warning",
-    message: "Platform Core: Jonas Eriksson on leave reduces team to 75% capacity",
-    source: "Capacity", timestamp: "2d ago",
-    rootCauses: [
-      "Jonas Eriksson is backup for Session Management",
-      "Team already at 92% allocation before leave",
-    ],
-    recommendedActions: [
-      "Defer non-critical Platform Core work during leave period",
-      "Ensure Session Management coverage with remaining team",
-    ],
-  },
-  {
-    id: "a-06", severity: "info",
-    message: "Product Frontend health score improved to 8.2 (+0.4)",
-    source: "Health", timestamp: "3d ago",
-  },
-];
+// ── Derived Team Signals ──
+
+/**
+ * Compute team coverage score from skill assignments.
+ * For each skill owned by the team, score = owners*1.0 + backups*0.6 + learners*0.3
+ * Normalize to 0-100 where 2.0 raw score per skill = 100%.
+ */
+function computeTeamCoverage(teamId: string): { coverageScore: number; spofCount: number; busFactor: number } {
+  const teamAssignments = MOCK_ASSIGNMENTS.filter((a) => a.teamId === teamId);
+  const teamSkillIds = [...new Set(teamAssignments.map((a) => a.skillId))];
+
+  if (teamSkillIds.length === 0) return { coverageScore: 100, spofCount: 0, busFactor: 5 };
+
+  let totalScore = 0;
+  let spofCount = 0;
+  let minOwners = Infinity;
+
+  teamSkillIds.forEach((skillId) => {
+    const skillAssignments = MOCK_ASSIGNMENTS.filter((a) => a.skillId === skillId);
+    const owners = skillAssignments.filter((a) => a.role === "owner").length;
+    const backups = skillAssignments.filter((a) => a.role === "backup").length;
+    const learners = skillAssignments.filter((a) => a.role === "learner").length;
+
+    const rawScore = owners * 1.0 + backups * 0.6 + learners * 0.3;
+    totalScore += Math.min(rawScore / 2.0, 1.0); // normalize per skill, cap at 100%
+
+    if (owners <= 1 && backups === 0) spofCount++;
+    const effectivePeople = owners + backups;
+    if (effectivePeople < minOwners) minOwners = effectivePeople;
+  });
+
+  const coverageScore = Math.round((totalScore / teamSkillIds.length) * 100);
+  const busFactor = minOwners === Infinity ? 5 : Math.min(minOwners, 5);
+
+  return { coverageScore, spofCount, busFactor };
+}
+
+/**
+ * Health Score = weighted composite (0-10):
+ *   - Allocation pressure (30%): lower allocation = healthier
+ *   - Coverage score (30%): higher coverage = healthier
+ *   - SPOF count (20%): fewer SPOFs = healthier
+ *   - Bus factor (20%): higher bus factor = healthier
+ */
+function computeHealthScore(
+  allocationPct: number,
+  coverageScore: number,
+  spofCount: number,
+  busFactor: number,
+): number {
+  // Allocation: 100%→0, 50%→10. Invert and scale.
+  const allocScore = Math.max(0, Math.min(10, (100 - allocationPct) / 5));
+  // Coverage: 0%→0, 100%→10
+  const covScore = coverageScore / 10;
+  // SPOFs: 0→10, 5+→0
+  const spofScore = Math.max(0, 10 - spofCount * 2);
+  // Bus factor: 0→0, 4+→10
+  const bfScore = Math.min(busFactor * 2.5, 10);
+
+  const weighted = allocScore * 0.3 + covScore * 0.3 + spofScore * 0.2 + bfScore * 0.2;
+  return Math.round(weighted * 10) / 10;
+}
+
+/**
+ * Derive delivery load status from allocation percentage.
+ */
+function deriveDeliveryLoad(allocationPct: number): SignalStatus {
+  if (allocationPct >= 90) return "critical";
+  if (allocationPct >= 80) return "warning";
+  return "healthy";
+}
+
+/**
+ * Generate contextual alerts for a team based on derived data.
+ */
+function generateTeamAlerts(
+  teamName: string,
+  teamId: string,
+  allocationPct: number,
+  spofCount: number,
+  busFactor: number,
+  onLeave: number,
+): string[] {
+  const alerts: string[] = [];
+
+  // SPOF alerts
+  if (spofCount > 0) {
+    const teamSpofs = MOCK_ASSIGNMENTS
+      .filter((a) => a.teamId === teamId && a.role === "owner")
+      .filter((a) => {
+        const allForSkill = MOCK_ASSIGNMENTS.filter((sa) => sa.skillId === a.skillId);
+        return allForSkill.filter((sa) => sa.role === "owner").length <= 1
+          && allForSkill.filter((sa) => sa.role === "backup").length === 0;
+      });
+    const uniqueSpofOwners = [...new Set(teamSpofs.map((a) => a.employeeName))];
+    uniqueSpofOwners.forEach((name) => {
+      const skills = teamSpofs.filter((a) => a.employeeName === name);
+      const skillNames = skills.map((a) => {
+        const skill = MOCK_SKILLS.find((s) => s.id === a.skillId);
+        return skill?.name ?? a.skillId;
+      });
+      alerts.push(`${name} is sole owner of ${skillNames.join(", ")} — no backup`);
+    });
+  }
+
+  // Capacity alerts
+  if (allocationPct >= 90) {
+    alerts.push(`Team at ${allocationPct}% allocation — approaching capacity ceiling`);
+  }
+
+  // Bus factor alert
+  if (busFactor < 2) {
+    alerts.push(`Bus factor of ${busFactor} — critical knowledge concentration risk`);
+  }
+
+  // Leave alert
+  if (onLeave > 0) {
+    alerts.push(`${onLeave} member${onLeave > 1 ? "s" : ""} on leave — reduced capacity`);
+  }
+
+  return alerts;
+}
+
+/**
+ * Compute all team signals from skills + capacity source data.
+ */
+export function computeTeamSignals(): TeamSignal[] {
+  return MOCK_CAPACITY.map((cap) => {
+    const allocationPct = Math.round((cap.allocated / cap.totalCapacity) * 100);
+    const { coverageScore, spofCount, busFactor } = computeTeamCoverage(cap.teamId);
+    const healthScore = computeHealthScore(allocationPct, coverageScore, spofCount, busFactor);
+    const deliveryLoad = deriveDeliveryLoad(allocationPct);
+    const alerts = generateTeamAlerts(cap.teamName, cap.teamId, allocationPct, spofCount, busFactor, cap.onLeave);
+
+    return {
+      teamId: cap.teamId,
+      teamName: cap.teamName,
+      memberCount: cap.totalCapacity,
+      allocation: allocationPct,
+      deliveryLoad,
+      capacityTrend: cap.trend,
+      healthScore,
+      spofCount,
+      coverageScore,
+      alerts,
+      busFactor,
+    };
+  });
+}
+
+// Backwards-compatible export (now computed)
+export const MOCK_TEAM_SIGNALS: TeamSignal[] = computeTeamSignals();
+
+// ── Org Signals (derived from team signals) ──
+
+function computeOrgSignals(): OrgSignal[] {
+  const teams = MOCK_TEAM_SIGNALS;
+  const avgHealth = +(teams.reduce((s, t) => s + t.healthScore, 0) / teams.length).toFixed(1);
+  const avgAllocation = Math.round(teams.reduce((s, t) => s + t.allocation, 0) / teams.length);
+  const totalSpofs = teams.reduce((s, t) => s + t.spofCount, 0);
+  const avgCoverage = Math.round(teams.reduce((s, t) => s + t.coverageScore, 0) / teams.length);
+  const teamsAtRisk = teams.filter((t) => t.deliveryLoad !== "healthy").length;
+
+  return [
+    {
+      id: "sig-01", label: "Org Health Score", value: avgHealth, unit: "/10",
+      status: avgHealth >= 7 ? "healthy" : avgHealth >= 5.5 ? "warning" : "critical",
+      trend: "stable", trendValue: "Composite of all teams",
+      description: "Weighted composite across allocation, coverage, SPOFs, and bus factor.",
+      history: [6.8, 6.9, 7.0, 6.9, 7.1, 7.2, avgHealth], delta: "0",
+    },
+    {
+      id: "sig-02", label: "Avg Allocation", value: avgAllocation, unit: "%",
+      status: avgAllocation >= 85 ? "critical" : avgAllocation >= 75 ? "warning" : "healthy",
+      trend: avgAllocation >= 80 ? "up" : "stable", trendValue: `${avgAllocation}% avg across teams`,
+      description: "Average engineer allocation across all teams.",
+      history: [72, 74, 76, 78, 78, 80, avgAllocation], delta: avgAllocation >= 80 ? "+2" : "0",
+    },
+    {
+      id: "sig-03", label: "SPOF Exposure", value: totalSpofs, unit: " skills",
+      status: totalSpofs >= 5 ? "critical" : totalSpofs >= 3 ? "warning" : "healthy",
+      trend: "stable", trendValue: "Skills with single owner, no backup",
+      description: "Skills with a single owner and zero backup coverage.",
+      history: [5, 6, 6, 7, 7, 7, totalSpofs], delta: "0",
+    },
+    {
+      id: "sig-04", label: "Avg Coverage", value: avgCoverage, unit: "%",
+      status: avgCoverage >= 75 ? "healthy" : avgCoverage >= 55 ? "warning" : "critical",
+      trend: "stable", trendValue: "Across all team skills",
+      description: "Average skill coverage score across all teams.",
+      history: [60, 62, 63, 65, 65, 66, avgCoverage], delta: "0",
+    },
+    {
+      id: "sig-05", label: "Teams At Risk", value: teamsAtRisk, unit: "",
+      status: teamsAtRisk >= 3 ? "critical" : teamsAtRisk >= 1 ? "warning" : "healthy",
+      trend: teamsAtRisk >= 2 ? "up" : "stable", trendValue: `${teamsAtRisk} of ${teams.length} teams`,
+      description: "Teams with delivery load at warning or critical levels.",
+      history: [1, 1, 2, 2, 2, 3, teamsAtRisk], delta: "0",
+    },
+  ];
+}
+
+export const MOCK_ORG_SIGNALS: OrgSignal[] = computeOrgSignals();
+
+// ── Alerts (derived from team data — no escalation source) ──
+
+function computeAlerts(): AlertItem[] {
+  const alerts: AlertItem[] = [];
+  const teams = MOCK_TEAM_SIGNALS;
+
+  // Capacity alerts
+  teams.filter((t) => t.allocation >= 90).forEach((t, i) => {
+    alerts.push({
+      id: `a-cap-${i}`,
+      severity: "critical",
+      message: `${t.teamName} at ${t.allocation}% allocation — approaching capacity ceiling`,
+      source: "Capacity",
+      timestamp: "Current",
+      rootCauses: [
+        `${t.memberCount} members covering ${t.spofCount > 0 ? `${t.spofCount} SPOF skill areas` : "high workload"}`,
+        "Limited capacity buffer for unplanned work",
+      ],
+      recommendedActions: [
+        `Reduce ${t.teamName} allocation below 85%`,
+        "Defer lower-priority initiatives",
+      ],
+    });
+  });
+
+  // SPOF alerts
+  const spofRisks = getSPOFRisks();
+  const criticalSpofs = spofRisks.filter((s) => s.severity === "critical");
+  if (criticalSpofs.length > 0) {
+    alerts.push({
+      id: "a-spof-crit",
+      severity: "critical",
+      message: `${criticalSpofs.length} critical SPOF${criticalSpofs.length > 1 ? "s" : ""}: ${criticalSpofs.map((s) => s.skillName).join(", ")}`,
+      source: "Resilience",
+      timestamp: "Current",
+      rootCauses: criticalSpofs.map((s) => `${s.skillName} owned solely by ${s.ownerName} (${s.ownerTeam})`),
+      recommendedActions: criticalSpofs.map((s) => `Assign backup owner for ${s.skillName}`),
+    });
+  }
+
+  // Concentration alerts
+  const concentration = getOwnerConcentration();
+  concentration.filter((c) => c.criticalSkillCount >= 4).forEach((c, i) => {
+    alerts.push({
+      id: `a-conc-${i}`,
+      severity: "warning",
+      message: `${c.employeeName} owns ${c.criticalSkillCount} critical skills — high concentration risk`,
+      source: "Resilience",
+      timestamp: "Current",
+      rootCauses: [
+        `${c.employeeName} is sole owner of: ${c.skills.map((s) => s.name).join(", ")}`,
+        "Context-switching across too many critical areas",
+      ],
+      recommendedActions: [
+        `Reduce ${c.employeeName}'s ownership load — assign backups`,
+        "Prioritize cross-training for highest-criticality skills",
+      ],
+    });
+  });
+
+  // Bus factor alerts
+  teams.filter((t) => (t.busFactor ?? 0) < 2).forEach((t, i) => {
+    alerts.push({
+      id: `a-bf-${i}`,
+      severity: "warning",
+      message: `${t.teamName} bus factor of ${t.busFactor} — losing one person impacts operations`,
+      source: "Resilience",
+      timestamp: "Current",
+      rootCauses: [
+        "Critical skills concentrated in too few people",
+        `${t.spofCount} skills have no backup coverage`,
+      ],
+      recommendedActions: [
+        `Start cross-training program in ${t.teamName}`,
+        "Identify highest-risk skills for immediate backup assignment",
+      ],
+    });
+  });
+
+  // Healthy team info
+  teams.filter((t) => t.healthScore >= 7.5).forEach((t, i) => {
+    alerts.push({
+      id: `a-info-${i}`,
+      severity: "info",
+      message: `${t.teamName} health score of ${t.healthScore} — well balanced`,
+      source: "Health",
+      timestamp: "Current",
+    });
+  });
+
+  return alerts.sort((a, b) => {
+    const order = { critical: 0, warning: 1, info: 2 };
+    return order[a.severity] - order[b.severity];
+  });
+}
+
+export const MOCK_ALERTS: AlertItem[] = computeAlerts();
 
 // ── Derived helpers ──
 
@@ -189,7 +339,6 @@ export function getSignalsStats() {
   return {
     avgHealthScore: +(teams.reduce((s, t) => s + t.healthScore, 0) / teams.length).toFixed(1),
     teamsAtRisk: teams.filter((t) => t.deliveryLoad !== "healthy").length,
-    totalEscalations: teams.reduce((s, t) => s + t.openEscalations, 0),
     criticalAlerts: MOCK_ALERTS.filter((a) => a.severity === "critical").length,
     avgAllocation: Math.round(teams.reduce((s, t) => s + t.allocation, 0) / teams.length),
     criticalResilience: MOCK_RESILIENCE.filter((r) => r.status === "critical").length,
@@ -254,7 +403,6 @@ export function getRiskForecasts(): RiskForecast[] {
     return start >= now && start <= twoWeeksOut;
   });
 
-  // Map PTO to risk forecasts by checking if the person owns critical skills
   const forecasts: RiskForecast[] = [];
 
   upcomingPTO.forEach((pto) => {
@@ -273,7 +421,6 @@ export function getRiskForecasts(): RiskForecast[] {
       return skill?.name ?? a.skillId;
     });
 
-    // Simulate projected coverage drop
     const projectedCoverage = Math.max(20, 100 - (impactedAreas.length * 15));
 
     const startStr = new Date(pto.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric" });
