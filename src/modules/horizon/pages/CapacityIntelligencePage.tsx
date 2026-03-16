@@ -231,6 +231,36 @@ export default function CapacityIntelligencePage() {
     }));
   }, [capacityData]);
 
+  // Stream-level capacity: how loaded is each delivery stream
+  const streamCapacity = useMemo(() => {
+    return streams.map((stream) => {
+      // Find initiatives in this stream
+      const streamInits = initiatives.filter((i) => i.streamIds.includes(stream.id));
+      const initIds = new Set(streamInits.map((i) => i.id));
+      // Find work allocations for those initiatives
+      const streamAllocs = workAllocations.filter((wa) => initIds.has(wa.initiativeId));
+      // Unique engineers allocated
+      const uniqueEngIds = new Set(streamAllocs.map((wa) => wa.employeeId));
+      // Average allocation across those engineers (weighted by their allocation %)
+      const totalAllocPct = streamAllocs.reduce((sum, wa) => sum + wa.percentage, 0);
+      const avgAlloc = uniqueEngIds.size > 0 ? Math.round(totalAllocPct / uniqueEngIds.size) : 0;
+      // Stream load: total allocation headcount-adjusted
+      const loadPct = Math.min(100, avgAlloc);
+      const activeInits = streamInits.filter((i) => i.status === "active").length;
+
+      return {
+        id: stream.id,
+        name: stream.name,
+        owningTeam: stream.owningTeamName,
+        engineerCount: uniqueEngIds.size,
+        initiativeCount: streamInits.length,
+        activeInitiatives: activeInits,
+        loadPct,
+        totalAllocPct,
+      };
+    }).sort((a, b) => b.loadPct - a.loadPct);
+  }, []);
+
   // Today visibility
   useEffect(() => {
     const el = scrollRef.current;
