@@ -17,6 +17,7 @@ import {
   riskText,
 } from "@/shared/lib/risk-colors";
 import { RiskLegend } from "../components/RiskLegend";
+import { DomainRiskMap } from "../components/DomainRiskMap";
 
 const ALERT_ICON = {
   critical: AlertCircle,
