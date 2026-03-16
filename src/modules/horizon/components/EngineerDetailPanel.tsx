@@ -61,21 +61,23 @@ interface EngineerDetailPanelProps {
 }
 
 export default function EngineerDetailPanel({ open, onOpenChange, engineer }: EngineerDetailPanelProps) {
-  if (!engineer) return null;
+  const engineerId = engineer?.id ?? "";
 
   const windows = useMemo(() =>
     availabilityWindows
-      .filter((w) => w.employeeId === engineer.id)
+      .filter((w) => w.employeeId === engineerId)
       .sort((a, b) => a.startDate.localeCompare(b.startDate)),
-    [engineer.id]
+    [engineerId]
   );
 
   const events = useMemo(() =>
     timelineEvents
-      .filter((e) => e.employeeId === engineer.id || e.isGlobal)
+      .filter((e) => e.employeeId === engineerId || e.isGlobal)
       .sort((a, b) => a.startDate.localeCompare(b.startDate)),
-    [engineer.id]
+    [engineerId]
   );
+
+  if (!engineer) return null;
 
   const capacityColor = engineer.capacity >= 90
     ? "text-emerald-600 dark:text-emerald-400"
