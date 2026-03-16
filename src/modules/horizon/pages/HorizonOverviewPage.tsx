@@ -292,7 +292,7 @@ export default function HorizonOverviewPage() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="flex items-center gap-2 font-medium">
                     <Briefcase size={13} className="text-primary/60" />
-                    {p.project}
+                    {p.initiative}
                   </span>
                   <span className="text-xs text-muted-foreground tabular-nums">
                     {p.share}%
