@@ -1,10 +1,10 @@
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Rocket, Users, Calendar, Layers, BarChart3 } from "lucide-react";
+import { ArrowLeft, Rocket, Users, Calendar, Boxes, BarChart3, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/shared/lib/utils";
-import { getInitiative, getAllocationsForInitiative, getStreamsForInitiative, getAllocationLoad } from "../data";
+import { getInitiative, getAllocationsForInitiative, getDomainsForInitiative, getValueStreamsForInitiative, getAllocationLoad } from "../data";
 
 const statusColors: Record<string, string> = {
   planned: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
@@ -36,7 +36,8 @@ export default function InitiativeDetailPage() {
   }
 
   const allocs = getAllocationsForInitiative(init.id);
-  const initStreams = getStreamsForInitiative(init.id);
+  const initDomains = getDomainsForInitiative(init.id);
+  const initVS = getValueStreamsForInitiative(init.id);
   const totalLoad = getAllocationLoad(init.id);
   const duration = getDurationDays(init.startDate, init.endDate);
 
@@ -144,21 +145,40 @@ export default function InitiativeDetailPage() {
             </p>
           </div>
 
-          {/* Stream context */}
+          {/* Domains */}
           <div className="rounded-lg border border-border/50 bg-card p-5 space-y-3">
             <div className="flex items-center gap-2">
-              <Layers size={14} className="text-primary" />
-              <h2 className="text-sm font-semibold">Streams</h2>
+              <Boxes size={14} className="text-primary" />
+              <h2 className="text-sm font-semibold">Domains</h2>
             </div>
             <div className="space-y-2">
-              {initStreams.map((s) => (
+              {initDomains.map((d) => (
                 <Link
-                  key={s.id}
-                  to={`/app/work/streams/${s.id}`}
+                  key={d.id}
+                  to={`/app/work/domains/${d.id}`}
                   className="block rounded-md border border-border/30 bg-muted/30 p-3 hover:border-primary/30 transition-colors"
                 >
-                  <p className="text-sm font-medium">{s.name}</p>
-                  <p className="text-[11px] text-muted-foreground">{s.owningTeamName}</p>
+                  <p className="text-sm font-medium">{d.name}</p>
+                  <p className="text-[11px] text-muted-foreground">{d.owningTeamName}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Value Streams */}
+          <div className="rounded-lg border border-border/50 bg-card p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <Globe size={14} className="text-primary" />
+              <h2 className="text-sm font-semibold">Value Streams</h2>
+            </div>
+            <div className="space-y-2">
+              {initVS.map((vs) => (
+                <Link
+                  key={vs.id}
+                  to={`/app/work/value-streams/${vs.id}`}
+                  className="block rounded-md border border-border/30 bg-muted/30 p-3 hover:border-primary/30 transition-colors"
+                >
+                  <p className="text-sm font-medium">{vs.name}</p>
                 </Link>
               ))}
             </div>

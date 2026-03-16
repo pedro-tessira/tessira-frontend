@@ -39,7 +39,7 @@ import {
   allocations,
 } from "../data";
 import type { AvailabilityWindow } from "../types";
-import { streams, initiatives, workAllocations } from "@/modules/work/data";
+import { domains, initiatives, workAllocations } from "@/modules/work/data";
 import { Link } from "react-router-dom";
 import { Sparkline } from "@/modules/signals/components/Sparkline";
 
@@ -232,31 +232,30 @@ export default function CapacityIntelligencePage() {
     }));
   }, [capacityData]);
 
-  // Stream-level capacity: how loaded is each delivery stream
-  const streamCapacity = useMemo(() => {
-    return streams.map((stream) => {
-      const streamInits = initiatives.filter((i) => i.streamIds.includes(stream.id));
-      const initIds = new Set(streamInits.map((i) => i.id));
-      const streamAllocs = workAllocations.filter((wa) => initIds.has(wa.initiativeId));
-      const uniqueEngIds = new Set(streamAllocs.map((wa) => wa.employeeId));
-      const totalAllocPct = streamAllocs.reduce((sum, wa) => sum + wa.percentage, 0);
+  // Domain-level capacity: how loaded is each engineering domain
+  const domainCapacity = useMemo(() => {
+    return domains.map((domain) => {
+      const domainInits = initiatives.filter((i) => i.domainIds.includes(domain.id));
+      const initIds = new Set(domainInits.map((i) => i.id));
+      const domainAllocs = workAllocations.filter((wa) => initIds.has(wa.initiativeId));
+      const uniqueEngIds = new Set(domainAllocs.map((wa) => wa.employeeId));
+      const totalAllocPct = domainAllocs.reduce((sum, wa) => sum + wa.percentage, 0);
       const avgAlloc = uniqueEngIds.size > 0 ? Math.round(totalAllocPct / uniqueEngIds.size) : 0;
       const loadPct = Math.min(100, avgAlloc);
-      const activeInits = streamInits.filter((i) => i.status === "active").length;
+      const activeInits = domainInits.filter((i) => i.status === "active").length;
 
-      // Generate a 4-week trend based on the current load with realistic variation
-      const seed = stream.id.charCodeAt(stream.id.length - 1);
+      const seed = domain.id.charCodeAt(domain.id.length - 1);
       const weeklyTrend = Array.from({ length: 4 }, (_, i) => {
         const variance = ((seed * (i + 1) * 7) % 25) - 12;
         return Math.max(0, Math.min(100, loadPct + variance - (3 - i) * 3));
       });
 
       return {
-        id: stream.id,
-        name: stream.name,
-        owningTeam: stream.owningTeamName,
+        id: domain.id,
+        name: domain.name,
+        owningTeam: domain.owningTeamName,
         engineerCount: uniqueEngIds.size,
-        initiativeCount: streamInits.length,
+        initiativeCount: domainInits.length,
         activeInitiatives: activeInits,
         loadPct,
         totalAllocPct,
@@ -323,11 +322,11 @@ export default function CapacityIntelligencePage() {
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Layers size={14} className="text-primary" />
-            <h3 className="text-sm font-semibold">Stream Load</h3>
-            <span className="text-[11px] text-muted-foreground">— Average allocation per engineer by delivery stream</span>
+            <h3 className="text-sm font-semibold">Domain Load</h3>
+            <span className="text-[11px] text-muted-foreground">— Average allocation per engineer by domain</span>
           </div>
           <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {streamCapacity.map((s) => {
+            {domainCapacity.map((s) => {
               const loadColor = s.loadPct >= 80
                 ? "text-destructive"
                 : s.loadPct >= 50
@@ -341,7 +340,7 @@ export default function CapacityIntelligencePage() {
               return (
                 <Link
                   key={s.id}
-                  to={`/app/work/streams/${s.id}`}
+                  to={`/app/work/domains/${s.id}`}
                   className="rounded-lg border border-border/50 bg-card p-4 space-y-3 hover:border-primary/30 transition-colors"
                 >
                   <div className="flex items-start justify-between gap-2">

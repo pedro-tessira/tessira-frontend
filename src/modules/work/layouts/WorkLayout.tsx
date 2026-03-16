@@ -1,9 +1,10 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Layers, Rocket } from "lucide-react";
+import { Globe, Boxes, Rocket } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 
 const WORK_NAV = [
-  { label: "Streams", href: "/app/work", icon: Layers, end: true },
+  { label: "Value Streams", href: "/app/work", icon: Globe, end: true },
+  { label: "Domains", href: "/app/work/domains", icon: Boxes },
   { label: "Initiatives", href: "/app/work/initiatives", icon: Rocket },
 ];
 
@@ -13,7 +14,7 @@ export default function WorkLayout() {
       <div>
         <h1 className="text-xl font-semibold tracking-tight">Work</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Engineering streams, initiatives, and capacity allocations.
+          Value streams, engineering domains, initiatives, and capacity allocations.
         </p>
       </div>
 

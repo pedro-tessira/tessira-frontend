@@ -10,19 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/shared/lib/utils";
-import { Briefcase, Calendar, Users, Database, Pencil, Trash2, Layers } from "lucide-react";
+import { Briefcase, Calendar, Users, Database, Pencil, Trash2, Boxes, Globe } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import type { Allocation } from "../types";
-import { initiatives, streams } from "@/modules/work/data";
+import { initiatives, domains, valueStreams } from "@/modules/work/data";
 
 interface AllocationDetailPanelProps {
   open: boolean;
@@ -87,9 +80,12 @@ export default function AllocationDetailPanel({
     allocation.project.toLowerCase().includes(i.name.toLowerCase().split(" ")[0])
   );
 
-  // Find streams for matched initiative
-  const matchedStreams = matchedInit
-    ? matchedInit.streamIds.map((id) => streams.find((s) => s.id === id)!).filter(Boolean)
+  // Find domains and value streams for matched initiative
+  const matchedDomains = matchedInit
+    ? matchedInit.domainIds.map((id) => domains.find((d) => d.id === id)!).filter(Boolean)
+    : [];
+  const matchedVS = matchedInit
+    ? matchedInit.valueStreamIds.map((id) => valueStreams.find((vs) => vs.id === id)!).filter(Boolean)
     : [];
 
   const handleStartEdit = () => {
@@ -153,21 +149,42 @@ export default function AllocationDetailPanel({
                 )}
               </div>
 
-              {/* Initiative & Stream context */}
-              {matchedStreams.length > 0 && (
+              {/* Domain context */}
+              {matchedDomains.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <Layers size={13} className="text-primary" />
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Streams</span>
+                    <Boxes size={13} className="text-primary" />
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Domains</span>
                   </div>
                   <div className="space-y-1.5">
-                    {matchedStreams.map((s) => (
+                    {matchedDomains.map((d) => (
                       <Link
-                        key={s.id}
-                        to={`/app/work/streams/${s.id}`}
+                        key={d.id}
+                        to={`/app/work/domains/${d.id}`}
                         className="block rounded-md border border-border/30 bg-muted/30 px-3 py-2 text-xs font-medium hover:border-primary/30 transition-colors"
                       >
-                        {s.name}
+                        {d.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Value Stream context */}
+              {matchedVS.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Globe size={13} className="text-primary" />
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Value Streams</span>
+                  </div>
+                  <div className="space-y-1.5">
+                    {matchedVS.map((vs) => (
+                      <Link
+                        key={vs.id}
+                        to={`/app/work/value-streams/${vs.id}`}
+                        className="block rounded-md border border-border/30 bg-muted/30 px-3 py-2 text-xs font-medium hover:border-primary/30 transition-colors"
+                      >
+                        {vs.name}
                       </Link>
                     ))}
                   </div>

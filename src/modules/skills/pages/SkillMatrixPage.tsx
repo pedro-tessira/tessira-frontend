@@ -48,9 +48,8 @@ export default function SkillMatrixPage() {
           className="rounded-md border border-border/50 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary tessira-transition"
         >
           <option value="all">All Types</option>
-          <option value="technology">Technology</option>
-          <option value="system">System</option>
-          <option value="domain">Domain</option>
+          <option value="technical">Technical</option>
+          <option value="functional">Functional</option>
           <option value="operational">Operational</option>
         </select>
         <div className="flex items-center gap-3 text-xs text-muted-foreground ml-auto">
@@ -85,9 +84,8 @@ export default function SkillMatrixPage() {
                         {skill.name.length > 16 ? skill.name.slice(0, 14) + "…" : skill.name}
                       </div>
                       <div className={`text-[9px] mt-0.5 ${
-                        skill.skillType === "technology" ? "text-primary" :
-                        skill.skillType === "system" ? "text-secondary-foreground" :
-                        skill.skillType === "domain" ? "text-warning" :
+                        skill.skillType === "technical" ? "text-primary" :
+                        skill.skillType === "functional" ? "text-warning" :
                         "text-success"
                       }`}>
                         {skill.skillType}

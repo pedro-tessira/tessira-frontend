@@ -1,7 +1,7 @@
 export type SkillLevel = "expert" | "proficient" | "learning" | "none";
 export type CoverageStatus = "healthy" | "at_risk" | "critical";
 export type RiskSeverity = "critical" | "high" | "medium" | "low";
-export type SkillType = "technology" | "system" | "domain" | "operational";
+export type SkillType = "technical" | "functional" | "operational";
 export type SkillCriticality = "critical" | "high" | "standard" | "low";
 export type OwnershipRole = "owner" | "backup" | "learner";
 export type SkillMomentum = "improving" | "stable" | "declining";

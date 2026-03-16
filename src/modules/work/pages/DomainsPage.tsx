@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { Layers, Users, Rocket } from "lucide-react";
-import { streams, getInitiativesForStream, getEngineersForStream, getStreamLoadPercent } from "../data";
+import { Boxes, Users, Rocket } from "lucide-react";
+import { domains, getInitiativesForDomain, getEngineersForDomain, getDomainLoadPercent } from "../data";
 import { cn } from "@/shared/lib/utils";
 
 function loadColor(pct: number) {
@@ -9,36 +9,36 @@ function loadColor(pct: number) {
   return "text-success";
 }
 
-export default function StreamsPage() {
+export default function DomainsPage() {
   return (
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {streams.map((stream) => {
-          const activeInits = getInitiativesForStream(stream.id).filter((i) => i.status === "active");
-          const engineers = getEngineersForStream(stream.id);
-          const load = getStreamLoadPercent(stream.id);
+        {domains.map((domain) => {
+          const activeInits = getInitiativesForDomain(domain.id).filter((i) => i.status === "active");
+          const engineers = getEngineersForDomain(domain.id);
+          const load = getDomainLoadPercent(domain.id);
 
           return (
             <Link
-              key={stream.id}
-              to={`/app/work/streams/${stream.id}`}
+              key={domain.id}
+              to={`/app/work/domains/${domain.id}`}
               className="rounded-lg border border-border/50 bg-card p-5 space-y-4 hover:border-primary/30 transition-colors group"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2.5">
                   <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
-                    <Layers size={16} className="text-primary" />
+                    <Boxes size={16} className="text-primary" />
                   </div>
                   <div>
                     <h3 className="text-sm font-semibold group-hover:text-primary transition-colors">
-                      {stream.name}
+                      {domain.name}
                     </h3>
-                    <p className="text-[11px] text-muted-foreground">{stream.owningTeamName}</p>
+                    <p className="text-[11px] text-muted-foreground">{domain.owningTeamName}</p>
                   </div>
                 </div>
               </div>
 
-              <p className="text-xs text-muted-foreground line-clamp-2">{stream.description}</p>
+              <p className="text-xs text-muted-foreground line-clamp-2">{domain.description}</p>
 
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1.5">

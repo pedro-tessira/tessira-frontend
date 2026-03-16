@@ -1,6 +1,12 @@
 export type InitiativeStatus = "planned" | "active" | "completed";
 
-export interface Stream {
+export interface ValueStream {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface Domain {
   id: string;
   name: string;
   description: string;
@@ -15,7 +21,8 @@ export interface Initiative {
   status: InitiativeStatus;
   startDate: string;
   endDate: string;
-  streamIds: string[];
+  domainIds: string[];
+  valueStreamIds: string[];
 }
 
 export interface WorkAllocation {
