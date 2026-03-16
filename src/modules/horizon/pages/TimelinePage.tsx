@@ -192,14 +192,17 @@ export default function TimelinePage() {
   } | null>(null);
   const isDragging = useRef(false);
 
-  // Drag-to-resize state
+  // Drag-to-resize state (works for both allocations and events)
   const [resizeState, setResizeState] = useState<{
-    allocId: string;
+    itemId: string;
+    itemType: "allocation" | "event";
     edge: "left" | "right";
     originalStart: string;
     originalEnd: string;
     currentDayIndex: number;
   } | null>(null);
+  // Keep allocId for backward compat in type checks
+  type ResizeState = typeof resizeState;
   const isResizing = useRef(false);
 
   const toggleLayer = (layer: TimelineLayer) => {
