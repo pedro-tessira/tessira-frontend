@@ -874,7 +874,7 @@ function AllocationBlock({
   rangeDays: number;
   topOffset: number;
   onClick: (e: React.MouseEvent) => void;
-  onResizeStart?: (allocId: string, edge: "left" | "right", originalStart: string, originalEnd: string, e: React.MouseEvent) => void;
+  onResizeStart?: (itemId: string, itemType: "allocation" | "event", edge: "left" | "right", originalStart: string, originalEnd: string, e: React.MouseEvent) => void;
   displayStart?: string;
   displayEnd?: string;
   isResizing?: boolean;
