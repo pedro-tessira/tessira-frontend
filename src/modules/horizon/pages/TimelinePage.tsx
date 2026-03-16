@@ -471,11 +471,17 @@ export default function TimelinePage() {
                   id={emp.id}
                   label={
                     <>
-                      <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
-                        <User size={11} className="text-primary" />
+                      <div className={cn(
+                        "h-6 w-6 rounded-full flex items-center justify-center",
+                        conflictSet.has(emp.id) ? "bg-amber-500/20" : "bg-primary/10"
+                      )}>
+                        {conflictSet.has(emp.id)
+                          ? <AlertTriangle size={11} className="text-amber-600 dark:text-amber-400" />
+                          : <User size={11} className="text-primary" />
+                        }
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-medium truncate">{emp.name}</p>
+                        <p className={cn("text-xs font-medium truncate", conflictSet.has(emp.id) && "text-amber-700 dark:text-amber-300")}>{emp.name}</p>
                         <p className="text-[10px] text-muted-foreground truncate">{emp.teamName}</p>
                       </div>
                     </>
