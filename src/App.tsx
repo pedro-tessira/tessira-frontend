@@ -39,6 +39,13 @@ import AuditPage from "@/modules/admin/pages/AuditPage";
 import HelpPage from "@/modules/help/pages/HelpPage";
 import NotFound from "./pages/NotFound";
 
+// Work
+import WorkLayout from "@/modules/work/layouts/WorkLayout";
+import StreamsPage from "@/modules/work/pages/StreamsPage";
+import StreamDetailPage from "@/modules/work/pages/StreamDetailPage";
+import InitiativesPage from "@/modules/work/pages/InitiativesPage";
+import InitiativeDetailPage from "@/modules/work/pages/InitiativeDetailPage";
+
 // Account
 import AccountPage from "@/modules/account/pages/AccountPage";
 import AccountProfileTab from "@/modules/account/pages/AccountProfileTab";
@@ -84,6 +91,12 @@ const App = () => (
             <Route path="/app" element={<AppShell />}>
               <Route index element={<Navigate to="/app/overview" replace />} />
               <Route path="overview" element={<OverviewPage />} />
+              <Route path="work" element={<WorkLayout />}>
+                <Route index element={<StreamsPage />} />
+                <Route path="initiatives" element={<InitiativesPage />} />
+              </Route>
+              <Route path="work/streams/:streamId" element={<StreamDetailPage />} />
+              <Route path="work/initiatives/:initiativeId" element={<InitiativeDetailPage />} />
               <Route path="horizon" element={<HorizonLayout />}>
                 <Route index element={<HorizonOverviewPage />} />
                 <Route path="timeline" element={<TimelinePage />} />

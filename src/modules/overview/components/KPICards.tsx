@@ -1,10 +1,10 @@
 import { useNavigate } from "react-router-dom";
-import { CalendarRange, Users2, Zap, Activity, TrendingUp } from "lucide-react";
+import { Rocket, Layers, Zap, Activity, TrendingUp } from "lucide-react";
 import { METRICS } from "../data";
 
 export default function KPICards() {
   const navigate = useNavigate();
-  const icons = [CalendarRange, Users2, Zap, Activity];
+  const icons = [Rocket, Layers, Zap, Activity];
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

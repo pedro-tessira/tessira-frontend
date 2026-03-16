@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -5,10 +6,23 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/shared/lib/utils";
-import { Briefcase, Calendar, Users, Database } from "lucide-react";
+import { Briefcase, Calendar, Users, Database, Pencil, Layers } from "lucide-react";
+import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import type { Allocation } from "../types";
+import { initiatives, streams } from "@/modules/work/data";
 
 interface AllocationDetailPanelProps {
   open: boolean;
@@ -45,6 +59,11 @@ export default function AllocationDetailPanel({
   onOpenChange,
   allocation,
 }: AllocationDetailPanelProps) {
+  const [editing, setEditing] = useState(false);
+  const [editPct, setEditPct] = useState([50]);
+  const [editStart, setEditStart] = useState("");
+  const [editEnd, setEditEnd] = useState("");
+
   if (!allocation) return null;
 
   const duration = getDurationDays(allocation.startDate, allocation.endDate);
@@ -62,6 +81,29 @@ export default function AllocationDetailPanel({
       ? "bg-amber-500"
       : "bg-emerald-500";
 
+  // Try to find matching initiative
+  const matchedInit = initiatives.find((i) =>
+    i.name.toLowerCase().includes(allocation.project.toLowerCase().split(" ")[0]) ||
+    allocation.project.toLowerCase().includes(i.name.toLowerCase().split(" ")[0])
+  );
+
+  // Find streams for matched initiative
+  const matchedStreams = matchedInit
+    ? matchedInit.streamIds.map((id) => streams.find((s) => s.id === id)!).filter(Boolean)
+    : [];
+
+  const handleStartEdit = () => {
+    setEditing(true);
+    setEditPct([allocation.percentage]);
+    setEditStart(allocation.startDate);
+    setEditEnd(allocation.endDate);
+  };
+
+  const handleSaveEdit = () => {
+    toast.success(`Allocation updated: ${allocation.employeeName} → ${allocation.project} at ${editPct[0]}%`);
+    setEditing(false);
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-md overflow-y-auto">
@@ -73,73 +115,103 @@ export default function AllocationDetailPanel({
         </SheetHeader>
 
         <div className="space-y-5 pt-5">
-          {/* Allocation % */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Allocation
-              </span>
-              <span className={cn("text-lg font-bold tabular-nums", percentColor)}>
-                {allocation.percentage}%
-              </span>
-            </div>
-            <div className="h-2 rounded-full bg-muted overflow-hidden">
-              <div
-                className={cn("h-full rounded-full transition-all", barColor)}
-                style={{ width: `${allocation.percentage}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Details */}
-          <div className="space-y-3">
-            <DetailRow
-              icon={Users}
-              label="Engineer"
-              value={allocation.employeeName}
-            />
-            <DetailRow
-              icon={Users}
-              label="Team"
-              value={allocation.teamName}
-            />
-            <DetailRow
-              icon={Calendar}
-              label="Start"
-              value={formatDate(allocation.startDate)}
-            />
-            <DetailRow
-              icon={Calendar}
-              label="End"
-              value={formatDate(allocation.endDate)}
-            />
-            <DetailRow
-              icon={Calendar}
-              label="Duration"
-              value={`${duration} day${duration !== 1 ? "s" : ""}`}
-            />
-            {allocation.source && (
-              <div className="flex items-center gap-3">
-                <Database size={14} className="text-muted-foreground shrink-0" />
-                <span className="text-xs text-muted-foreground w-20">Source</span>
-                <Badge
-                  variant="secondary"
-                  className={cn("text-[11px]", sourceColors[allocation.source])}
-                >
-                  {sourceLabels[allocation.source]}
-                </Badge>
+          {!editing ? (
+            <>
+              {/* Allocation % */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Allocation
+                  </span>
+                  <span className={cn("text-lg font-bold tabular-nums", percentColor)}>
+                    {allocation.percentage}%
+                  </span>
+                </div>
+                <div className="h-2 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={cn("h-full rounded-full transition-all", barColor)}
+                    style={{ width: `${allocation.percentage}%` }}
+                  />
+                </div>
               </div>
-            )}
-          </div>
 
-          {/* Description */}
-          {allocation.description && (
-            <div className="space-y-1.5">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Notes
-              </span>
-              <p className="text-sm text-muted-foreground">{allocation.description}</p>
-            </div>
+              {/* Details */}
+              <div className="space-y-3">
+                <DetailRow icon={Users} label="Engineer" value={allocation.employeeName} />
+                <DetailRow icon={Users} label="Team" value={allocation.teamName} />
+                <DetailRow icon={Calendar} label="Start" value={formatDate(allocation.startDate)} />
+                <DetailRow icon={Calendar} label="End" value={formatDate(allocation.endDate)} />
+                <DetailRow icon={Calendar} label="Duration" value={`${duration} day${duration !== 1 ? "s" : ""}`} />
+                {allocation.source && (
+                  <div className="flex items-center gap-3">
+                    <Database size={14} className="text-muted-foreground shrink-0" />
+                    <span className="text-xs text-muted-foreground w-20">Source</span>
+                    <Badge variant="secondary" className={cn("text-[11px]", sourceColors[allocation.source])}>
+                      {sourceLabels[allocation.source]}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+
+              {/* Initiative & Stream context */}
+              {matchedStreams.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Layers size={13} className="text-primary" />
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Streams</span>
+                  </div>
+                  <div className="space-y-1.5">
+                    {matchedStreams.map((s) => (
+                      <Link
+                        key={s.id}
+                        to={`/app/work/streams/${s.id}`}
+                        className="block rounded-md border border-border/30 bg-muted/30 px-3 py-2 text-xs font-medium hover:border-primary/30 transition-colors"
+                      >
+                        {s.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {matchedInit && (
+                <Link
+                  to={`/app/work/initiatives/${matchedInit.id}`}
+                  className="block rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+                >
+                  View Initiative: {matchedInit.name} →
+                </Link>
+              )}
+
+              {/* Edit button */}
+              <Button variant="outline" size="sm" className="w-full gap-2" onClick={handleStartEdit}>
+                <Pencil size={13} /> Edit Allocation
+              </Button>
+            </>
+          ) : (
+            <>
+              {/* Edit form */}
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Allocation — {editPct[0]}%</Label>
+                  <Slider value={editPct} onValueChange={setEditPct} min={10} max={100} step={10} className="py-2" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Start Date</Label>
+                    <Input type="date" value={editStart} onChange={(e) => setEditStart(e.target.value)} className="h-9 text-sm" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">End Date</Label>
+                    <Input type="date" value={editEnd} onChange={(e) => setEditEnd(e.target.value)} className="h-9 text-sm" />
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="flex-1" onClick={() => setEditing(false)}>Cancel</Button>
+                <Button size="sm" className="flex-1" onClick={handleSaveEdit}>Save Changes</Button>
+              </div>
+            </>
           )}
         </div>
       </SheetContent>

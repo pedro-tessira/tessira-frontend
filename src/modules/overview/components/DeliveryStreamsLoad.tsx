@@ -21,8 +21,8 @@ export default function DeliveryStreamsLoad({ streamFilter }: Props) {
       onClick={() => navigate("/app/horizon")}
     >
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold">Delivery Streams Load</CardTitle>
-        <p className="text-xs text-muted-foreground">FTE allocation per delivery stream</p>
+        <CardTitle className="text-sm font-semibold">Stream Load</CardTitle>
+        <p className="text-xs text-muted-foreground">FTE allocation per engineering stream</p>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="h-[220px] w-full">

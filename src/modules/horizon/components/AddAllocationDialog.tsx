@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -18,61 +18,103 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { horizonEmployees } from "../data";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/shared/lib/utils";
+import { horizonEmployees, allocations } from "../data";
+import { initiatives } from "@/modules/work/data";
 import { toast } from "sonner";
 
 interface AddAllocationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  prefillEmployeeId?: string;
+  prefillStartDate?: string;
+  prefillEndDate?: string;
 }
 
 export default function AddAllocationDialog({
   open,
   onOpenChange,
+  prefillEmployeeId,
+  prefillStartDate,
+  prefillEndDate,
 }: AddAllocationDialogProps) {
-  const [project, setProject] = useState("");
-  const [employeeId, setEmployeeId] = useState("");
+  const [initiativeId, setInitiativeId] = useState("");
+  const [employeeId, setEmployeeId] = useState(prefillEmployeeId ?? "");
   const [percentage, setPercentage] = useState([50]);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [source, setSource] = useState("manual");
+  const [startDate, setStartDate] = useState(prefillStartDate ?? "");
+  const [endDate, setEndDate] = useState(prefillEndDate ?? "");
+
+  // Reset on open with prefills
+  useState(() => {
+    if (open) {
+      setEmployeeId(prefillEmployeeId ?? "");
+      setStartDate(prefillStartDate ?? "");
+      setEndDate(prefillEndDate ?? "");
+    }
+  });
+
+  // Calculate current free capacity for selected engineer
+  const freeCapacity = useMemo(() => {
+    if (!employeeId) return null;
+    const today = new Date().toISOString().slice(0, 10);
+    const current = allocations
+      .filter((a) => a.employeeId === employeeId && a.startDate <= today && a.endDate >= today)
+      .reduce((s, a) => s + a.percentage, 0);
+    return Math.max(0, 100 - current);
+  }, [employeeId]);
+
+  const activeInitiatives = initiatives.filter((i) => i.status === "active" || i.status === "planned");
 
   const handleSubmit = () => {
-    if (!project || !employeeId || !startDate || !endDate) {
+    if (!initiativeId || !employeeId || !startDate || !endDate) {
       toast.error("Please fill in all required fields");
       return;
     }
     const emp = horizonEmployees.find((e) => e.id === employeeId);
-    toast.success(`Allocation created: ${emp?.name} → ${project} at ${percentage[0]}%`);
+    const init = initiatives.find((i) => i.id === initiativeId);
+    toast.success(`Allocation created: ${emp?.name} → ${init?.name} at ${percentage[0]}%`);
     onOpenChange(false);
-    // Reset
-    setProject("");
+    setInitiativeId("");
     setEmployeeId("");
     setPercentage([50]);
     setStartDate("");
     setEndDate("");
-    setSource("manual");
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Allocation</DialogTitle>
+          <DialogTitle>Create Allocation</DialogTitle>
           <DialogDescription>
-            Assign an engineer to a project or initiative.
+            Assign an engineer to an initiative with a capacity percentage.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
-            <Label className="text-xs">Project / Initiative *</Label>
-            <Input
-              value={project}
-              onChange={(e) => setProject(e.target.value)}
-              placeholder="e.g. API Gateway, Checkout Platform"
-              className="h-9 text-sm"
-            />
+            <Label className="text-xs">Initiative *</Label>
+            <Select value={initiativeId} onValueChange={(v) => {
+              setInitiativeId(v);
+              const init = initiatives.find((i) => i.id === v);
+              if (init) {
+                if (!startDate) setStartDate(init.startDate);
+                if (!endDate) setEndDate(init.endDate);
+              }
+            }}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue placeholder="Select initiative" />
+              </SelectTrigger>
+              <SelectContent>
+                {activeInitiatives.map((i) => (
+                  <SelectItem key={i.id} value={i.id} className="text-sm">
+                    {i.name}
+                    <span className="text-muted-foreground ml-1">({i.status})</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1.5">
@@ -90,6 +132,31 @@ export default function AddAllocationDialog({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Capacity suggestion */}
+          {freeCapacity !== null && (
+            <div className="rounded-md border border-border/50 bg-muted/30 px-3 py-2 space-y-1">
+              <p className="text-[11px] font-medium text-muted-foreground">Available capacity</p>
+              <div className="flex items-center gap-3">
+                <span className={cn(
+                  "text-lg font-bold tabular-nums",
+                  freeCapacity < 20 ? "text-destructive" : freeCapacity < 50 ? "text-warning" : "text-success"
+                )}>
+                  {freeCapacity}%
+                </span>
+                {freeCapacity > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-[11px]"
+                    onClick={() => setPercentage([Math.min(freeCapacity, Math.round(freeCapacity / 10) * 10 || 10)])}
+                  >
+                    Use suggested: {Math.min(freeCapacity, Math.round(freeCapacity / 10) * 10 || 10)}%
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <Label className="text-xs">
@@ -124,20 +191,6 @@ export default function AddAllocationDialog({
                 className="h-9 text-sm"
               />
             </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs">Source</Label>
-            <Select value={source} onValueChange={setSource}>
-              <SelectTrigger className="h-9 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="manual" className="text-sm">Manual</SelectItem>
-                <SelectItem value="jira" className="text-sm">Jira</SelectItem>
-                <SelectItem value="linear" className="text-sm">Linear</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </div>
 
