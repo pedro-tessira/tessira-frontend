@@ -11,7 +11,6 @@ interface Props {
 
 export default function DeliveryRisk({ domainFilter }: Props) {
   const navigate = useNavigate();
-  // No direct domain filter on initiatives — show all
   const data = DELIVERY_RISK;
 
   return (
@@ -21,7 +20,7 @@ export default function DeliveryRisk({ domainFilter }: Props) {
     >
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold">Delivery Risk</CardTitle>
-        <p className="text-xs text-muted-foreground">Risk score by initiative</p>
+        <p className="text-xs text-muted-foreground">Risk score by initiative — color = risk level</p>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="h-[200px] w-full">

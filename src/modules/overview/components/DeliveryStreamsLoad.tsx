@@ -22,7 +22,7 @@ export default function DomainLoadChart({ domainFilter }: Props) {
     >
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold">Domain Load</CardTitle>
-        <p className="text-xs text-muted-foreground">FTE allocation per engineering domain</p>
+        <p className="text-xs text-muted-foreground">FTE allocation per engineering domain — neutral color</p>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="h-[220px] w-full">

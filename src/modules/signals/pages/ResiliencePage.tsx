@@ -166,7 +166,7 @@ export default function ResiliencePage() {
                       {Array.from({ length: Math.min(bf, 5) }).map((_, i) => (
                         <div key={i} className={cn(
                           "h-4 w-2 rounded-sm",
-                          bf < 2 ? "bg-destructive" : bf < 3 ? "bg-warning" : "bg-success"
+                          bf < 2 ? "bg-destructive" : bf < 3 ? "bg-orange" : "bg-success"
                         )} />
                       ))}
                       {Array.from({ length: Math.max(0, 5 - bf) }).map((_, i) => (
@@ -175,7 +175,7 @@ export default function ResiliencePage() {
                     </div>
                     <span className={cn(
                       "text-sm font-bold tabular-nums",
-                      bf < 2 ? "text-destructive" : bf < 3 ? "text-warning" : "text-success"
+                      bf < 2 ? "text-destructive" : bf < 3 ? "text-orange" : "text-success"
                     )}>
                       {bf}
                     </span>
@@ -268,7 +268,7 @@ export default function ResiliencePage() {
           </thead>
           <tbody className="divide-y divide-border/50">
             {filtered.map((r) => {
-              const barColor = r.coverageScore >= 75 ? "bg-success" : r.coverageScore >= 50 ? "bg-warning" : "bg-destructive";
+              const barColor = r.coverageScore >= 75 ? "bg-success" : r.coverageScore >= 55 ? "bg-warning" : r.coverageScore >= 35 ? "bg-orange" : "bg-destructive";
               return (
                 <tr key={r.area} className="hover:bg-accent/10 tessira-transition group">
                   <td className="px-4 py-3">

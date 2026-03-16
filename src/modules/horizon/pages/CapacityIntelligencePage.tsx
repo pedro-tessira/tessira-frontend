@@ -297,14 +297,14 @@ export default function CapacityIntelligencePage() {
             label="Free Capacity"
             value={`${totalCapacity}%`}
             detail={`${capacityData.length} engineers`}
-            accent={totalCapacity >= 80 ? "emerald" : totalCapacity >= 60 ? "amber" : "red"}
+            accent={totalCapacity >= 40 ? "emerald" : totalCapacity >= 20 ? "amber" : totalCapacity >= 10 ? "orange" : "red"}
           />
           <KPICard
             icon={TrendingDown}
             label="Avg Allocation"
             value={`${totalAllocation}%`}
             detail={`Availability: ${totalAvailability}%`}
-            accent={totalAllocation >= 80 ? "red" : totalAllocation >= 50 ? "amber" : "emerald"}
+            accent="neutral"
           />
           <KPICard icon={UserCheck} label="Available" value={availableCount} detail="≥ 90% free" accent="emerald" />
           <KPICard icon={Clock} label="Partial" value={partialCount} detail="50–89% free" accent="amber" />
@@ -327,16 +327,9 @@ export default function CapacityIntelligencePage() {
           </div>
           <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {domainCapacity.map((s) => {
-              const loadColor = s.loadPct >= 80
-                ? "text-destructive"
-                : s.loadPct >= 50
-                ? "text-amber-600 dark:text-amber-400"
-                : "text-emerald-600 dark:text-emerald-400";
-              const barColor = s.loadPct >= 80
-                ? "bg-destructive"
-                : s.loadPct >= 50
-                ? "bg-amber-500"
-                : "bg-emerald-500";
+              // Domain load uses neutral primary color — risk is shown separately
+              const loadColor = "text-primary";
+              const barColor = "bg-primary";
               return (
                 <Link
                   key={s.id}
@@ -367,10 +360,7 @@ export default function CapacityIntelligencePage() {
                     </span>
                     <span className="ml-auto flex items-center gap-1.5">
                       <span className="text-[10px] text-muted-foreground/70">4w trend</span>
-                      <Sparkline
-                        data={s.weeklyTrend}
-                        color={s.loadPct >= 80 ? "destructive" : s.loadPct >= 50 ? "warning" : "success"}
-                      />
+                      <Sparkline data={s.weeklyTrend} color="default" />
                     </span>
                   </div>
                 </Link>
@@ -443,7 +433,7 @@ export default function CapacityIntelligencePage() {
                 <Progress value={t.capacity} className="h-1.5 flex-1" />
                 <span className={cn(
                   "text-xs font-bold tabular-nums",
-                  t.capacity >= 80 ? "text-emerald-600 dark:text-emerald-400" : t.capacity >= 60 ? "text-amber-600 dark:text-amber-400" : "text-destructive"
+                  t.capacity >= 40 ? "text-success" : t.capacity >= 20 ? "text-warning" : t.capacity >= 10 ? "text-orange" : "text-destructive"
                 )}>{t.capacity}%</span>
               </div>
             </div>
@@ -550,17 +540,21 @@ function KPICard({
   label: string;
   value: string | number;
   detail: string;
-  accent: "emerald" | "amber" | "red";
+  accent: "emerald" | "amber" | "orange" | "red" | "neutral";
 }) {
-  const accentColors = {
-    emerald: "border-emerald-500/20 bg-emerald-500/5",
-    amber: "border-amber-500/20 bg-amber-500/5",
+  const accentColors: Record<string, string> = {
+    emerald: "border-success/20 bg-success/5",
+    amber: "border-warning/20 bg-warning/5",
+    orange: "border-orange/20 bg-orange/5",
     red: "border-destructive/20 bg-destructive/5",
+    neutral: "border-border/50 bg-card",
   };
-  const iconColors = {
-    emerald: "text-emerald-600 dark:text-emerald-400",
-    amber: "text-amber-600 dark:text-amber-400",
+  const iconColors: Record<string, string> = {
+    emerald: "text-success",
+    amber: "text-warning",
+    orange: "text-orange",
     red: "text-destructive",
+    neutral: "text-muted-foreground",
   };
 
   return (
@@ -592,16 +586,21 @@ function CapacityRow({
   onClick?: () => void;
 }) {
   const free = emp.capacity.free;
-  const capacityColor = free >= 90
-    ? "text-emerald-600 dark:text-emerald-400"
-    : free >= 60
-    ? "text-amber-600 dark:text-amber-400"
+  // Free capacity risk coloring
+  const capacityColor = free >= 40
+    ? "text-success"
+    : free >= 20
+    ? "text-warning"
+    : free >= 10
+    ? "text-orange"
     : "text-destructive";
 
-  const barColor = free >= 90
-    ? "bg-emerald-500"
-    : free >= 60
-    ? "bg-amber-500"
+  const barColor = free >= 40
+    ? "bg-success"
+    : free >= 20
+    ? "bg-warning"
+    : free >= 10
+    ? "bg-orange"
     : "bg-destructive";
 
   return (
@@ -622,12 +621,12 @@ function CapacityRow({
             </TooltipTrigger>
             <TooltipContent side="left" className="text-xs space-y-0.5">
               <p>Availability: {emp.capacity.availability}%</p>
-              <p>Allocation: {emp.capacity.allocation}%</p>
+              <p className="text-muted-foreground">Allocation: {emp.capacity.allocation}%</p>
               <p className="font-semibold">Free capacity: {free}%</p>
             </TooltipContent>
           </Tooltip>
           <div className="w-12 h-1.5 rounded-full bg-muted overflow-hidden flex">
-            <div className={cn("h-full transition-all bg-indigo-500")} style={{ width: `${emp.capacity.allocation}%` }} />
+            <div className="h-full transition-all bg-primary/40" style={{ width: `${emp.capacity.allocation}%` }} />
             <div className={cn("h-full transition-all", barColor)} style={{ width: `${free}%` }} />
           </div>
         </div>

@@ -4,6 +4,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TEAM_ALLOCATION, allocationColor } from "../data";
+import { freeCapacityRisk, riskText } from "@/shared/lib/risk-colors";
 
 interface Props {
   teamFilter?: string;
@@ -22,7 +23,7 @@ export default function TeamAllocation({ teamFilter }: Props) {
     >
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold">Team Allocation</CardTitle>
-        <p className="text-xs text-muted-foreground">Current allocation by team</p>
+        <p className="text-xs text-muted-foreground">Current allocation by team — neutral color (risk shown via free capacity)</p>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="h-[200px] w-full">
