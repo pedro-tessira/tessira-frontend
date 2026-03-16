@@ -21,6 +21,7 @@ import { cn } from "@/shared/lib/utils";
 import {
   Calendar,
   Pencil,
+  Trash2,
   User,
   Users,
   CalendarRange,
@@ -170,10 +171,23 @@ export default function EventDetailPanel({
                 </div>
               )}
 
-              {/* Edit button */}
-              <Button variant="outline" size="sm" className="w-full gap-2" onClick={handleStartEdit}>
-                <Pencil size={13} /> Edit Event
-              </Button>
+              {/* Action buttons */}
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="flex-1 gap-2" onClick={handleStartEdit}>
+                  <Pencil size={13} /> Edit Event
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  onClick={() => {
+                    toast.success(`Event removed: ${event.title}`);
+                    onOpenChange(false);
+                  }}
+                >
+                  <Trash2 size={13} /> Remove
+                </Button>
+              </div>
             </>
           ) : (
             <>
