@@ -807,6 +807,17 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
         {/* Event blocks */}
         {slottedEvents.map(({ event, slot }) => {
           if (!expanded && slot >= MAX_VISIBLE_EVENTS) return null;
+          const isBeingResized = resizeState?.itemId === event.id && resizeState?.itemType === "event";
+          let evDisplayStart = event.startDate;
+          let evDisplayEnd = event.endDate;
+          if (isBeingResized && resizeState) {
+            const newDate = toISO(addDays(rangeStart, resizeState.currentDayIndex));
+            if (resizeState.edge === "left") {
+              evDisplayStart = newDate <= evDisplayEnd ? newDate : evDisplayEnd;
+            } else {
+              evDisplayEnd = newDate >= evDisplayStart ? newDate : evDisplayStart;
+            }
+          }
           return (
             <EventBlock
               key={event.id}
@@ -819,6 +830,10 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
                 e.stopPropagation();
                 onEventClick?.(event);
               }}
+              onResizeStart={onResizeStart}
+              displayStart={evDisplayStart}
+              displayEnd={evDisplayEnd}
+              isResizing={isBeingResized}
             />
           );
         })}
