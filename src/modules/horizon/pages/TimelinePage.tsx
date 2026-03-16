@@ -598,11 +598,13 @@ export default function TimelinePage() {
                   onEventClick={setSelectedEvent}
                   availFn={layers.has("availability") ? (dayISO: string) => getAvailForDay(emp.id, dayISO) : undefined}
                   onDragStart={(dayIndex) => handleDragStart(emp.id, dayIndex)}
-                  onDragMove={handleDragMove}
+                  onDragMove={isResizing.current ? handleResizeMove : handleDragMove}
                   dragSelection={dragState?.empId === emp.id ? {
                     startIndex: Math.min(dragState.startDayIndex, dragState.currentDayIndex),
                     endIndex: Math.max(dragState.startDayIndex, dragState.currentDayIndex),
                   } : undefined}
+                  onResizeStart={handleResizeStart}
+                  resizeState={resizeState}
                 />
               ))}
 
