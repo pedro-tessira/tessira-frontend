@@ -44,12 +44,12 @@ const CAPACITY_THRESHOLD = 70; // alert below this %
 type AvailSource = "available" | "partial" | "vacation" | "sick_leave" | "company_event" | "unavailable";
 
 const sourceConfig: Record<AvailSource, { label: string; color: string; dotColor: string }> = {
-  available:      { label: "Available",          color: "bg-emerald-500/15", dotColor: "bg-emerald-500" },
-  partial:        { label: "Partial Allocation", color: "bg-amber-500/12",   dotColor: "bg-amber-500" },
-  vacation:       { label: "Vacation",           color: "bg-sky-500/12",     dotColor: "bg-sky-500" },
-  sick_leave:     { label: "Sick Leave",         color: "bg-red-500/12",     dotColor: "bg-red-500" },
-  company_event:  { label: "Company Event",      color: "bg-purple-500/12",  dotColor: "bg-purple-500" },
-  unavailable:    { label: "Unavailable",        color: "bg-muted/30",       dotColor: "bg-muted-foreground/40" },
+  available:      { label: "Available",          color: "bg-emerald-500/20", dotColor: "bg-emerald-500" },
+  partial:        { label: "Partial Allocation", color: "bg-amber-500/25",   dotColor: "bg-amber-500" },
+  vacation:       { label: "Vacation",           color: "bg-sky-500/25",     dotColor: "bg-sky-500" },
+  sick_leave:     { label: "Sick Leave",         color: "bg-red-500/25",     dotColor: "bg-red-500" },
+  company_event:  { label: "Company Event",      color: "bg-purple-500/25",  dotColor: "bg-purple-500" },
+  unavailable:    { label: "Unavailable",        color: "bg-muted/50",       dotColor: "bg-muted-foreground/40" },
 };
 
 // Mock enrichment data
