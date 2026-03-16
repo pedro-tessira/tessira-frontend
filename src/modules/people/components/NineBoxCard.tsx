@@ -59,7 +59,7 @@ function getEvidenceSummary(employeeId: string) {
   return { positive, concerns, topDims, total: notes.length };
 }
 
-export function NineBoxCard({ employeeId, note, movement, onDragStart }: NineBoxCardProps) {
+export function NineBoxCard({ employeeId, note, movement, onDragStart, onSelect }: NineBoxCardProps) {
   const emp = MOCK_EMPLOYEES.find((e) => e.id === employeeId);
   if (!emp) return null;
 
