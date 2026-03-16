@@ -773,7 +773,7 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
         {/* Allocation bars */}
         {slottedAllocs.map(({ alloc, slot }) => {
           // Compute resize overrides
-          const isBeingResized = resizeState?.allocId === alloc.id;
+          const isBeingResized = resizeState?.itemId === alloc.id && resizeState?.itemType === "allocation";
           let displayStart = alloc.startDate;
           let displayEnd = alloc.endDate;
           if (isBeingResized && resizeState) {
