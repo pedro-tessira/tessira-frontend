@@ -1,11 +1,16 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Search, Filter, Download } from "lucide-react";
+import { Search, Filter, Download, Plus, Pencil, Trash2 } from "lucide-react";
 import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { StatusBadge } from "../components/StatusBadge";
 import { AvatarInitials } from "../components/AvatarInitials";
-import { MOCK_EMPLOYEES } from "../data";
-import type { EmployeeStatus } from "../types";
+import { Button } from "@/components/ui/button";
+import { usePeopleStore } from "../contexts/PeopleStoreContext";
+import AddEmployeeDialog from "../components/AddEmployeeDialog";
+import EditEmployeeDialog from "../components/EditEmployeeDialog";
+import DeleteConfirmDialog from "../components/DeleteConfirmDialog";
+import type { Employee, EmployeeStatus } from "../types";
+import { toast } from "@/hooks/use-toast";
 
 const STATUS_OPTIONS: { value: EmployeeStatus | "all"; label: string }[] = [
   { value: "all", label: "All Statuses" },
@@ -15,15 +20,22 @@ const STATUS_OPTIONS: { value: EmployeeStatus | "all"; label: string }[] = [
   { value: "inactive", label: "Inactive" },
 ];
 
-const DEPT_OPTIONS = ["All Departments", ...new Set(MOCK_EMPLOYEES.map((e) => e.department))];
-
 export default function EmployeeListPage() {
+  const { employees, deleteEmployee } = usePeopleStore();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<EmployeeStatus | "all">("all");
   const [deptFilter, setDeptFilter] = useState("All Departments");
+  const [addOpen, setAddOpen] = useState(false);
+  const [editEmployee, setEditEmployee] = useState<Employee | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null);
+
+  const deptOptions = useMemo(
+    () => ["All Departments", ...new Set(employees.map((e) => e.department))],
+    [employees]
+  );
 
   const filtered = useMemo(() => {
-    return MOCK_EMPLOYEES.filter((emp) => {
+    return employees.filter((emp) => {
       const matchesSearch =
         search === "" ||
         `${emp.firstName} ${emp.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
@@ -33,22 +45,21 @@ export default function EmployeeListPage() {
       const matchesDept = deptFilter === "All Departments" || emp.department === deptFilter;
       return matchesSearch && matchesStatus && matchesDept;
     });
-  }, [search, statusFilter, deptFilter]);
+  }, [search, statusFilter, deptFilter, employees]);
 
   return (
     <div className="space-y-5">
       <ModulePageHeader
         title="Employees"
-        description={`${MOCK_EMPLOYEES.length} employees across the organization.`}
+        description={`${employees.length} employees across the organization.`}
         breadcrumbs={[
           { label: "People", href: "/app/people" },
           { label: "Employees" },
         ]}
         actions={
-          <button className="inline-flex items-center gap-2 rounded-md border border-border/50 bg-background px-3 py-2 text-xs font-medium text-foreground hover:bg-accent tessira-transition">
-            <Download size={13} />
-            Export
-          </button>
+          <Button size="sm" className="gap-1.5 h-8 text-xs" onClick={() => setAddOpen(true)}>
+            <Plus size={13} /> Add Employee
+          </Button>
         }
       />
 
@@ -70,9 +81,7 @@ export default function EmployeeListPage() {
           className="rounded-md border border-border/50 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary tessira-transition"
         >
           {STATUS_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </select>
         <select
@@ -80,10 +89,8 @@ export default function EmployeeListPage() {
           onChange={(e) => setDeptFilter(e.target.value)}
           className="rounded-md border border-border/50 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary tessira-transition"
         >
-          {DEPT_OPTIONS.map((dept) => (
-            <option key={dept} value={dept}>
-              {dept}
-            </option>
+          {deptOptions.map((dept) => (
+            <option key={dept} value={dept}>{dept}</option>
           ))}
         </select>
         {(search || statusFilter !== "all" || deptFilter !== "All Departments") && (
@@ -102,34 +109,19 @@ export default function EmployeeListPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/50 bg-muted/30">
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Employee
-                </th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Title
-                </th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Department
-                </th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Country
-                </th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Manager
-                </th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Status
-                </th>
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">Employee</th>
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">Title</th>
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">Department</th>
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">Country</th>
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                <th className="text-right px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
               {filtered.map((emp) => (
                 <tr key={emp.id} className="hover:bg-accent/20 tessira-transition">
                   <td className="px-4 py-3">
-                    <Link
-                      to={`/app/people/employees/${emp.id}`}
-                      className="flex items-center gap-3 group"
-                    >
+                    <Link to={`/app/people/employees/${emp.id}`} className="flex items-center gap-3 group">
                       <AvatarInitials firstName={emp.firstName} lastName={emp.lastName} size="sm" />
                       <div className="min-w-0">
                         <div className="font-medium text-foreground group-hover:text-primary tessira-transition truncate">
@@ -147,20 +139,16 @@ export default function EmployeeListPage() {
                       {emp.country}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
-                    {emp.managerName ? (
-                      <Link
-                        to={`/app/people/employees/${emp.managerId}`}
-                        className="text-muted-foreground hover:text-primary tessira-transition"
-                      >
-                        {emp.managerName}
-                      </Link>
-                    ) : (
-                      <span className="text-muted-foreground/40">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <StatusBadge status={emp.status} />
+                  <td className="px-4 py-3"><StatusBadge status={emp.status} /></td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditEmployee(emp)}>
+                        <Pencil size={13} />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(emp)}>
+                        <Trash2 size={13} />
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -178,10 +166,26 @@ export default function EmployeeListPage() {
 
         {filtered.length > 0 && (
           <div className="border-t border-border/50 px-4 py-2.5 text-xs text-muted-foreground">
-            Showing {filtered.length} of {MOCK_EMPLOYEES.length} employees
+            Showing {filtered.length} of {employees.length} employees
           </div>
         )}
       </div>
+
+      <AddEmployeeDialog open={addOpen} onOpenChange={setAddOpen} />
+      <EditEmployeeDialog open={!!editEmployee} onOpenChange={(o) => { if (!o) setEditEmployee(null); }} employee={editEmployee} />
+      <DeleteConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}
+        title="Delete Employee"
+        description={`Are you sure you want to remove ${deleteTarget?.firstName} ${deleteTarget?.lastName}? This will also remove all their team memberships.`}
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteEmployee(deleteTarget.id);
+            toast({ title: "Employee deleted", description: `${deleteTarget.firstName} ${deleteTarget.lastName} has been removed.` });
+            setDeleteTarget(null);
+          }
+        }}
+      />
     </div>
   );
 }
