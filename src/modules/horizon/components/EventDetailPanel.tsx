@@ -21,6 +21,7 @@ import { cn } from "@/shared/lib/utils";
 import {
   Calendar,
   Pencil,
+  Trash2,
   User,
   Users,
   CalendarRange,

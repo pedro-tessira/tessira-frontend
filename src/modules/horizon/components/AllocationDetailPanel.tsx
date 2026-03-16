@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/shared/lib/utils";
-import { Briefcase, Calendar, Users, Database, Pencil, Layers } from "lucide-react";
+import { Briefcase, Calendar, Users, Database, Pencil, Trash2, Layers } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import type { Allocation } from "../types";
