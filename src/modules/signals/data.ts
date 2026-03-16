@@ -162,12 +162,15 @@ function generateTeamAlerts(
 
 /**
  * Compute all team signals from skills + capacity source data.
+ * Accepts optional normalized weights for health score computation.
  */
-export function computeTeamSignals(): TeamSignal[] {
+export function computeTeamSignals(
+  weights?: { allocation: number; coverage: number; spof: number; busFactor: number },
+): TeamSignal[] {
   return MOCK_CAPACITY.map((cap) => {
     const allocationPct = Math.round((cap.allocated / cap.totalCapacity) * 100);
     const { coverageScore, spofCount, busFactor } = computeTeamCoverage(cap.teamId);
-    const healthScore = computeHealthScore(allocationPct, coverageScore, spofCount, busFactor);
+    const healthScore = computeHealthScore(allocationPct, coverageScore, spofCount, busFactor, weights);
     const deliveryLoad = deriveDeliveryLoad(allocationPct);
     const alerts = generateTeamAlerts(cap.teamName, cap.teamId, allocationPct, spofCount, busFactor, cap.onLeave);
 
@@ -187,7 +190,7 @@ export function computeTeamSignals(): TeamSignal[] {
   });
 }
 
-// Backwards-compatible export (now computed)
+// Backwards-compatible export (default weights)
 export const MOCK_TEAM_SIGNALS: TeamSignal[] = computeTeamSignals();
 
 // ── Org Signals (derived from team signals) ──
