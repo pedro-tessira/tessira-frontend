@@ -8,9 +8,9 @@ import { cn } from "@/shared/lib/utils";
 import { freeCapacityRisk, riskText } from "@/shared/lib/risk-colors";
 
 export default function CapacityPage() {
-  const totalCapacity = MOCK_CAPACITY.reduce((s, c) => s + c.totalCapacity, 0);
-  const totalAllocated = MOCK_CAPACITY.reduce((s, c) => s + c.allocated, 0);
-  const totalAvailable = MOCK_CAPACITY.reduce((s, c) => s + c.available, 0);
+  const totalCapacity = Math.round(MOCK_CAPACITY.reduce((s, c) => s + c.totalCapacity, 0) * 10) / 10;
+  const totalAllocated = Math.round(MOCK_CAPACITY.reduce((s, c) => s + c.allocated, 0) * 10) / 10;
+  const totalAvailable = Math.round(MOCK_CAPACITY.reduce((s, c) => s + c.available, 0) * 10) / 10;
   const totalOnLeave = MOCK_CAPACITY.reduce((s, c) => s + c.onLeave, 0);
   const overloadedTeams = MOCK_CAPACITY.filter((c) => c.riskLevel !== "healthy").length;
   const orgFreeCapacity = Math.round((totalAvailable / totalCapacity) * 100);
