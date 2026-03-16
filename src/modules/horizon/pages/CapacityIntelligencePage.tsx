@@ -255,17 +255,24 @@ export default function CapacityIntelligencePage() {
     <TooltipProvider delayDuration={200}>
       <div className="space-y-5">
         {/* ── KPI Header ── */}
-        <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-3 grid-cols-2 lg:grid-cols-6">
           <KPICard
             icon={Activity}
-            label="Team Capacity"
+            label="Free Capacity"
             value={`${totalCapacity}%`}
             detail={`${capacityData.length} engineers`}
             accent={totalCapacity >= 80 ? "emerald" : totalCapacity >= 60 ? "amber" : "red"}
           />
-          <KPICard icon={UserCheck} label="Available" value={availableCount} detail="≥ 90% capacity" accent="emerald" />
-          <KPICard icon={Clock} label="Partial" value={partialCount} detail="50–89% capacity" accent="amber" />
-          <KPICard icon={UserMinus} label="Unavailable" value={unavailableCount} detail="< 50% capacity" accent="red" />
+          <KPICard
+            icon={TrendingDown}
+            label="Avg Allocation"
+            value={`${totalAllocation}%`}
+            detail={`Availability: ${totalAvailability}%`}
+            accent={totalAllocation >= 80 ? "red" : totalAllocation >= 50 ? "amber" : "emerald"}
+          />
+          <KPICard icon={UserCheck} label="Available" value={availableCount} detail="≥ 90% free" accent="emerald" />
+          <KPICard icon={Clock} label="Partial" value={partialCount} detail="50–89% free" accent="amber" />
+          <KPICard icon={UserMinus} label="Unavailable" value={unavailableCount} detail="< 50% free" accent="red" />
           <KPICard
             icon={AlertTriangle}
             label="Alerts"
