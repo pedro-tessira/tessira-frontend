@@ -212,7 +212,11 @@ export function AppShell() {
   );
 
   return (
-    <div className="flex h-svh w-full overflow-hidden bg-background text-foreground">
+    <div
+      className="flex h-svh w-full overflow-hidden bg-background text-foreground"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* Mobile overlay */}
       {isMobile && mobileOpen && (
         <div
