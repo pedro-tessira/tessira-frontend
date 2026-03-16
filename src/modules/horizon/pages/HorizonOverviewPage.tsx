@@ -285,10 +285,10 @@ export default function HorizonOverviewPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Section 3: Allocation Distribution */}
         <div className="rounded-lg border border-border/50 bg-card p-5">
-          <h2 className="text-sm font-semibold mb-4">Allocation Distribution</h2>
+          <h2 className="text-sm font-semibold mb-4">Initiative Distribution</h2>
           <div className="space-y-3">
             {projectDistribution.map((p) => (
-              <div key={p.project} className="space-y-1">
+              <div key={p.initiative} className="space-y-1">
                 <div className="flex items-center justify-between text-sm">
                   <span className="flex items-center gap-2 font-medium">
                     <Briefcase size={13} className="text-primary/60" />
