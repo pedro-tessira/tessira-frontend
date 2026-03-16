@@ -540,17 +540,21 @@ function KPICard({
   label: string;
   value: string | number;
   detail: string;
-  accent: "emerald" | "amber" | "red";
+  accent: "emerald" | "amber" | "orange" | "red" | "neutral";
 }) {
-  const accentColors = {
-    emerald: "border-emerald-500/20 bg-emerald-500/5",
-    amber: "border-amber-500/20 bg-amber-500/5",
+  const accentColors: Record<string, string> = {
+    emerald: "border-success/20 bg-success/5",
+    amber: "border-warning/20 bg-warning/5",
+    orange: "border-orange/20 bg-orange/5",
     red: "border-destructive/20 bg-destructive/5",
+    neutral: "border-border/50 bg-card",
   };
-  const iconColors = {
-    emerald: "text-emerald-600 dark:text-emerald-400",
-    amber: "text-amber-600 dark:text-amber-400",
+  const iconColors: Record<string, string> = {
+    emerald: "text-success",
+    amber: "text-warning",
+    orange: "text-orange",
     red: "text-destructive",
+    neutral: "text-muted-foreground",
   };
 
   return (
