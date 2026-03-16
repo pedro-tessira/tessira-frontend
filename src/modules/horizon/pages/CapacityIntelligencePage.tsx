@@ -189,32 +189,42 @@ export default function CapacityIntelligencePage() {
     }));
   }, [filteredEmployees, dates]);
 
-  // Aggregates
+  // Aggregates — use "free" as effective capacity
   const totalCapacity = capacityData.length > 0
-    ? Math.round(capacityData.reduce((s, e) => s + e.capacity, 0) / capacityData.length)
+    ? Math.round(capacityData.reduce((s, e) => s + e.capacity.free, 0) / capacityData.length)
     : 0;
-  const availableCount = capacityData.filter((e) => e.capacity >= 90).length;
-  const partialCount = capacityData.filter((e) => e.capacity >= 50 && e.capacity < 90).length;
-  const unavailableCount = capacityData.filter((e) => e.capacity < 50).length;
+  const totalAvailability = capacityData.length > 0
+    ? Math.round(capacityData.reduce((s, e) => s + e.capacity.availability, 0) / capacityData.length)
+    : 0;
+  const totalAllocation = capacityData.length > 0
+    ? Math.round(capacityData.reduce((s, e) => s + e.capacity.allocation, 0) / capacityData.length)
+    : 0;
+  const availableCount = capacityData.filter((e) => e.capacity.free >= 90).length;
+  const partialCount = capacityData.filter((e) => e.capacity.free >= 50 && e.capacity.free < 90).length;
+  const unavailableCount = capacityData.filter((e) => e.capacity.free < 50).length;
 
   // Capacity alerts
   const alerts = capacityData
-    .filter((e) => e.capacity < CAPACITY_THRESHOLD)
-    .sort((a, b) => a.capacity - b.capacity);
+    .filter((e) => e.capacity.free < CAPACITY_THRESHOLD)
+    .sort((a, b) => a.capacity.free - b.capacity.free);
 
   // Team-level capacity
   const teamCapacity = useMemo(() => {
-    const teams = new Map<string, { name: string; total: number; count: number }>();
+    const teams = new Map<string, { name: string; totalFree: number; totalAvail: number; totalAlloc: number; count: number }>();
     capacityData.forEach((e) => {
-      const existing = teams.get(e.teamId) || { name: e.teamName, total: 0, count: 0 };
-      existing.total += e.capacity;
+      const existing = teams.get(e.teamId) || { name: e.teamName, totalFree: 0, totalAvail: 0, totalAlloc: 0, count: 0 };
+      existing.totalFree += e.capacity.free;
+      existing.totalAvail += e.capacity.availability;
+      existing.totalAlloc += e.capacity.allocation;
       existing.count++;
       teams.set(e.teamId, existing);
     });
     return Array.from(teams.entries()).map(([id, v]) => ({
       id,
       name: v.name,
-      capacity: Math.round(v.total / v.count),
+      capacity: Math.round(v.totalFree / v.count),
+      availability: Math.round(v.totalAvail / v.count),
+      allocation: Math.round(v.totalAlloc / v.count),
     }));
   }, [capacityData]);
 
