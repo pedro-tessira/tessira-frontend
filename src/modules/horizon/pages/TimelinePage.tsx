@@ -510,6 +510,7 @@ export default function TimelinePage() {
                   expanded={expandedRows.has("global")}
                   onToggle={() => toggleRow("global")}
                   onAllocationClick={setSelectedAllocation}
+                  onEventClick={setSelectedEvent}
                   className="bg-muted/5"
                 />
               )}
