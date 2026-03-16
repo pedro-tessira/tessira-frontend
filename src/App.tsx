@@ -39,6 +39,13 @@ import AuditPage from "@/modules/admin/pages/AuditPage";
 import HelpPage from "@/modules/help/pages/HelpPage";
 import NotFound from "./pages/NotFound";
 
+// Work
+import WorkLayout from "@/modules/work/layouts/WorkLayout";
+import StreamsPage from "@/modules/work/pages/StreamsPage";
+import StreamDetailPage from "@/modules/work/pages/StreamDetailPage";
+import InitiativesPage from "@/modules/work/pages/InitiativesPage";
+import InitiativeDetailPage from "@/modules/work/pages/InitiativeDetailPage";
+
 // Account
 import AccountPage from "@/modules/account/pages/AccountPage";
 import AccountProfileTab from "@/modules/account/pages/AccountProfileTab";
