@@ -76,8 +76,8 @@ export default function AllocationDetailPanel({
 
   // Try to find matching initiative
   const matchedInit = initiatives.find((i) =>
-    i.name.toLowerCase().includes(allocation.project.toLowerCase().split(" ")[0]) ||
-    allocation.project.toLowerCase().includes(i.name.toLowerCase().split(" ")[0])
+    i.name.toLowerCase().includes(allocation.initiative.toLowerCase().split(" ")[0]) ||
+    allocation.initiative.toLowerCase().includes(i.name.toLowerCase().split(" ")[0])
   );
 
   // Find domains and value streams for matched initiative
