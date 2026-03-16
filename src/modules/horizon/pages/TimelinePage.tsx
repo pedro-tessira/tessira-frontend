@@ -12,8 +12,7 @@ import {
   User,
   Layers,
   Briefcase,
-  Eye,
-  EyeOff,
+  AlertTriangle,
 } from "lucide-react";
 import {
   Select,
@@ -29,6 +28,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import {
   timelineEvents,
   horizonEmployees,
@@ -282,6 +282,30 @@ export default function TimelinePage() {
     return w?.status ?? null;
   };
 
+  // ── Allocation Conflict Detection ──
+  const conflicts = useMemo(() => {
+    const result: { empId: string; empName: string; peakPct: number; peakDate: string }[] = [];
+    for (const emp of filteredEmployees) {
+      const empAllocs = allocations.filter((a) => a.employeeId === emp.id);
+      if (empAllocs.length < 2) continue;
+      let peak = 0;
+      let peakDate = "";
+      for (const d of dates) {
+        if (d.getDay() === 0 || d.getDay() === 6) continue;
+        const iso = toISO(d);
+        let dayTotal = 0;
+        for (const a of empAllocs) {
+          if (a.startDate <= iso && a.endDate >= iso) dayTotal += a.percentage;
+        }
+        if (dayTotal > peak) { peak = dayTotal; peakDate = iso; }
+      }
+      if (peak > 100) result.push({ empId: emp.id, empName: emp.name, peakPct: peak, peakDate });
+    }
+    return result;
+  }, [filteredEmployees, dates]);
+
+  const conflictSet = useMemo(() => new Set(conflicts.map((c) => c.empId)), [conflicts]);
+
   return (
     <TooltipProvider delayDuration={200}>
       <div className="space-y-4">
@@ -356,6 +380,25 @@ export default function TimelinePage() {
           )}
         </div>
 
+        {/* ── Allocation Conflicts Alert ── */}
+        {conflicts.length > 0 && layers.has("allocations") && (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <AlertTriangle size={14} className="text-amber-600 dark:text-amber-400" />
+              <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">
+                Over-allocation — {conflicts.length} engineer{conflicts.length !== 1 ? "s" : ""} exceed{conflicts.length === 1 ? "s" : ""} 100%
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {conflicts.map((c) => (
+                <Badge key={c.empId} variant="secondary" className="text-[11px] bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20">
+                  {c.empName} — peak {c.peakPct}% on {formatDate(c.peakDate)}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ── Calendar Grid ── */}
         <div className="rounded-lg border border-border/50 bg-card overflow-hidden relative">
           {!todayVisible && (
@@ -428,11 +471,17 @@ export default function TimelinePage() {
                   id={emp.id}
                   label={
                     <>
-                      <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
-                        <User size={11} className="text-primary" />
+                      <div className={cn(
+                        "h-6 w-6 rounded-full flex items-center justify-center",
+                        conflictSet.has(emp.id) ? "bg-amber-500/20" : "bg-primary/10"
+                      )}>
+                        {conflictSet.has(emp.id)
+                          ? <AlertTriangle size={11} className="text-amber-600 dark:text-amber-400" />
+                          : <User size={11} className="text-primary" />
+                        }
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-medium truncate">{emp.name}</p>
+                        <p className={cn("text-xs font-medium truncate", conflictSet.has(emp.id) && "text-amber-700 dark:text-amber-300")}>{emp.name}</p>
                         <p className="text-[10px] text-muted-foreground truncate">{emp.teamName}</p>
                       </div>
                     </>
