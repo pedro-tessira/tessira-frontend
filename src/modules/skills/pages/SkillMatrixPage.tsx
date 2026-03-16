@@ -84,9 +84,8 @@ export default function SkillMatrixPage() {
                         {skill.name.length > 16 ? skill.name.slice(0, 14) + "…" : skill.name}
                       </div>
                       <div className={`text-[9px] mt-0.5 ${
-                        skill.skillType === "technology" ? "text-primary" :
-                        skill.skillType === "system" ? "text-secondary-foreground" :
-                        skill.skillType === "domain" ? "text-warning" :
+                        skill.skillType === "technical" ? "text-primary" :
+                        skill.skillType === "functional" ? "text-warning" :
                         "text-success"
                       }`}>
                         {skill.skillType}

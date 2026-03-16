@@ -39,7 +39,7 @@ import {
   allocations,
 } from "../data";
 import type { AvailabilityWindow } from "../types";
-import { streams, initiatives, workAllocations } from "@/modules/work/data";
+import { domains, initiatives, workAllocations } from "@/modules/work/data";
 import { Link } from "react-router-dom";
 import { Sparkline } from "@/modules/signals/components/Sparkline";
 
