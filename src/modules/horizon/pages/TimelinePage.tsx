@@ -724,7 +724,7 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
         className="relative select-none"
         style={{ width: gridWidth, minHeight: Math.max(36, rowHeight) }}
         onMouseDown={(e) => {
-          if (!onDragStart) return;
+          if (!onDragStart || isResizingGlobal) return;
           const rect = e.currentTarget.getBoundingClientRect();
           const x = e.clientX - rect.left;
           const dayIndex = Math.floor(x / DAY_WIDTH);
