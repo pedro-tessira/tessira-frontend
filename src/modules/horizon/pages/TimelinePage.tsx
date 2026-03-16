@@ -388,7 +388,7 @@ export default function TimelinePage() {
     if (newStart <= newEnd) {
       if (resizeState.itemType === "allocation") {
         const alloc = allocations.find((a) => a.id === resizeState.itemId);
-        if (alloc) toast.success(`Allocation resized: ${alloc.employeeName} → ${alloc.project} (${formatDate(newStart)} – ${formatDate(newEnd)})`);
+        if (alloc) toast.success(`Allocation resized: ${alloc.employeeName} → ${alloc.initiative} (${formatDate(newStart)} – ${formatDate(newEnd)})`);
       } else {
         const evt = timelineEvents.find((e) => e.id === resizeState.itemId);
         if (evt) toast.success(`Event resized: ${evt.title} (${formatDate(newStart)} – ${formatDate(newEnd)})`);
