@@ -360,9 +360,7 @@ export default function CapacityIntelligencePage() {
                     </span>
                     <span className="ml-auto flex items-center gap-1.5">
                       <span className="text-[10px] text-muted-foreground/70">4w trend</span>
-                      <Sparkline
-                        data={s.weeklyTrend}
-                        color={s.loadPct >= 80 ? "destructive" : s.loadPct >= 50 ? "warning" : "success"}
+                      <Sparkline data={s.weeklyTrend} color="default" />
                       />
                     </span>
                   </div>
