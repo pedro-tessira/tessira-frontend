@@ -474,22 +474,23 @@ function CapacityRow({
   rangeStart,
   onClick,
 }: {
-  emp: { id: string; name: string; teamName: string; capacity: number; enrichment?: { role: string; skill: string; location: string } };
+  emp: { id: string; name: string; teamName: string; capacity: { availability: number; allocation: number; free: number }; enrichment?: { role: string; skill: string; location: string } };
   dates: Date[];
   todayISO: string;
   gridWidth: number;
   rangeStart: Date;
   onClick?: () => void;
 }) {
-  const capacityColor = emp.capacity >= 90
+  const free = emp.capacity.free;
+  const capacityColor = free >= 90
     ? "text-emerald-600 dark:text-emerald-400"
-    : emp.capacity >= 60
+    : free >= 60
     ? "text-amber-600 dark:text-amber-400"
     : "text-destructive";
 
-  const barColor = emp.capacity >= 90
+  const barColor = free >= 90
     ? "bg-emerald-500"
-    : emp.capacity >= 60
+    : free >= 60
     ? "bg-amber-500"
     : "bg-destructive";
 
@@ -505,9 +506,19 @@ function CapacityRow({
           <p className="text-[10px] text-muted-foreground truncate">{emp.enrichment?.role} · {emp.teamName}</p>
         </div>
         <div className="flex flex-col items-end gap-0.5 shrink-0">
-          <span className={cn("text-[11px] font-bold tabular-nums", capacityColor)}>{emp.capacity}%</span>
-          <div className="w-10 h-1 rounded-full bg-muted overflow-hidden">
-            <div className={cn("h-full rounded-full transition-all", barColor)} style={{ width: `${emp.capacity}%` }} />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className={cn("text-[11px] font-bold tabular-nums cursor-help", capacityColor)}>{free}%</span>
+            </TooltipTrigger>
+            <TooltipContent side="left" className="text-xs space-y-0.5">
+              <p>Availability: {emp.capacity.availability}%</p>
+              <p>Allocation: {emp.capacity.allocation}%</p>
+              <p className="font-semibold">Free capacity: {free}%</p>
+            </TooltipContent>
+          </Tooltip>
+          <div className="w-12 h-1.5 rounded-full bg-muted overflow-hidden flex">
+            <div className={cn("h-full transition-all bg-indigo-500")} style={{ width: `${emp.capacity.allocation}%` }} />
+            <div className={cn("h-full transition-all", barColor)} style={{ width: `${free}%` }} />
           </div>
         </div>
       </div>
