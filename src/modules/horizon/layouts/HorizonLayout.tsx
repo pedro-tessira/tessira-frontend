@@ -1,10 +1,11 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { LayoutDashboard, GanttChart, Share2 } from "lucide-react";
+import { LayoutDashboard, GanttChart, Share2, Activity } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 
 const HORIZON_NAV = [
   { label: "Overview", href: "/app/horizon", icon: LayoutDashboard, end: true },
   { label: "Timeline", href: "/app/horizon/timeline", icon: GanttChart },
+  { label: "Capacity", href: "/app/horizon/capacity", icon: Activity },
   { label: "Share", href: "/app/horizon/share", icon: Share2 },
 ];
 

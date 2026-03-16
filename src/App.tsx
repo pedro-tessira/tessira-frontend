@@ -11,6 +11,7 @@ import OverviewPage from "@/modules/overview/pages/OverviewPage";
 import HorizonLayout from "@/modules/horizon/layouts/HorizonLayout";
 import HorizonOverviewPage from "@/modules/horizon/pages/HorizonOverviewPage";
 import TimelinePage from "@/modules/horizon/pages/TimelinePage";
+import CapacityIntelligencePage from "@/modules/horizon/pages/CapacityIntelligencePage";
 import SharePage from "@/modules/horizon/pages/SharePage";
 import PeopleOverviewPage from "@/modules/people/pages/PeopleOverviewPage";
 import NineBoxPage from "@/modules/people/pages/NineBoxPage";
@@ -86,6 +87,7 @@ const App = () => (
               <Route path="horizon" element={<HorizonLayout />}>
                 <Route index element={<HorizonOverviewPage />} />
                 <Route path="timeline" element={<TimelinePage />} />
+                <Route path="capacity" element={<CapacityIntelligencePage />} />
                 <Route path="share" element={<SharePage />} />
               </Route>
               <Route path="people" element={<PeopleOverviewPage />} />
