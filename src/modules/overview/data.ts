@@ -15,13 +15,13 @@ export const CAPACITY_FORECAST = [
   { week: "Week 4", current: null, projected: 85 },
 ];
 
-/* Delivery Streams Load */
+/* Stream Load (based on initiatives) */
 export const STREAM_LOAD = [
-  { stream: "Auth Service", fte: 4.2, status: "heavy" as const },
-  { stream: "Billing v3", fte: 2.8, status: "normal" as const },
-  { stream: "API Gateway", fte: 3.5, status: "heavy" as const },
-  { stream: "Mobile SDK", fte: 1.6, status: "light" as const },
-  { stream: "Observability", fte: 2.1, status: "normal" as const },
+  { stream: "Auth Platform", fte: 4.2, status: "heavy" as const },
+  { stream: "Payments Platform", fte: 2.8, status: "normal" as const },
+  { stream: "Developer Experience", fte: 3.5, status: "heavy" as const },
+  { stream: "Mobile SDK", fte: 1.0, status: "light" as const },
+  { stream: "Observability", fte: 2.5, status: "normal" as const },
 ];
 
 /* Skill Coverage Heatmap */
