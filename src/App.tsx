@@ -153,6 +153,7 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+      </PeopleStoreProvider>
       </HealthWeightsProvider>
       </TenantProvider>
     </TooltipProvider>
