@@ -327,16 +327,9 @@ export default function CapacityIntelligencePage() {
           </div>
           <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {domainCapacity.map((s) => {
-              const loadColor = s.loadPct >= 80
-                ? "text-destructive"
-                : s.loadPct >= 50
-                ? "text-amber-600 dark:text-amber-400"
-                : "text-emerald-600 dark:text-emerald-400";
-              const barColor = s.loadPct >= 80
-                ? "bg-destructive"
-                : s.loadPct >= 50
-                ? "bg-amber-500"
-                : "bg-emerald-500";
+              // Domain load uses neutral primary color — risk is shown separately
+              const loadColor = "text-primary";
+              const barColor = "bg-primary";
               return (
                 <Link
                   key={s.id}
