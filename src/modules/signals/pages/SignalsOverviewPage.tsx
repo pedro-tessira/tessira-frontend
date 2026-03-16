@@ -200,6 +200,9 @@ export default function SignalsOverviewPage() {
         </div>
       </div>
 
+      {/* Risk legend */}
+      <RiskLegend />
+
       {/* Team health ranking */}
       <div className="rounded-lg border border-border/50 bg-card">
         <div className="flex items-center justify-between border-b border-border/50 px-5 py-3">
