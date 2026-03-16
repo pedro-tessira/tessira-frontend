@@ -586,16 +586,21 @@ function CapacityRow({
   onClick?: () => void;
 }) {
   const free = emp.capacity.free;
-  const capacityColor = free >= 90
-    ? "text-emerald-600 dark:text-emerald-400"
-    : free >= 60
-    ? "text-amber-600 dark:text-amber-400"
+  // Free capacity risk coloring
+  const capacityColor = free >= 40
+    ? "text-success"
+    : free >= 20
+    ? "text-warning"
+    : free >= 10
+    ? "text-orange"
     : "text-destructive";
 
-  const barColor = free >= 90
-    ? "bg-emerald-500"
-    : free >= 60
-    ? "bg-amber-500"
+  const barColor = free >= 40
+    ? "bg-success"
+    : free >= 20
+    ? "bg-warning"
+    : free >= 10
+    ? "bg-orange"
     : "bg-destructive";
 
   return (
@@ -616,12 +621,12 @@ function CapacityRow({
             </TooltipTrigger>
             <TooltipContent side="left" className="text-xs space-y-0.5">
               <p>Availability: {emp.capacity.availability}%</p>
-              <p>Allocation: {emp.capacity.allocation}%</p>
+              <p className="text-muted-foreground">Allocation: {emp.capacity.allocation}%</p>
               <p className="font-semibold">Free capacity: {free}%</p>
             </TooltipContent>
           </Tooltip>
           <div className="w-12 h-1.5 rounded-full bg-muted overflow-hidden flex">
-            <div className={cn("h-full transition-all bg-indigo-500")} style={{ width: `${emp.capacity.allocation}%` }} />
+            <div className="h-full transition-all bg-primary/40" style={{ width: `${emp.capacity.allocation}%` }} />
             <div className={cn("h-full transition-all", barColor)} style={{ width: `${free}%` }} />
           </div>
         </div>
