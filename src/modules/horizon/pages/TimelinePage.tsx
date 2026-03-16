@@ -380,6 +380,25 @@ export default function TimelinePage() {
           )}
         </div>
 
+        {/* ── Allocation Conflicts Alert ── */}
+        {conflicts.length > 0 && layers.has("allocations") && (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <AlertTriangle size={14} className="text-amber-600 dark:text-amber-400" />
+              <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">
+                Over-allocation — {conflicts.length} engineer{conflicts.length !== 1 ? "s" : ""} exceed{conflicts.length === 1 ? "s" : ""} 100%
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {conflicts.map((c) => (
+                <Badge key={c.empId} variant="secondary" className="text-[11px] bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20">
+                  {c.empName} — peak {c.peakPct}% on {formatDate(c.peakDate)}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ── Calendar Grid ── */}
         <div className="rounded-lg border border-border/50 bg-card overflow-hidden relative">
           {!todayVisible && (
