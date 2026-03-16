@@ -12,7 +12,7 @@ export const StreamRiskMap = forwardRef<HTMLDivElement>(function StreamRiskMap(_
   const streamRisks = useMemo(() => getStreamRisks(), []);
 
   return (
-    <div className="rounded-lg border border-border/50 bg-card">
+    <div ref={ref} className="rounded-lg border border-border/50 bg-card">
       <div className="flex items-center justify-between border-b border-border/50 px-5 py-3">
         <div>
           <h3 className="text-sm font-semibold">Stream Risk Map</h3>
