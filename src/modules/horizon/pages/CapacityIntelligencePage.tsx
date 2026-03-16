@@ -647,7 +647,10 @@ function CapacityRow({
                   style={{
                     width: DAY_WIDTH,
                     ...(isToday
-                      ? { backgroundImage: "linear-gradient(hsl(var(--primary) / 0.14), hsl(var(--primary) / 0.14))" }
+                      ? {
+                          backgroundImage: "linear-gradient(hsl(var(--primary) / 0.14), hsl(var(--primary) / 0.14))",
+                          boxShadow: "inset 2px 0 0 hsl(var(--primary) / 0.35), inset -2px 0 0 hsl(var(--primary) / 0.35)",
+                        }
                       : {}),
                   }}
                   className={cn(
@@ -655,7 +658,6 @@ function CapacityRow({
                     isMonday && !isToday && "border-l-2 border-border/40",
                     !isMonday && !isToday && "border-r border-border/10",
                     isWeekend ? "bg-muted/15" : cfg.color,
-                    isToday && "border-x-2 border-primary/30 relative z-[1]"
                   )}
                 />
               </TooltipTrigger>
