@@ -52,7 +52,6 @@ export function HealthWeightsDialog() {
                   <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-background" />
                 )}
               </Button>
-              </Button>
             </DialogTrigger>
           </TooltipTrigger>
           <TooltipContent>Configure health score factor weights</TooltipContent>
