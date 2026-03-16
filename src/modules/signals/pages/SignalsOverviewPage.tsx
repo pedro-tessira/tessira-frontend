@@ -8,7 +8,9 @@ import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { StatCard } from "@/shared/components/StatCard";
 import { SignalDot, TrendIndicator, SignalBadge } from "../components/SignalIndicators";
 import { Sparkline } from "../components/Sparkline";
-import { MOCK_ORG_SIGNALS, MOCK_ALERTS, MOCK_TEAM_SIGNALS, getSignalsStats } from "../data";
+import { MOCK_ORG_SIGNALS, MOCK_ALERTS, computeTeamSignals, getSignalsStats } from "../data";
+import { useHealthWeights } from "../contexts/HealthWeightsContext";
+import { HealthWeightsDialog } from "../components/HealthWeightsDialog";
 import { cn } from "@/shared/lib/utils";
 import {
   healthScoreRisk, freeCapacityRisk, coverageRisk, spofRisk, busFactorRisk,
