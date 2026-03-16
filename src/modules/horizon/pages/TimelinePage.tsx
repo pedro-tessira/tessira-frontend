@@ -717,7 +717,7 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
 
   return (
     <div
-      className={cn("flex border-b border-border/30 last:border-0 hover:bg-accent/5 transition-colors", onDragStart ? "cursor-crosshair" : "cursor-pointer", className)}
+      className={cn("flex border-b border-border/30 last:border-0 hover:bg-accent/5 transition-colors cursor-default", className)}
       onClick={!onDragStart ? onToggle : undefined}
     >
       {/* Sticky label */}
