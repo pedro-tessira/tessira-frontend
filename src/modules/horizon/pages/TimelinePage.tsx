@@ -747,34 +747,32 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
           onDragMove(dayIndex);
         }}
       >
-        {/* Availability background cells */}
-        {availFn && (
-          <div className="flex absolute inset-0">
-            {dates.map((d, i) => {
-              const iso = toISO(d);
-              const status = availFn(iso);
-              const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-              const isToday = iso === todayISO;
-              return (
-                <div
-                  key={i}
-                  style={{
-                    width: DAY_WIDTH,
-                    ...(isToday
-                      ? { backgroundImage: "linear-gradient(hsl(var(--primary) / 0.14), hsl(var(--primary) / 0.14))" }
-                      : {}),
-                  }}
-                  className={cn(
-                    "border-r border-border/10 h-full",
-                    status ? availStatusColors[status] : "",
-                    isWeekend && "bg-muted/15",
-                    isToday && "border-x border-primary/30"
-                  )}
-                />
-              );
-            })}
-          </div>
-        )}
+        {/* Background cells (availability + today overlay) */}
+        <div className="flex absolute inset-0">
+          {dates.map((d, i) => {
+            const iso = toISO(d);
+            const status = availFn ? availFn(iso) : null;
+            const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+            const isToday = iso === todayISO;
+            return (
+              <div
+                key={i}
+                style={{
+                  width: DAY_WIDTH,
+                  ...(isToday
+                    ? { backgroundImage: "linear-gradient(hsl(var(--primary) / 0.14), hsl(var(--primary) / 0.14))" }
+                    : {}),
+                }}
+                className={cn(
+                  "border-r border-border/10 h-full",
+                  status ? availStatusColors[status] : "",
+                  isWeekend && "bg-muted/15",
+                  isToday && "border-x border-primary/30"
+                )}
+              />
+            );
+          })}
+        </div>
 
         {/* Allocation bars */}
         {slottedAllocs.map(({ alloc, slot }) => {
