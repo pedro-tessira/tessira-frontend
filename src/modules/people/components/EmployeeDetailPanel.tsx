@@ -79,6 +79,19 @@ export default function EmployeeDetailPanel({ open, onOpenChange, employeeId, bo
             <DetailRow icon={Users2} label="Department" value={employee.department} />
           </div>
 
+          {/* 9-Box Placement */}
+          {boxLabel && (
+            <div className="space-y-2">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                9-Box Placement
+              </span>
+              <div className="flex items-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-2">
+                <Grid3X3 size={14} className="text-primary shrink-0" />
+                <span className="text-sm font-semibold text-primary">{boxLabel}</span>
+              </div>
+            </div>
+          )}
+
           {/* Reporting */}
           {employee.managerName && employee.managerId && (
             <div className="space-y-2">
