@@ -682,9 +682,11 @@ interface TimelineLaneProps {
   onDragStart?: (dayIndex: number) => void;
   onDragMove?: (dayIndex: number) => void;
   dragSelection?: { startIndex: number; endIndex: number };
+  onResizeStart?: (allocId: string, edge: "left" | "right", originalStart: string, originalEnd: string, e: React.MouseEvent) => void;
+  resizeState?: { allocId: string; edge: "left" | "right"; originalStart: string; originalEnd: string; currentDayIndex: number } | null;
 }
 
-function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rangeDays, dates, todayISO, layers, expanded, onToggle, onAllocationClick, onEventClick, className, availFn, onDragStart, onDragMove, dragSelection }: TimelineLaneProps) {
+function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rangeDays, dates, todayISO, layers, expanded, onToggle, onAllocationClick, onEventClick, className, availFn, onDragStart, onDragMove, dragSelection, onResizeStart, resizeState }: TimelineLaneProps) {
   const slottedEvents = useMemo(() => assignEventSlots(events), [events]);
   const slottedAllocs = useMemo(() => assignAllocSlots(allocs), [allocs]);
 
