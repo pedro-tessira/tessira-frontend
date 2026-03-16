@@ -166,7 +166,7 @@ export default function ResiliencePage() {
                       {Array.from({ length: Math.min(bf, 5) }).map((_, i) => (
                         <div key={i} className={cn(
                           "h-4 w-2 rounded-sm",
-                          bf < 2 ? "bg-destructive" : bf < 3 ? "bg-warning" : "bg-success"
+                          bf < 2 ? "bg-destructive" : bf < 3 ? "bg-orange" : "bg-success"
                         )} />
                       ))}
                       {Array.from({ length: Math.max(0, 5 - bf) }).map((_, i) => (
