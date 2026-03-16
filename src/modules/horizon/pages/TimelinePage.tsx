@@ -530,10 +530,13 @@ export default function TimelinePage() {
                     return (
                       <div
                         key={i}
-                        style={{ width: DAY_WIDTH }}
+                        style={{
+                          width: DAY_WIDTH,
+                          ...(isToday ? { boxShadow: "inset 2px 0 0 hsl(var(--primary) / 0.5), inset -2px 0 0 hsl(var(--primary) / 0.5)" } : {}),
+                        }}
                         className={cn(
                           "text-center py-1.5 text-[10px] border-r border-border/20 last:border-0",
-                          isToday && "font-semibold text-primary border-x border-primary/30",
+                          isToday && "font-semibold text-primary",
                           isWeekend && !isToday && "bg-muted/20 text-muted-foreground/40",
                           isMonday && !isToday && "border-l border-border/40"
                         )}
@@ -758,12 +761,14 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
               return (
                 <div
                   key={i}
-                  style={{ width: DAY_WIDTH }}
+                  style={{
+                    width: DAY_WIDTH,
+                    ...(isToday ? { boxShadow: "inset 2px 0 0 hsl(var(--primary) / 0.5), inset -2px 0 0 hsl(var(--primary) / 0.5)" } : {}),
+                  }}
                   className={cn(
                     "border-r border-border/10 h-full",
                     status ? availStatusColors[status] : "",
                     isWeekend && "bg-muted/15",
-                    isToday && "border-x border-primary/30"
                   )}
                 />
               );
