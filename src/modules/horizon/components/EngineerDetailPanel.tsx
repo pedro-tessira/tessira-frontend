@@ -77,20 +77,6 @@ export default function EngineerDetailPanel({ open, onOpenChange, engineer }: En
     [engineerId]
   );
 
-  if (!engineer) return null;
-
-  const capacityColor = engineer.capacity >= 90
-    ? "text-emerald-600 dark:text-emerald-400"
-    : engineer.capacity >= 60
-    ? "text-amber-600 dark:text-amber-400"
-    : "text-destructive";
-
-  const barColor = engineer.capacity >= 90
-    ? "bg-emerald-500"
-    : engineer.capacity >= 60
-    ? "bg-amber-500"
-    : "bg-destructive";
-
   // Availability breakdown stats
   const breakdown = useMemo(() => {
     const counts: Record<AvailSource, number> = {
@@ -104,6 +90,10 @@ export default function EngineerDetailPanel({ open, onOpenChange, engineer }: En
   }, [windows]);
 
   const totalDays = Object.values(breakdown).reduce((s, v) => s + v, 0) || 1;
+
+  if (!engineer) return null;
+
+  const capacityColor = engineer.capacity >= 90
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
