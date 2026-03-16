@@ -6,14 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DELIVERY_RISK, riskColor } from "../data";
 
 interface Props {
-  streamFilter?: string;
+  domainFilter?: string;
 }
 
-export default function DeliveryRisk({ streamFilter }: Props) {
+export default function DeliveryRisk({ domainFilter }: Props) {
   const navigate = useNavigate();
-  const data = streamFilter && streamFilter !== "all"
-    ? DELIVERY_RISK.filter((d) => d.stream === streamFilter)
-    : DELIVERY_RISK;
+  // No direct domain filter on initiatives — show all
+  const data = DELIVERY_RISK;
 
   return (
     <Card
@@ -22,7 +21,7 @@ export default function DeliveryRisk({ streamFilter }: Props) {
     >
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold">Delivery Risk</CardTitle>
-        <p className="text-xs text-muted-foreground">Risk score by delivery stream</p>
+        <p className="text-xs text-muted-foreground">Risk score by initiative</p>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="h-[200px] w-full">
@@ -42,11 +41,11 @@ export default function DeliveryRisk({ streamFilter }: Props) {
               />
               <YAxis
                 type="category"
-                dataKey="stream"
+                dataKey="initiative"
                 tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
                 axisLine={false}
                 tickLine={false}
-                width={90}
+                width={130}
               />
               <Tooltip
                 contentStyle={{

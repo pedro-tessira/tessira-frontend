@@ -2,7 +2,7 @@
 
 export const METRICS = [
   { label: "Active Initiatives", value: "6", trend: "+2 this sprint", link: "/app/work/initiatives" },
-  { label: "Active Streams", value: "5", trend: "All domains covered", link: "/app/work" },
+  { label: "Active Domains", value: "5", trend: "All areas covered", link: "/app/work/domains" },
   { label: "Free Capacity", value: "45%", trend: "Across 12 engineers", link: "/app/horizon" },
   { label: "Skill Coverage", value: "91%", trend: "3 gaps identified", link: "/app/skills" },
 ];
@@ -15,13 +15,13 @@ export const CAPACITY_FORECAST = [
   { week: "Week 4", current: null, projected: 85 },
 ];
 
-/* Stream Load (based on initiatives) */
-export const STREAM_LOAD = [
-  { stream: "Auth Platform", fte: 4.2, status: "heavy" as const },
-  { stream: "Payments Platform", fte: 2.8, status: "normal" as const },
-  { stream: "Developer Experience", fte: 3.5, status: "heavy" as const },
-  { stream: "Mobile SDK", fte: 1.0, status: "light" as const },
-  { stream: "Observability", fte: 2.5, status: "normal" as const },
+/* Domain Load (FTE allocation per engineering domain) */
+export const DOMAIN_LOAD = [
+  { domain: "Auth Platform", fte: 4.2, status: "heavy" as const },
+  { domain: "Payments Platform", fte: 2.8, status: "normal" as const },
+  { domain: "Frontend Platform", fte: 3.5, status: "heavy" as const },
+  { domain: "Data Platform", fte: 1.0, status: "light" as const },
+  { domain: "Observability", fte: 2.5, status: "normal" as const },
 ];
 
 /* Skill Coverage Heatmap */
@@ -72,21 +72,21 @@ export const TEAM_ALLOCATION = [
   { team: "DevOps", allocation: 102 },
 ];
 
-/* Delivery Risk */
+/* Delivery Risk (by initiative) */
 export const DELIVERY_RISK = [
-  { stream: "Auth Rewrite", risk: 82 },
-  { stream: "Billing v3", risk: 45 },
-  { stream: "API Gateway", risk: 71 },
-  { stream: "Mobile SDK", risk: 30 },
-  { stream: "Observability", risk: 58 },
+  { initiative: "Auth Refactor", risk: 82 },
+  { initiative: "Billing v3 Migration", risk: 45 },
+  { initiative: "API Gateway Hardening", risk: 71 },
+  { initiative: "Mobile SDK Rewrite", risk: 30 },
+  { initiative: "Observability Rollout", risk: 58 },
 ];
 
 /* Signals */
 export const SIGNALS = [
-  { text: "SPOF detected: Auth service owned by 1 engineer", severity: "critical" as const, module: "/app/skills/risk" },
+  { text: "SPOF detected: Auth Platform owned by 1 engineer", severity: "critical" as const, module: "/app/skills/risk" },
   { text: "Platform team allocation at 94%", severity: "high" as const, module: "/app/signals/capacity" },
   { text: "Skill gap: Mobile — Security coverage at 42%", severity: "high" as const, module: "/app/skills/coverage" },
-  { text: "2 delivery streams risk score above 70", severity: "medium" as const, module: "/app/signals/resilience" },
+  { text: "2 initiatives with risk score above 70", severity: "medium" as const, module: "/app/signals/resilience" },
 ];
 
 /* Recent Activity */
@@ -110,7 +110,7 @@ export function riskColor(v: number) {
   return "hsl(var(--success))";
 }
 
-export function streamLoadColor(status: "heavy" | "normal" | "light") {
+export function domainLoadColor(status: "heavy" | "normal" | "light") {
   if (status === "heavy") return "hsl(var(--warning))";
   if (status === "light") return "hsl(var(--muted-foreground))";
   return "hsl(var(--primary))";

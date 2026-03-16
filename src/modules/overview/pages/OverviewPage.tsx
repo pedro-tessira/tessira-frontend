@@ -1,7 +1,7 @@
 import { useState } from "react";
 import KPICards from "../components/KPICards";
 import CapacityForecast from "../components/CapacityForecast";
-import DeliveryStreamsLoad from "../components/DeliveryStreamsLoad";
+import DomainLoadChart from "../components/DeliveryStreamsLoad";
 import SkillCoverageHeatmap from "../components/SkillCoverageHeatmap";
 import SystemResilienceMap from "../components/SystemResilienceMap";
 import TeamAllocation from "../components/TeamAllocation";
@@ -14,7 +14,7 @@ export default function OverviewPage() {
   const [filters, setFilters] = useState<DashboardFilterValues>({
     dateRange: "4w",
     team: "all",
-    stream: "all",
+    domain: "all",
   });
 
   return (
@@ -32,10 +32,10 @@ export default function OverviewPage() {
 
       <KPICards />
 
-      {/* Row 1: Capacity Forecast | Delivery Streams Load */}
+      {/* Row 1: Capacity Forecast | Domain Load */}
       <div className="grid gap-4 lg:grid-cols-2">
         <CapacityForecast />
-        <DeliveryStreamsLoad streamFilter={filters.stream} />
+        <DomainLoadChart domainFilter={filters.domain} />
       </div>
 
       {/* Row 2: Skill Coverage | System Resilience */}
@@ -47,7 +47,7 @@ export default function OverviewPage() {
       {/* Row 3: Team Allocation | Delivery Risk */}
       <div className="grid gap-4 lg:grid-cols-2">
         <TeamAllocation teamFilter={filters.team} />
-        <DeliveryRisk streamFilter={filters.stream} />
+        <DeliveryRisk domainFilter={filters.domain} />
       </div>
 
       {/* Row 4: Signals | Recent Activity */}

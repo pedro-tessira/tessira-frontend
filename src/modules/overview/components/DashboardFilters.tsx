@@ -5,7 +5,7 @@ import {
 } from "@/components/ui/select";
 import { TEAMS } from "../data";
 
-const STREAMS = ["Auth Service", "Billing v3", "API Gateway", "Mobile SDK", "Observability"];
+const DOMAINS = ["Auth Platform", "Payments Platform", "Frontend Platform", "Data Platform", "Observability"];
 
 const DATE_RANGES = [
   { value: "4w", label: "Next 4 weeks" },
@@ -19,7 +19,7 @@ export type DateRange = (typeof DATE_RANGES)[number]["value"];
 export interface DashboardFilterValues {
   dateRange: DateRange;
   team: string;
-  stream: string;
+  domain: string;
 }
 
 interface DashboardFiltersProps {
@@ -61,15 +61,15 @@ export default function DashboardFilters({ filters, onChange }: DashboardFilters
         </SelectContent>
       </Select>
 
-      {/* Stream filter */}
-      <Select value={filters.stream} onValueChange={(v) => update({ stream: v })}>
-        <SelectTrigger className="h-8 w-[160px] text-xs bg-card border-border/50">
-          <SelectValue placeholder="All streams" />
+      {/* Domain filter */}
+      <Select value={filters.domain} onValueChange={(v) => update({ domain: v })}>
+        <SelectTrigger className="h-8 w-[170px] text-xs bg-card border-border/50">
+          <SelectValue placeholder="All domains" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all" className="text-xs">All streams</SelectItem>
-          {STREAMS.map((s) => (
-            <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
+          <SelectItem value="all" className="text-xs">All domains</SelectItem>
+          {DOMAINS.map((d) => (
+            <SelectItem key={d} value={d} className="text-xs">{d}</SelectItem>
           ))}
         </SelectContent>
       </Select>
