@@ -18,6 +18,7 @@ interface EmployeeDetailPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   employeeId: string | null;
+  boxLabel?: string;
 }
 
 function getTenure(startDate: string) {
