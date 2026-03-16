@@ -3,7 +3,7 @@ import type {
   SkillSystem, OwnerConcentration, SkillMomentum, TeamExposure,
 } from "./types";
 
-// ── Domains ──
+// ── Skill Domains (mapped to engineering domains) ──
 export const MOCK_DOMAINS: SkillDomain[] = [
   { id: "dom-01", name: "Auth & Identity", category: "system" },
   { id: "dom-02", name: "Payment Processing", category: "system" },
@@ -25,30 +25,35 @@ export const MOCK_SYSTEMS: SkillSystem[] = [
   { id: "sys-06", name: "Deployment Infrastructure", description: "CI/CD and infrastructure as code", skillIds: ["sk-11", "sk-12"] },
 ];
 
-// ── Skills (with skillType and systemIds) ──
+// ── Skills (with skillType: technical/functional/operational) ──
 export const MOCK_SKILLS: Skill[] = [
-  { id: "sk-01", name: "OAuth / OIDC Implementation", domainId: "dom-01", description: "Implementing and maintaining OAuth2 and OpenID Connect flows.", criticality: "critical", skillType: "technology", systemIds: ["sys-01", "sys-05"], businessImpact: "Authentication breaks across all services if knowledge is lost." },
-  { id: "sk-02", name: "Session Management", domainId: "dom-01", description: "User session lifecycle, token refresh, and revocation.", criticality: "high", skillType: "system", systemIds: ["sys-05"], businessImpact: "User sessions may fail or become insecure without expertise." },
-  { id: "sk-03", name: "Stripe Integration", domainId: "dom-02", description: "Payment intent flows, webhook handling, and subscription lifecycle.", criticality: "critical", skillType: "technology", systemIds: ["sys-02"], businessImpact: "Payment processing stops if knowledge is lost." },
-  { id: "sk-04", name: "PCI Compliance", domainId: "dom-02", description: "Maintaining PCI DSS compliance in payment infrastructure.", criticality: "critical", skillType: "domain", systemIds: ["sys-02"], businessImpact: "Non-compliance risk leading to fines and inability to process payments." },
-  { id: "sk-05", name: "Kafka Operations", domainId: "dom-03", description: "Managing Kafka clusters, topic configuration, and consumer groups.", criticality: "high", skillType: "technology", systemIds: ["sys-04"], businessImpact: "Data pipeline failures causing delayed or lost event processing." },
-  { id: "sk-06", name: "ETL Pipeline Design", domainId: "dom-03", description: "Designing and maintaining data transformation pipelines.", criticality: "high", skillType: "system", systemIds: ["sys-04"], businessImpact: "Data quality degrades and downstream analytics become unreliable." },
-  { id: "sk-07", name: "React Architecture", domainId: "dom-04", description: "Large-scale React application patterns, state management, and performance.", criticality: "standard", skillType: "technology", businessImpact: "Frontend development velocity slows without architectural guidance." },
-  { id: "sk-08", name: "Design System Maintenance", domainId: "dom-04", description: "Maintaining and evolving the shared component library.", criticality: "standard", skillType: "system", businessImpact: "UI consistency degrades and frontend teams duplicate effort." },
-  { id: "sk-09", name: "Datadog / APM", domainId: "dom-05", description: "Application performance monitoring, dashboards, and alerting.", criticality: "high", skillType: "technology", systemIds: ["sys-03"], businessImpact: "Observability gaps make incident detection and diagnosis slower." },
-  { id: "sk-10", name: "Distributed Tracing", domainId: "dom-05", description: "Implementing and interpreting distributed traces across services.", criticality: "high", skillType: "technology", systemIds: ["sys-03"], businessImpact: "Cross-service debugging becomes significantly harder." },
+  // Technical skills
+  { id: "sk-01", name: "OAuth / OIDC Implementation", domainId: "dom-01", description: "Implementing and maintaining OAuth2 and OpenID Connect flows.", criticality: "critical", skillType: "technical", systemIds: ["sys-01", "sys-05"], businessImpact: "Authentication breaks across all services if knowledge is lost." },
+  { id: "sk-03", name: "Stripe Integration", domainId: "dom-02", description: "Payment intent flows, webhook handling, and subscription lifecycle.", criticality: "critical", skillType: "technical", systemIds: ["sys-02"], businessImpact: "Payment processing stops if knowledge is lost." },
+  { id: "sk-05", name: "Kafka Operations", domainId: "dom-03", description: "Managing Kafka clusters, topic configuration, and consumer groups.", criticality: "high", skillType: "technical", systemIds: ["sys-04"], businessImpact: "Data pipeline failures causing delayed or lost event processing." },
+  { id: "sk-07", name: "React Architecture", domainId: "dom-04", description: "Large-scale React application patterns, state management, and performance.", criticality: "standard", skillType: "technical", businessImpact: "Frontend development velocity slows without architectural guidance." },
+  { id: "sk-09", name: "Datadog / APM", domainId: "dom-05", description: "Application performance monitoring, dashboards, and alerting.", criticality: "high", skillType: "technical", systemIds: ["sys-03"], businessImpact: "Observability gaps make incident detection and diagnosis slower." },
+  { id: "sk-10", name: "Distributed Tracing", domainId: "dom-05", description: "Implementing and interpreting distributed traces across services.", criticality: "high", skillType: "technical", systemIds: ["sys-03"], businessImpact: "Cross-service debugging becomes significantly harder." },
+  { id: "sk-14", name: "Rate Limiting & Throttling", domainId: "dom-08", description: "API gateway rate limiting, abuse prevention, and traffic shaping.", criticality: "high", skillType: "technical", systemIds: ["sys-01"], businessImpact: "API abuse and traffic spikes go unmitigated." },
+  { id: "sk-15", name: "Service Mesh Config", domainId: "dom-08", description: "Configuring service-to-service routing, mTLS, and retries.", criticality: "critical", skillType: "technical", systemIds: ["sys-01"], businessImpact: "Service-to-service communication becomes unreliable and insecure." },
+
+  // Functional skills
+  { id: "sk-02", name: "Session Management", domainId: "dom-01", description: "User session lifecycle, token refresh, and revocation.", criticality: "high", skillType: "functional", systemIds: ["sys-05"], businessImpact: "User sessions may fail or become insecure without expertise." },
+  { id: "sk-04", name: "PCI Compliance", domainId: "dom-02", description: "Maintaining PCI DSS compliance in payment infrastructure.", criticality: "critical", skillType: "functional", systemIds: ["sys-02"], businessImpact: "Non-compliance risk leading to fines and inability to process payments." },
+  { id: "sk-06", name: "ETL Pipeline Design", domainId: "dom-03", description: "Designing and maintaining data transformation pipelines.", criticality: "high", skillType: "functional", systemIds: ["sys-04"], businessImpact: "Data quality degrades and downstream analytics become unreliable." },
+  { id: "sk-08", name: "Design System Maintenance", domainId: "dom-04", description: "Maintaining and evolving the shared component library.", criticality: "standard", skillType: "functional", businessImpact: "UI consistency degrades and frontend teams duplicate effort." },
+  { id: "sk-16", name: "Settlement Logic", domainId: "dom-02", description: "Reconciliation and settlement rules for payment batches.", criticality: "critical", skillType: "functional", systemIds: ["sys-02"], businessImpact: "Financial reconciliation fails, causing payment discrepancies." },
+  { id: "sk-17", name: "Fraud Rules", domainId: "dom-02", description: "Fraud detection heuristics and rules engine.", criticality: "high", skillType: "functional", systemIds: ["sys-02"], businessImpact: "Fraud detection weakens, increasing financial losses." },
+
+  // Operational skills
   { id: "sk-11", name: "GitHub Actions", domainId: "dom-06", description: "CI/CD pipeline authoring, optimization, and maintenance.", criticality: "standard", skillType: "operational", systemIds: ["sys-06"], businessImpact: "Deployment velocity decreases and pipeline issues go unresolved." },
   { id: "sk-12", name: "Infrastructure as Code", domainId: "dom-06", description: "Terraform / Pulumi for cloud infrastructure provisioning.", criticality: "high", skillType: "operational", systemIds: ["sys-06"], businessImpact: "Infrastructure changes become risky manual operations." },
   { id: "sk-13", name: "On-Call Coordination", domainId: "dom-07", description: "Incident triage, escalation, and post-mortem facilitation.", criticality: "high", skillType: "operational", systemIds: ["sys-03"], businessImpact: "Incident response time increases, affecting customer trust." },
-  { id: "sk-14", name: "Rate Limiting & Throttling", domainId: "dom-08", description: "API gateway rate limiting, abuse prevention, and traffic shaping.", criticality: "high", skillType: "system", systemIds: ["sys-01"], businessImpact: "API abuse and traffic spikes go unmitigated." },
-  { id: "sk-15", name: "Service Mesh Config", domainId: "dom-08", description: "Configuring service-to-service routing, mTLS, and retries.", criticality: "critical", skillType: "system", systemIds: ["sys-01"], businessImpact: "Service-to-service communication becomes unreliable and insecure." },
-  { id: "sk-16", name: "Settlement Logic", domainId: "dom-02", description: "Reconciliation and settlement rules for payment batches.", criticality: "critical", skillType: "domain", systemIds: ["sys-02"], businessImpact: "Financial reconciliation fails, causing payment discrepancies." },
-  { id: "sk-17", name: "Fraud Rules", domainId: "dom-02", description: "Fraud detection heuristics and rules engine.", criticality: "high", skillType: "domain", systemIds: ["sys-02"], businessImpact: "Fraud detection weakens, increasing financial losses." },
   { id: "sk-18", name: "Production Debugging", domainId: "dom-07", description: "Debugging production incidents across distributed systems.", criticality: "high", skillType: "operational", systemIds: ["sys-03"], businessImpact: "Production issues take longer to resolve, increasing downtime." },
   { id: "sk-19", name: "Release Management", domainId: "dom-06", description: "Coordinating releases, feature flags, and rollback procedures.", criticality: "standard", skillType: "operational", systemIds: ["sys-06"], businessImpact: "Releases become riskier and rollbacks are harder to coordinate." },
 ];
 
-// ── Assignments (employee × skill) — role uses "learner" instead of "contributor" ──
+// ── Assignments (employee × skill) ──
 export const MOCK_ASSIGNMENTS: SkillAssignment[] = [
   // Auth — Sarah is sole owner (SPOF!)
   { skillId: "sk-01", employeeId: "emp-001", employeeName: "Sarah Chen", level: "expert", role: "owner", teamId: "team-001", teamName: "Platform Core" },
@@ -83,7 +88,7 @@ export const MOCK_ASSIGNMENTS: SkillAssignment[] = [
   { skillId: "sk-14", employeeId: "emp-002", employeeName: "Marcus Rivera", level: "proficient", role: "owner", teamId: "team-002", teamName: "Backend Services" },
   { skillId: "sk-14", employeeId: "emp-005", employeeName: "Mei Tanaka", level: "learning", role: "learner", teamId: "team-002", teamName: "Backend Services" },
   { skillId: "sk-15", employeeId: "emp-001", employeeName: "Sarah Chen", level: "expert", role: "owner", teamId: "team-001", teamName: "Platform Core" },
-  // New domain/operational skills
+  // Functional skills
   { skillId: "sk-16", employeeId: "emp-002", employeeName: "Marcus Rivera", level: "expert", role: "owner", teamId: "team-002", teamName: "Backend Services" },
   { skillId: "sk-17", employeeId: "emp-002", employeeName: "Marcus Rivera", level: "proficient", role: "owner", teamId: "team-002", teamName: "Backend Services" },
   { skillId: "sk-17", employeeId: "emp-005", employeeName: "Mei Tanaka", level: "learning", role: "learner", teamId: "team-002", teamName: "Backend Services" },
@@ -93,26 +98,26 @@ export const MOCK_ASSIGNMENTS: SkillAssignment[] = [
   { skillId: "sk-19", employeeId: "emp-009", employeeName: "Lin Zhou", level: "proficient", role: "backup", teamId: "team-005", teamName: "Engineering Leadership" },
 ];
 
-// ── Momentum mock data (simulates historical trend) ──
+// ── Momentum mock data ──
 const MOCK_MOMENTUM: Record<string, SkillMomentum> = {
-  "sk-01": "declining",  // OAuth — single owner, no new learners
+  "sk-01": "declining",
   "sk-02": "stable",
-  "sk-03": "declining",  // Stripe — single owner
-  "sk-04": "declining",  // PCI — single owner
-  "sk-05": "stable",     // Kafka — has backup
-  "sk-06": "improving",  // ETL — new backup added
-  "sk-07": "improving",  // React — learner progressing
-  "sk-08": "improving",  // Design System — learner
-  "sk-09": "declining",  // Datadog — single owner
-  "sk-10": "declining",  // Tracing — single owner
-  "sk-11": "stable",     // GH Actions — has backup
+  "sk-03": "declining",
+  "sk-04": "declining",
+  "sk-05": "stable",
+  "sk-06": "improving",
+  "sk-07": "improving",
+  "sk-08": "improving",
+  "sk-09": "declining",
+  "sk-10": "declining",
+  "sk-11": "stable",
   "sk-12": "stable",
-  "sk-13": "improving",  // On-call — learner added
+  "sk-13": "improving",
   "sk-14": "stable",
-  "sk-15": "declining",  // Service Mesh — single owner
-  "sk-16": "declining",  // Settlement — single owner
+  "sk-15": "declining",
+  "sk-16": "declining",
   "sk-17": "stable",
-  "sk-18": "improving",  // Prod Debugging — has backup
+  "sk-18": "improving",
   "sk-19": "stable",
 };
 
@@ -262,7 +267,6 @@ export function getSkillSystems(skillId: string) {
   return MOCK_SYSTEMS.filter((s) => s.skillIds.includes(skillId));
 }
 
-// For the matrix: employees who have any skill assignments
 export function getMatrixEmployees() {
   const empIds = [...new Set(MOCK_ASSIGNMENTS.map((a) => a.employeeId))];
   return empIds.map((id) => {
@@ -279,7 +283,6 @@ export function getEmployeeSkillLevel(employeeId: string, skillId: string) {
 export function getTeamExposure(): TeamExposure[] {
   const exposures: TeamExposure[] = [];
   
-  // For each domain, check if all owner assignments belong to a single team
   MOCK_DOMAINS.forEach((domain) => {
     const domainSkills = MOCK_SKILLS.filter((s) => s.domainId === domain.id);
     const domainOwnerAssignments = MOCK_ASSIGNMENTS.filter(
@@ -288,7 +291,6 @@ export function getTeamExposure(): TeamExposure[] {
     
     if (domainOwnerAssignments.length === 0) return;
     
-    // Group by team
     const teamMap = new Map<string, { teamId: string; teamName: string; skillIds: Set<string> }>();
     domainOwnerAssignments.forEach((a) => {
       const existing = teamMap.get(a.teamId);
