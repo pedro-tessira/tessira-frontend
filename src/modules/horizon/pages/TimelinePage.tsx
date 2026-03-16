@@ -545,6 +545,12 @@ export default function TimelinePage() {
                   onToggle={() => toggleRow(emp.id)}
                   onAllocationClick={setSelectedAllocation}
                   availFn={layers.has("availability") ? (dayISO: string) => getAvailForDay(emp.id, dayISO) : undefined}
+                  onDragStart={(dayIndex) => handleDragStart(emp.id, dayIndex)}
+                  onDragMove={handleDragMove}
+                  dragSelection={dragState?.empId === emp.id ? {
+                    startIndex: Math.min(dragState.startDayIndex, dragState.currentDayIndex),
+                    endIndex: Math.max(dragState.startDayIndex, dragState.currentDayIndex),
+                  } : undefined}
                 />
               ))}
 
