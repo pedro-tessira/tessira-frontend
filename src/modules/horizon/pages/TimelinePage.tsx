@@ -766,20 +766,38 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
         )}
 
         {/* Allocation bars */}
-        {slottedAllocs.map(({ alloc, slot }) => (
-          <AllocationBlock
-            key={alloc.id}
-            alloc={alloc}
-            slot={slot}
-            rangeStart={rangeStart}
-            rangeDays={rangeDays}
-            topOffset={ROW_PADDING}
-            onClick={(e) => {
-              e.stopPropagation();
-              onAllocationClick(alloc);
-            }}
-          />
-        ))}
+        {slottedAllocs.map(({ alloc, slot }) => {
+          // Compute resize overrides
+          const isBeingResized = resizeState?.allocId === alloc.id;
+          let displayStart = alloc.startDate;
+          let displayEnd = alloc.endDate;
+          if (isBeingResized && resizeState) {
+            const newDate = toISO(addDays(rangeStart, resizeState.currentDayIndex));
+            if (resizeState.edge === "left") {
+              displayStart = newDate <= displayEnd ? newDate : displayEnd;
+            } else {
+              displayEnd = newDate >= displayStart ? newDate : displayStart;
+            }
+          }
+          return (
+            <AllocationBlock
+              key={alloc.id}
+              alloc={alloc}
+              slot={slot}
+              rangeStart={rangeStart}
+              rangeDays={rangeDays}
+              topOffset={ROW_PADDING}
+              onClick={(e) => {
+                e.stopPropagation();
+                onAllocationClick(alloc);
+              }}
+              onResizeStart={onResizeStart}
+              displayStart={displayStart}
+              displayEnd={displayEnd}
+              isResizing={isBeingResized}
+            />
+          );
+        })}
 
         {/* Event blocks */}
         {slottedEvents.map(({ event, slot }) => {
