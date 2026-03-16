@@ -55,7 +55,7 @@ interface EngineerDetailPanelProps {
     id: string;
     name: string;
     teamName: string;
-    capacity: number;
+    capacity: number | { availability: number; allocation: number; free: number };
     enrichment?: { role: string; skill: string; location: string };
   } | null;
 }
