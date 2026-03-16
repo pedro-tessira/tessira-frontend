@@ -931,7 +931,7 @@ function AllocationBlock({
               className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize opacity-0 group-hover:opacity-100 hover:bg-primary/30 rounded-r-md transition-opacity z-10"
               onMouseDown={(e) => {
                 e.stopPropagation();
-                onResizeStart(alloc.id, "right", alloc.startDate, alloc.endDate, e);
+                onResizeStart(alloc.id, "allocation", "right", alloc.startDate, alloc.endDate, e);
               }}
             />
           )}
