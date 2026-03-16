@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { Users2, Calendar, Zap, Activity, CalendarRange } from "lucide-react";
-import { ModulePageHeader } from "../components/ModulePageHeader";
+import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { StatusBadge } from "../components/StatusBadge";
 import { AvatarInitials } from "../components/AvatarInitials";
 import { getTeam, getTeamMembers } from "../data";

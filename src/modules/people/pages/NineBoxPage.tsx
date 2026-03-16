@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { ModulePageHeader } from "../components/ModulePageHeader";
+import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { StatCard } from "../components/StatCard";
 import { NineBoxCard, type MovementRecord } from "../components/NineBoxCard";
 import { Button } from "@/components/ui/button";

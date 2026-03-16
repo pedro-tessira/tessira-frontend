@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Users2, ArrowRight } from "lucide-react";
-import { ModulePageHeader } from "../components/ModulePageHeader";
+import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { AvatarInitials } from "../components/AvatarInitials";
 import { MOCK_TEAMS, MOCK_EMPLOYEES } from "../data";
 
