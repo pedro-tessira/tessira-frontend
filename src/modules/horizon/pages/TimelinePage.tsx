@@ -357,14 +357,51 @@ export default function TimelinePage() {
     setDragState(null);
   }, [dragState, rangeStart]);
 
-  // Global mouseup listener for drag
+  // ── Drag-to-resize handlers ──
+  const handleResizeStart = useCallback((allocId: string, edge: "left" | "right", originalStart: string, originalEnd: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    isResizing.current = true;
+    // Calculate current day index from the edge being dragged
+    const edgeDate = new Date(edge === "left" ? originalStart : originalEnd);
+    edgeDate.setHours(0, 0, 0, 0);
+    const dayIndex = Math.round((edgeDate.getTime() - rangeStart.getTime()) / 86400000);
+    setResizeState({ allocId, edge, originalStart, originalEnd, currentDayIndex: dayIndex });
+  }, [rangeStart]);
+
+  const handleResizeMove = useCallback((dayIndex: number) => {
+    if (!isResizing.current) return;
+    setResizeState((prev) => prev ? { ...prev, currentDayIndex: dayIndex } : null);
+  }, []);
+
+  const handleResizeEnd = useCallback(() => {
+    if (!isResizing.current || !resizeState) {
+      isResizing.current = false;
+      setResizeState(null);
+      return;
+    }
+    isResizing.current = false;
+    const newDate = toISO(addDays(rangeStart, resizeState.currentDayIndex));
+    const alloc = allocations.find((a) => a.id === resizeState.allocId);
+    if (alloc) {
+      const newStart = resizeState.edge === "left" ? newDate : resizeState.originalStart;
+      const newEnd = resizeState.edge === "right" ? newDate : resizeState.originalEnd;
+      if (newStart <= newEnd) {
+        toast.success(`Allocation resized: ${alloc.employeeName} → ${alloc.project} (${formatDate(newStart)} – ${formatDate(newEnd)})`);
+      }
+    }
+    setResizeState(null);
+  }, [resizeState, rangeStart]);
+
+  // Global mouseup listener for drag & resize
   useEffect(() => {
     const onMouseUp = () => {
       if (isDragging.current) handleDragEnd();
+      if (isResizing.current) handleResizeEnd();
     };
     window.addEventListener("mouseup", onMouseUp);
     return () => window.removeEventListener("mouseup", onMouseUp);
-  }, [handleDragEnd]);
+  }, [handleDragEnd, handleResizeEnd]);
 
   return (
     <TooltipProvider delayDuration={200}>
