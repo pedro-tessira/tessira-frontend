@@ -1,6 +1,10 @@
 import { cn } from "@/shared/lib/utils";
 import type { SignalStatus, TrendDirection } from "../types";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import {
+  freeCapacityRisk, healthScoreRisk, capacityTrendColor,
+  riskText, riskBg, riskBgSubtle,
+} from "@/shared/lib/risk-colors";
 
 const STATUS_MAP: Record<SignalStatus, { dot: string; bg: string; text: string }> = {
   healthy: { dot: "bg-success", bg: "bg-success/10", text: "text-success" },
@@ -28,7 +32,7 @@ export function SignalBadge({ status }: { status: SignalStatus }) {
 
 export function TrendIndicator({ direction, value }: { direction: TrendDirection; value?: string }) {
   const Icon = direction === "up" ? TrendingUp : direction === "down" ? TrendingDown : Minus;
-  const color = direction === "up" ? "text-warning" : direction === "down" ? "text-destructive" : "text-muted-foreground";
+  const color = capacityTrendColor(direction);
   return (
     <span className={cn("inline-flex items-center gap-1 text-xs", color)}>
       <Icon size={12} />
@@ -37,29 +41,40 @@ export function TrendIndicator({ direction, value }: { direction: TrendDirection
   );
 }
 
+/**
+ * CapacityBar — shows allocation as neutral bar, with free capacity risk coloring.
+ * Allocation bar = primary (neutral), Free capacity indicator = risk-colored.
+ */
 export function CapacityBar({ allocated, total, className }: { allocated: number; total: number; className?: string }) {
   const pct = Math.min(Math.round((allocated / total) * 100), 100);
-  const color = pct >= 90 ? "bg-destructive" : pct >= 80 ? "bg-warning" : "bg-success";
+  const freePct = 100 - pct;
+  const risk = freeCapacityRisk(freePct);
 
   return (
     <div className={cn("space-y-1", className)}>
       <div className="flex items-center justify-between text-xs">
         <span className="text-muted-foreground tabular-nums">{allocated} / {total} FTE</span>
-        <span className="font-medium tabular-nums">{pct}%</span>
+        <span className="flex items-center gap-2">
+          <span className="text-muted-foreground tabular-nums">{pct}%</span>
+          <span className={cn("font-medium tabular-nums", riskText(risk))}>{freePct}% free</span>
+        </span>
       </div>
-      <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-        <div className={cn("h-full rounded-full tessira-transition", color)} style={{ width: `${pct}%` }} />
+      <div className="h-2 w-full rounded-full bg-muted overflow-hidden flex">
+        <div className="h-full rounded-l-full bg-primary/60 tessira-transition" style={{ width: `${pct}%` }} />
+        <div className={cn("h-full rounded-r-full tessira-transition", riskBg(risk))} style={{ width: `${freePct}%` }} />
       </div>
     </div>
   );
 }
 
+/**
+ * ScoreGauge — Health Score is primary indicator, colored by risk level.
+ */
 export function ScoreGauge({ score, max = 10, label }: { score: number; max?: number; label?: string }) {
-  const pct = (score / max) * 100;
-  const color = pct >= 75 ? "text-success" : pct >= 50 ? "text-warning" : "text-destructive";
+  const risk = healthScoreRisk(score, max);
   return (
     <div className="text-center">
-      <div className={cn("text-2xl font-bold tabular-nums", color)}>
+      <div className={cn("text-2xl font-bold tabular-nums", riskText(risk))}>
         {score}
         <span className="text-sm font-normal text-muted-foreground">/{max}</span>
       </div>

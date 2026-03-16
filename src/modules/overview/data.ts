@@ -1,5 +1,7 @@
 /* ── Overview Dashboard Data ── */
 
+import { freeCapacityRisk, deliveryRisk, coverageRisk, riskHsl, allocationRisk } from "@/shared/lib/risk-colors";
+
 export const METRICS = [
   { label: "Active Initiatives", value: "6", trend: "+2 this sprint", link: "/app/work/initiatives" },
   { label: "Active Domains", value: "5", trend: "All areas covered", link: "/app/work/domains" },
@@ -97,34 +99,37 @@ export const RECENT_ACTIVITY = [
   "Horizon timeline updated for Q2",
 ];
 
-/* ── Helpers ── */
-export function allocationColor(v: number) {
-  if (v >= 95) return "hsl(var(--destructive))";
-  if (v >= 80) return "hsl(var(--warning))";
-  return "hsl(var(--success))";
-}
+/* ── Helpers (Risk-based coloring) ── */
 
-export function riskColor(v: number) {
-  if (v >= 70) return "hsl(var(--destructive))";
-  if (v >= 50) return "hsl(var(--warning))";
-  return "hsl(var(--success))";
-}
-
-export function domainLoadColor(status: "heavy" | "normal" | "light") {
-  if (status === "heavy") return "hsl(var(--warning))";
-  if (status === "light") return "hsl(var(--muted-foreground))";
+/** Team Allocation bar: use NEUTRAL color (primary). Risk shown via Free Capacity indicator. */
+export function allocationColor(_v: number) {
   return "hsl(var(--primary))";
 }
 
+/** Delivery Risk: color by risk score */
+export function riskColor(v: number) {
+  return riskHsl(deliveryRisk(v));
+}
+
+/** Domain Load: neutral brand color (not risk-based — load is informational) */
+export function domainLoadColor(_status: "heavy" | "normal" | "light") {
+  return "hsl(var(--primary))";
+}
+
+/** Coverage heatmap: color by knowledge risk */
 export function heatmapBg(coverage: number) {
-  if (coverage >= 80) return "bg-primary/20";
-  if (coverage >= 60) return "bg-warning/15";
+  const risk = coverageRisk(coverage);
+  if (risk === "healthy") return "bg-success/20";
+  if (risk === "acceptable") return "bg-warning/15";
+  if (risk === "warning") return "bg-orange/15";
   return "bg-destructive/15";
 }
 
 export function heatmapText(coverage: number) {
-  if (coverage >= 80) return "text-primary";
-  if (coverage >= 60) return "text-warning";
+  const risk = coverageRisk(coverage);
+  if (risk === "healthy") return "text-success";
+  if (risk === "acceptable") return "text-warning";
+  if (risk === "warning") return "text-orange";
   return "text-destructive";
 }
 
