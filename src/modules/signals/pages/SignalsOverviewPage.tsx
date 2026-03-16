@@ -109,7 +109,7 @@ export default function SignalsOverviewPage() {
             <p className="text-[11px] text-muted-foreground">Last 7 periods</p>
           </div>
           <div className="divide-y divide-border/50">
-            {MOCK_ORG_SIGNALS.map((sig) => (
+            {dynamicOrgSignals.map((sig) => (
               <div key={sig.id} className="flex items-center gap-4 px-5 py-3">
                 <SignalDot status={sig.status} size="md" />
                 <div className="flex-1 min-w-0">
