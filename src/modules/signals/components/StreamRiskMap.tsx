@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { Shield, AlertTriangle } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
@@ -8,7 +8,7 @@ import {
   riskText, riskBg, riskBgSubtle, riskBorder, riskLabel,
 } from "@/shared/lib/risk-colors";
 
-export function StreamRiskMap() {
+export const StreamRiskMap = forwardRef<HTMLDivElement>(function StreamRiskMap(_props, ref) {
   const streamRisks = useMemo(() => getStreamRisks(), []);
 
   return (
