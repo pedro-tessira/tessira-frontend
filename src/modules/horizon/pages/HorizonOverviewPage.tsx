@@ -433,7 +433,7 @@ export default function HorizonOverviewPage() {
                 >
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-medium truncate">
-                      {alloc.project}
+                      {alloc.initiative}
                       <span className="text-muted-foreground font-normal">
                         {" "}
                         — {alloc.employeeName}
