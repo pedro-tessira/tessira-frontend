@@ -191,6 +191,16 @@ export default function TimelinePage() {
   } | null>(null);
   const isDragging = useRef(false);
 
+  // Drag-to-resize state
+  const [resizeState, setResizeState] = useState<{
+    allocId: string;
+    edge: "left" | "right";
+    originalStart: string;
+    originalEnd: string;
+    currentDayIndex: number;
+  } | null>(null);
+  const isResizing = useRef(false);
+
   const toggleLayer = (layer: TimelineLayer) => {
     setLayers((prev) => {
       const next = new Set(prev);
