@@ -81,12 +81,12 @@ export function NineBoxCard({ employeeId, note, movement, onDragStart, onSelect 
             }}
             className="cursor-grab active:cursor-grabbing"
           >
-            <Link
-              to={`/app/people/employees/${emp.id}`}
-              className="flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-background/60 tessira-transition group"
+            <button
+              type="button"
+              className="flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-background/60 tessira-transition group w-full text-left"
               onClick={(e) => {
-                // Prevent navigation during drag
                 if (e.defaultPrevented) return;
+                onSelect(employeeId);
               }}
             >
               <AvatarInitials firstName={emp.firstName} lastName={emp.lastName} size="sm" />
@@ -114,7 +114,7 @@ export function NineBoxCard({ employeeId, note, movement, onDragStart, onSelect 
                   </div>
                 )}
               </div>
-            </Link>
+            </button>
           </div>
         </TooltipTrigger>
         {evidence.total > 0 && (
