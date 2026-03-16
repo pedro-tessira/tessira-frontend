@@ -362,15 +362,14 @@ export default function TimelinePage() {
   }, [dragState, rangeStart]);
 
   // ── Drag-to-resize handlers ──
-  const handleResizeStart = useCallback((allocId: string, edge: "left" | "right", originalStart: string, originalEnd: string, e: React.MouseEvent) => {
+  const handleResizeStart = useCallback((itemId: string, itemType: "allocation" | "event", edge: "left" | "right", originalStart: string, originalEnd: string, e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     isResizing.current = true;
-    // Calculate current day index from the edge being dragged
     const edgeDate = new Date(edge === "left" ? originalStart : originalEnd);
     edgeDate.setHours(0, 0, 0, 0);
     const dayIndex = Math.round((edgeDate.getTime() - rangeStart.getTime()) / 86400000);
-    setResizeState({ allocId, edge, originalStart, originalEnd, currentDayIndex: dayIndex });
+    setResizeState({ itemId, itemType, edge, originalStart, originalEnd, currentDayIndex: dayIndex });
   }, [rangeStart]);
 
   const handleResizeMove = useCallback((dayIndex: number) => {
@@ -386,12 +385,15 @@ export default function TimelinePage() {
     }
     isResizing.current = false;
     const newDate = toISO(addDays(rangeStart, resizeState.currentDayIndex));
-    const alloc = allocations.find((a) => a.id === resizeState.allocId);
-    if (alloc) {
-      const newStart = resizeState.edge === "left" ? newDate : resizeState.originalStart;
-      const newEnd = resizeState.edge === "right" ? newDate : resizeState.originalEnd;
-      if (newStart <= newEnd) {
-        toast.success(`Allocation resized: ${alloc.employeeName} → ${alloc.project} (${formatDate(newStart)} – ${formatDate(newEnd)})`);
+    const newStart = resizeState.edge === "left" ? newDate : resizeState.originalStart;
+    const newEnd = resizeState.edge === "right" ? newDate : resizeState.originalEnd;
+    if (newStart <= newEnd) {
+      if (resizeState.itemType === "allocation") {
+        const alloc = allocations.find((a) => a.id === resizeState.itemId);
+        if (alloc) toast.success(`Allocation resized: ${alloc.employeeName} → ${alloc.project} (${formatDate(newStart)} – ${formatDate(newEnd)})`);
+      } else {
+        const evt = timelineEvents.find((e) => e.id === resizeState.itemId);
+        if (evt) toast.success(`Event resized: ${evt.title} (${formatDate(newStart)} – ${formatDate(newEnd)})`);
       }
     }
     setResizeState(null);
