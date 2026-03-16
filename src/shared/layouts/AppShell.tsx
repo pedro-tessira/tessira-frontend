@@ -12,6 +12,7 @@ import {
   ChevronRight,
   PanelLeftClose,
   PanelLeft,
+  Briefcase,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useState } from "react";
