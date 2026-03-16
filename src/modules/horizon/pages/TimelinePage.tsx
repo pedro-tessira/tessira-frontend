@@ -758,12 +758,14 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
               return (
                 <div
                   key={i}
-                  style={{ width: DAY_WIDTH }}
+                  style={{
+                    width: DAY_WIDTH,
+                    ...(isToday ? { boxShadow: "inset 2px 0 0 hsl(var(--primary) / 0.5), inset -2px 0 0 hsl(var(--primary) / 0.5)" } : {}),
+                  }}
                   className={cn(
                     "border-r border-border/10 h-full",
                     status ? availStatusColors[status] : "",
                     isWeekend && "bg-muted/15",
-                    isToday && "border-x border-primary/30"
                   )}
                 />
               );
