@@ -1,17 +1,26 @@
-import { useParams, Link } from "react-router-dom";
+import { useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
-  Mail, MapPin, Clock, Calendar, Users2, Shield, Zap, Activity,
+  Mail, MapPin, Clock, Calendar, Users2, Shield, Zap, Activity, Pencil, Trash2,
 } from "lucide-react";
 import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { StatusBadge } from "../components/StatusBadge";
 import { AvatarInitials } from "../components/AvatarInitials";
 import { FollowUpNotes } from "../components/FollowUpNotes";
-import { getEmployee, getEmployeeMemberships } from "../data";
+import { Button } from "@/components/ui/button";
+import { usePeopleStore } from "../contexts/PeopleStoreContext";
+import EditEmployeeDialog from "../components/EditEmployeeDialog";
+import DeleteConfirmDialog from "../components/DeleteConfirmDialog";
+import { toast } from "@/hooks/use-toast";
 
 export default function EmployeeDetailPage() {
   const { employeeId } = useParams<{ employeeId: string }>();
+  const navigate = useNavigate();
+  const { getEmployee, getEmployeeMemberships, deleteEmployee } = usePeopleStore();
   const employee = getEmployee(employeeId ?? "");
   const memberships = employeeId ? getEmployeeMemberships(employeeId) : [];
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   if (!employee) {
     return (
@@ -53,6 +62,20 @@ export default function EmployeeDetailPage() {
           { label: "Employees", href: "/app/people/employees" },
           { label: `${employee.firstName} ${employee.lastName}` },
         ]}
+        actions={
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" onClick={() => setEditOpen(true)}>
+              <Pencil size={13} /> Edit
+            </Button>
+            <Button
+              variant="outline" size="sm"
+              className="gap-1.5 h-8 text-xs text-destructive hover:bg-destructive hover:text-destructive-foreground"
+              onClick={() => setDeleteOpen(true)}
+            >
+              <Trash2 size={13} /> Delete
+            </Button>
+          </div>
+        }
       />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -61,16 +84,10 @@ export default function EmployeeDetailPage() {
           {/* Profile Header */}
           <div className="rounded-lg border border-border/50 bg-card p-6">
             <div className="flex items-start gap-4">
-              <AvatarInitials
-                firstName={employee.firstName}
-                lastName={employee.lastName}
-                size="lg"
-              />
+              <AvatarInitials firstName={employee.firstName} lastName={employee.lastName} size="lg" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <h2 className="text-lg font-semibold">
-                    {employee.firstName} {employee.lastName}
-                  </h2>
+                  <h2 className="text-lg font-semibold">{employee.firstName} {employee.lastName}</h2>
                   <StatusBadge status={employee.status} />
                 </div>
                 <p className="text-sm text-muted-foreground mt-0.5">{employee.title}</p>
@@ -123,9 +140,7 @@ export default function EmployeeDetailPage() {
                 ))}
               </div>
             ) : (
-              <div className="p-8 text-center text-sm text-muted-foreground">
-                No team memberships found.
-              </div>
+              <div className="p-8 text-center text-sm text-muted-foreground">No team memberships found.</div>
             )}
           </div>
 
@@ -157,11 +172,8 @@ export default function EmployeeDetailPage() {
 
         {/* Sidebar */}
         <div className="space-y-4">
-          {/* Reporting */}
           <div className="rounded-lg border border-border/50 bg-card p-5 space-y-4">
-            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Reporting Context
-            </h3>
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Reporting Context</h3>
             {employee.managerName && employee.managerId ? (
               <div>
                 <div className="text-xs text-muted-foreground mb-1">Reports to</div>
@@ -178,11 +190,8 @@ export default function EmployeeDetailPage() {
             )}
           </div>
 
-          {/* Org metadata */}
           <div className="rounded-lg border border-border/50 bg-card p-5 space-y-3">
-            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Organization
-            </h3>
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Organization</h3>
             <div className="space-y-2">
               <div>
                 <div className="text-xs text-muted-foreground">Department</div>
@@ -204,6 +213,19 @@ export default function EmployeeDetailPage() {
           </div>
         </div>
       </div>
+
+      <EditEmployeeDialog open={editOpen} onOpenChange={setEditOpen} employee={employee} />
+      <DeleteConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete Employee"
+        description={`Are you sure you want to remove ${employee.firstName} ${employee.lastName}? This will also remove all their team memberships.`}
+        onConfirm={() => {
+          deleteEmployee(employee.id);
+          toast({ title: "Employee deleted", description: `${employee.firstName} ${employee.lastName} has been removed.` });
+          navigate("/app/people/employees");
+        }}
+      />
     </div>
   );
 }

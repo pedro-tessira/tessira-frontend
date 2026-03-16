@@ -4,13 +4,17 @@ import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { StatCard } from "@/shared/components/StatCard";
 import { StatusBadge } from "../components/StatusBadge";
 import { AvatarInitials } from "../components/AvatarInitials";
-import { getPeopleStats, MOCK_EMPLOYEES, MOCK_TEAMS } from "../data";
+import { usePeopleStore } from "../contexts/PeopleStoreContext";
 
 export default function PeopleOverviewPage() {
-  const stats = getPeopleStats();
-  const recentEmployees = MOCK_EMPLOYEES.slice(0, 5);
-  const onLeave = MOCK_EMPLOYEES.filter((e) => e.status === "on_leave");
-  const offboarding = MOCK_EMPLOYEES.filter((e) => e.status === "offboarding");
+  const { employees, teams } = usePeopleStore();
+
+  const active = employees.filter((e) => e.status === "active").length;
+  const onLeave = employees.filter((e) => e.status === "on_leave");
+  const offboarding = employees.filter((e) => e.status === "offboarding");
+  const countries = new Set(employees.map((e) => e.countryCode)).size;
+  const avgTeamSize = teams.length > 0 ? Math.round((employees.length / teams.length) * 10) / 10 : 0;
+  const recentEmployees = employees.slice(0, 5);
 
   return (
     <div className="space-y-6">
@@ -21,10 +25,10 @@ export default function PeopleOverviewPage() {
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total Employees" value={stats.totalEmployees} icon={Users2} detail={`${stats.activeEmployees} active`} />
-        <StatCard label="Teams" value={stats.totalTeams} icon={UserCheck} detail={`${stats.avgTeamSize} avg size`} />
-        <StatCard label="Countries" value={stats.countriesRepresented} icon={Globe} detail="Distributed workforce" />
-        <StatCard label="On Leave" value={stats.onLeave} icon={Clock} detail="Currently unavailable" />
+        <StatCard label="Total Employees" value={employees.length} icon={Users2} detail={`${active} active`} />
+        <StatCard label="Teams" value={teams.length} icon={UserCheck} detail={`${avgTeamSize} avg size`} />
+        <StatCard label="Countries" value={countries} icon={Globe} detail="Distributed workforce" />
+        <StatCard label="On Leave" value={onLeave.length} icon={Clock} detail="Currently unavailable" />
       </div>
 
       {/* Quick links */}
@@ -36,7 +40,7 @@ export default function PeopleOverviewPage() {
           <div>
             <h3 className="text-sm font-semibold">Employee Directory</h3>
             <p className="mt-1 text-xs text-muted-foreground">
-              Browse, search, and filter all {stats.totalEmployees} employees across the organization.
+              Browse, search, and filter all {employees.length} employees across the organization.
             </p>
           </div>
           <ArrowRight size={16} className="text-muted-foreground group-hover:text-primary tessira-transition shrink-0 ml-4" />
@@ -48,7 +52,7 @@ export default function PeopleOverviewPage() {
           <div>
             <h3 className="text-sm font-semibold">Team Structure</h3>
             <p className="mt-1 text-xs text-muted-foreground">
-              View {stats.totalTeams} teams, their leads, membership, and organizational context.
+              View {teams.length} teams, their leads, membership, and organizational context.
             </p>
           </div>
           <ArrowRight size={16} className="text-muted-foreground group-hover:text-primary tessira-transition shrink-0 ml-4" />
@@ -72,9 +76,7 @@ export default function PeopleOverviewPage() {
         <div className="lg:col-span-2 rounded-lg border border-border/50 bg-card">
           <div className="flex items-center justify-between border-b border-border/50 px-5 py-3">
             <h3 className="text-sm font-semibold">Recent Employees</h3>
-            <Link to="/app/people/employees" className="text-xs text-primary hover:underline">
-              View all
-            </Link>
+            <Link to="/app/people/employees" className="text-xs text-primary hover:underline">View all</Link>
           </div>
           <div className="divide-y divide-border/50">
             {recentEmployees.map((emp) => (
@@ -85,9 +87,7 @@ export default function PeopleOverviewPage() {
               >
                 <AvatarInitials firstName={emp.firstName} lastName={emp.lastName} size="sm" />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">
-                    {emp.firstName} {emp.lastName}
-                  </div>
+                  <div className="text-sm font-medium truncate">{emp.firstName} {emp.lastName}</div>
                   <div className="text-xs text-muted-foreground truncate">{emp.title}</div>
                 </div>
                 <StatusBadge status={emp.status} />
@@ -109,11 +109,7 @@ export default function PeopleOverviewPage() {
                   <span className="text-xs font-medium">On Leave ({onLeave.length})</span>
                 </div>
                 {onLeave.map((emp) => (
-                  <Link
-                    key={emp.id}
-                    to={`/app/people/employees/${emp.id}`}
-                    className="block text-xs text-muted-foreground hover:text-foreground py-1"
-                  >
+                  <Link key={emp.id} to={`/app/people/employees/${emp.id}`} className="block text-xs text-muted-foreground hover:text-foreground py-1">
                     {emp.firstName} {emp.lastName} · {emp.title}
                   </Link>
                 ))}
@@ -126,11 +122,7 @@ export default function PeopleOverviewPage() {
                   <span className="text-xs font-medium">Offboarding ({offboarding.length})</span>
                 </div>
                 {offboarding.map((emp) => (
-                  <Link
-                    key={emp.id}
-                    to={`/app/people/employees/${emp.id}`}
-                    className="block text-xs text-muted-foreground hover:text-foreground py-1"
-                  >
+                  <Link key={emp.id} to={`/app/people/employees/${emp.id}`} className="block text-xs text-muted-foreground hover:text-foreground py-1">
                     {emp.firstName} {emp.lastName} · {emp.title}
                   </Link>
                 ))}
