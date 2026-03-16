@@ -465,7 +465,7 @@ function CapacityRow({
     : "bg-destructive";
 
   return (
-    <div className="flex border-b border-border/20 last:border-0 hover:bg-accent/5 transition-colors">
+    <div className="flex border-b border-border/20 last:border-0 hover:bg-accent/10 transition-colors cursor-pointer" onClick={onClick}>
       {/* Sticky label */}
       <div className="w-[220px] shrink-0 border-r border-border/50 px-3 py-2 flex items-center gap-2.5 sticky left-0 z-10 bg-card">
         <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
