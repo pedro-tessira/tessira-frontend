@@ -433,7 +433,7 @@ export default function CapacityIntelligencePage() {
                 <Progress value={t.capacity} className="h-1.5 flex-1" />
                 <span className={cn(
                   "text-xs font-bold tabular-nums",
-                  t.capacity >= 80 ? "text-emerald-600 dark:text-emerald-400" : t.capacity >= 60 ? "text-amber-600 dark:text-amber-400" : "text-destructive"
+                  t.capacity >= 40 ? "text-success" : t.capacity >= 20 ? "text-warning" : t.capacity >= 10 ? "text-orange" : "text-destructive"
                 )}>{t.capacity}%</span>
               </div>
             </div>
