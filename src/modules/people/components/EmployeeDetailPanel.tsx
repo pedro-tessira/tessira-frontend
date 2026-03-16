@@ -41,7 +41,7 @@ function DetailRow({ icon: Icon, label, value }: { icon: typeof Mail; label: str
   );
 }
 
-export default function EmployeeDetailPanel({ open, onOpenChange, employeeId }: EmployeeDetailPanelProps) {
+export default function EmployeeDetailPanel({ open, onOpenChange, employeeId, boxLabel }: EmployeeDetailPanelProps) {
   if (!employeeId) return null;
 
   const employee = getEmployee(employeeId);
