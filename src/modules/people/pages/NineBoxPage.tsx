@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { StatCard } from "@/shared/components/StatCard";
 import { NineBoxCard, type MovementRecord } from "../components/NineBoxCard";
+import EmployeeDetailPanel from "../components/EmployeeDetailPanel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
