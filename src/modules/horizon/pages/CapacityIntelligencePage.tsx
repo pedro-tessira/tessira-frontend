@@ -387,6 +387,13 @@ export default function CapacityIntelligencePage() {
             </span>
           ))}
         </div>
+
+        {/* ── Engineer Detail Panel ── */}
+        <EngineerDetailPanel
+          open={!!selectedEngineer}
+          onOpenChange={(open) => !open && setSelectedEngineer(null)}
+          engineer={selectedEngineer}
+        />
       </div>
     </TooltipProvider>
   );
