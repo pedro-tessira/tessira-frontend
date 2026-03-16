@@ -70,6 +70,20 @@ export interface ShareLink {
   isActive: boolean;
 }
 
+export interface Allocation {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  project: string;
+  percentage: number;
+  startDate: string;
+  endDate: string;
+  teamId: string;
+  teamName: string;
+  source?: "manual" | "jira" | "linear";
+  description?: string;
+}
+
 export interface HorizonEmployee {
   id: string;
   name: string;

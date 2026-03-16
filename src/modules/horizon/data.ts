@@ -5,6 +5,7 @@ import type {
   HorizonStats,
   ShareLink,
   HorizonEmployee,
+  Allocation,
 } from "./types";
 
 // ── Helpers ──────────────────────────────────────────────
