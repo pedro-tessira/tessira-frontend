@@ -603,6 +603,11 @@ export default function TimelinePage() {
         prefillStartDate={addAllocPrefill.startDate}
         prefillEndDate={addAllocPrefill.endDate}
       />
+      <EventDetailPanel
+        open={!!selectedEvent}
+        onOpenChange={(open) => !open && setSelectedEvent(null)}
+        event={selectedEvent}
+      />
     </TooltipProvider>
   );
 }
