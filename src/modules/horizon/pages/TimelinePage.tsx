@@ -626,6 +626,7 @@ interface TimelineLaneProps {
   expanded: boolean;
   onToggle: () => void;
   onAllocationClick: (a: Allocation) => void;
+  onEventClick?: (e: TimelineEvent) => void;
   className?: string;
   availFn?: (dayISO: string) => AvailabilityWindow["status"] | null;
   onDragStart?: (dayIndex: number) => void;
