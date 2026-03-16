@@ -762,7 +762,7 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
                     "border-r border-border/10 h-full",
                     status ? availStatusColors[status] : "",
                     isWeekend && "bg-muted/15",
-                    isToday && "ring-1 ring-inset ring-primary/30"
+                    isToday && "border-x border-primary/30"
                   )}
                 />
               );

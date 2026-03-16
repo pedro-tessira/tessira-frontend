@@ -646,10 +646,10 @@ function CapacityRow({
                   style={{ width: DAY_WIDTH }}
                   className={cn(
                     "h-8",
-                    isMonday && "border-l-2 border-border/40",
-                    !isMonday && "border-r border-border/10",
+                    isMonday && !isToday && "border-l-2 border-border/40",
+                    !isMonday && !isToday && "border-r border-border/10",
                     isWeekend ? "bg-muted/15" : cfg.color,
-                    isToday && "ring-1 ring-inset ring-primary/40"
+                    isToday && "border-x border-primary/30"
                   )}
                 />
               </TooltipTrigger>

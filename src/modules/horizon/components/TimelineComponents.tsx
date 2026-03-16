@@ -146,7 +146,7 @@ export function DateGridHeader({ rangeStart, days }: { rangeStart: Date; days: n
               key={i}
               className={cn(
                 "flex-1 text-center py-1.5 text-[10px] border-r border-border/30 last:border-0",
-                isToday && "bg-primary/5 font-semibold text-primary",
+                isToday && "font-semibold text-primary border-x border-primary/30",
                 isWeekend && !isToday && "bg-muted/30 text-muted-foreground/50"
               )}
             >
