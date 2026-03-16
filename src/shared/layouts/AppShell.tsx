@@ -21,6 +21,7 @@ import { UserMenu } from "@/shared/components/UserMenu";
 
 const NAV_ITEMS = [
   { label: "Overview", href: "/app/overview", icon: LayoutDashboard },
+  { label: "Work", href: "/app/work", icon: Briefcase },
   { label: "Horizon", href: "/app/horizon", icon: CalendarRange },
   { label: "People", href: "/app/people", icon: Users2 },
   { label: "Skills", href: "/app/skills", icon: Zap },
