@@ -96,7 +96,7 @@ export default function AllocationDetailPanel({
   };
 
   const handleSaveEdit = () => {
-    toast.success(`Allocation updated: ${allocation.employeeName} → ${allocation.project} at ${editPct[0]}%`);
+    toast.success(`Allocation updated: ${allocation.employeeName} → ${allocation.initiative} at ${editPct[0]}%`);
     setEditing(false);
   };
 
