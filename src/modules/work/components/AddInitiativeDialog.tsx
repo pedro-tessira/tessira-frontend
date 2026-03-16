@@ -9,10 +9,10 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Rocket, X } from "lucide-react";
+import { Plus, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import type { Domain, ValueStream, InitiativeStatus } from "../types";
+import MultiSelectDropdown from "./MultiSelectDropdown";
 
 interface Props {
   domains: Domain[];
@@ -38,18 +38,6 @@ export default function AddInitiativeDialog({ domains, valueStreams, onAdd }: Pr
   const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
   const [selectedVS, setSelectedVS] = useState<string[]>([]);
 
-  const toggleDomain = (id: string) => {
-    setSelectedDomains((prev) =>
-      prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id]
-    );
-  };
-
-  const toggleVS = (id: string) => {
-    setSelectedVS((prev) =>
-      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
-    );
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !startDate || !endDate || selectedDomains.length === 0) return;
@@ -74,6 +62,9 @@ export default function AddInitiativeDialog({ domains, valueStreams, onAdd }: Pr
   };
 
   const isValid = name.trim() && startDate && endDate && selectedDomains.length > 0;
+
+  const domainOptions = domains.map((d) => ({ value: d.id, label: d.name }));
+  const vsOptions = valueStreams.map((vs) => ({ value: vs.id, label: vs.name }));
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -149,36 +140,22 @@ export default function AddInitiativeDialog({ domains, valueStreams, onAdd }: Pr
 
           <div className="space-y-2">
             <Label>Domains <span className="text-destructive">*</span></Label>
-            <div className="flex flex-wrap gap-1.5">
-              {domains.map((d) => (
-                <Badge
-                  key={d.id}
-                  variant={selectedDomains.includes(d.id) ? "default" : "outline"}
-                  className="cursor-pointer text-xs gap-1"
-                  onClick={() => toggleDomain(d.id)}
-                >
-                  {d.name}
-                  {selectedDomains.includes(d.id) && <X size={10} />}
-                </Badge>
-              ))}
-            </div>
+            <MultiSelectDropdown
+              options={domainOptions}
+              selected={selectedDomains}
+              onChange={setSelectedDomains}
+              placeholder="Select domains..."
+            />
           </div>
 
           <div className="space-y-2">
             <Label>Value Streams</Label>
-            <div className="flex flex-wrap gap-1.5">
-              {valueStreams.map((vs) => (
-                <Badge
-                  key={vs.id}
-                  variant={selectedVS.includes(vs.id) ? "default" : "outline"}
-                  className="cursor-pointer text-xs gap-1"
-                  onClick={() => toggleVS(vs.id)}
-                >
-                  {vs.name}
-                  {selectedVS.includes(vs.id) && <X size={10} />}
-                </Badge>
-              ))}
-            </div>
+            <MultiSelectDropdown
+              options={vsOptions}
+              selected={selectedVS}
+              onChange={setSelectedVS}
+              placeholder="Select value streams..."
+            />
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
