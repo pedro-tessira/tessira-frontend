@@ -375,6 +375,7 @@ export function getDomainRisks(): DomainRisk[] {
     else if (domainSpofs.length > 0 || avgCov < 60) riskLevel = "warning";
 
     return {
+      domainId: domain.id,
       domain: domain.name,
       spofCount: domainSpofs.length,
       coveragePct: Math.min(avgCov, 100),

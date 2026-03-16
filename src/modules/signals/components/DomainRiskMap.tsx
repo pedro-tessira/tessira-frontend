@@ -28,10 +28,11 @@ export function DomainRiskMap() {
           const spRisk = dr.spofCount > 0 ? spofRisk(dr.spofCount) : "healthy";
 
           return (
-            <div
+            <Link
               key={dr.domain}
+              to={`/app/work/domains/${dr.domainId}`}
               className={cn(
-                "rounded-lg border p-4 space-y-3 tessira-transition",
+                "rounded-lg border p-4 space-y-3 tessira-transition hover:shadow-md hover:scale-[1.01]",
                 riskBorder(covRisk),
                 riskBgSubtle(covRisk),
               )}
@@ -79,7 +80,7 @@ export function DomainRiskMap() {
               <div className={cn("text-[10px] font-medium uppercase tracking-wider", riskText(covRisk))}>
                 {riskLabel(covRisk)}
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>

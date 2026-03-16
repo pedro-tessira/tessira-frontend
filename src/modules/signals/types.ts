@@ -62,6 +62,7 @@ export interface AlertItem {
 }
 
 export interface DomainRisk {
+  domainId: string;
   domain: string;
   spofCount: number;
   coveragePct: number;
