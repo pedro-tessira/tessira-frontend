@@ -37,6 +37,7 @@ export function HealthWeightsDialog() {
 
   const isDefault = JSON.stringify(draft) === JSON.stringify(DEFAULT_WEIGHTS);
   const isChanged = JSON.stringify(draft) !== JSON.stringify(weights);
+  const isActiveNonDefault = JSON.stringify(weights) !== JSON.stringify(DEFAULT_WEIGHTS);
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
@@ -44,9 +45,13 @@ export function HealthWeightsDialog() {
         <Tooltip>
           <TooltipTrigger asChild>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs relative">
                 <Settings2 size={14} />
                 Weights
+                {isActiveNonDefault && (
+                  <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-background" />
+                )}
+              </Button>
               </Button>
             </DialogTrigger>
           </TooltipTrigger>
