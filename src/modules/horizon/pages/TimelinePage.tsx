@@ -858,6 +858,10 @@ function AllocationBlock({
   rangeDays,
   topOffset,
   onClick,
+  onResizeStart,
+  displayStart,
+  displayEnd,
+  isResizing: resizing,
 }: {
   alloc: Allocation;
   slot: number;
@@ -865,10 +869,16 @@ function AllocationBlock({
   rangeDays: number;
   topOffset: number;
   onClick: (e: React.MouseEvent) => void;
+  onResizeStart?: (allocId: string, edge: "left" | "right", originalStart: string, originalEnd: string, e: React.MouseEvent) => void;
+  displayStart?: string;
+  displayEnd?: string;
+  isResizing?: boolean;
 }) {
   const totalPx = rangeDays * DAY_WIDTH;
-  const aStart = new Date(alloc.startDate);
-  const aEnd = new Date(alloc.endDate);
+  const startDate = displayStart || alloc.startDate;
+  const endDate = displayEnd || alloc.endDate;
+  const aStart = new Date(startDate);
+  const aEnd = new Date(endDate);
   aStart.setHours(0, 0, 0, 0);
   aEnd.setHours(0, 0, 0, 0);
 
@@ -885,26 +895,50 @@ function AllocationBlock({
       <TooltipTrigger asChild>
         <div
           onMouseDown={(e) => e.stopPropagation()}
-          className="absolute rounded-md flex items-center px-1.5 text-[10px] font-semibold truncate cursor-pointer border border-indigo-500/40 bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-500/30 transition-colors"
+          className={cn(
+            "absolute rounded-md flex items-center px-1.5 text-[10px] font-semibold truncate cursor-pointer border border-indigo-500/40 bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-500/30 transition-colors group",
+            resizing && "ring-2 ring-primary/50 shadow-md"
+          )}
           style={{
             left: leftPx,
             width: widthPx,
             top: topPx,
             height: ALLOC_HEIGHT,
-            zIndex: 3,
+            zIndex: resizing ? 10 : 3,
           }}
           onClick={onClick}
         >
+          {/* Left resize handle */}
+          {onResizeStart && (
+            <div
+              className="absolute left-0 top-0 bottom-0 w-2 cursor-col-resize opacity-0 group-hover:opacity-100 hover:bg-primary/30 rounded-l-md transition-opacity z-10"
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                onResizeStart(alloc.id, "left", alloc.startDate, alloc.endDate, e);
+              }}
+            />
+          )}
           <Briefcase size={10} className="mr-1 shrink-0 opacity-70" />
           <span className="truncate">{label}</span>
+          {/* Right resize handle */}
+          {onResizeStart && (
+            <div
+              className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize opacity-0 group-hover:opacity-100 hover:bg-primary/30 rounded-r-md transition-opacity z-10"
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                onResizeStart(alloc.id, "right", alloc.startDate, alloc.endDate, e);
+              }}
+            />
+          )}
         </div>
       </TooltipTrigger>
       <TooltipContent side="top" className="text-xs space-y-0.5">
         <p className="font-semibold">{alloc.project}</p>
         <p className="text-muted-foreground">Allocation: {alloc.percentage}%</p>
         <p className="text-muted-foreground">{alloc.employeeName} · {alloc.teamName}</p>
-        <p className="tabular-nums">{formatDate(alloc.startDate)} → {formatDate(alloc.endDate)}</p>
+        <p className="tabular-nums">{formatDate(startDate)} → {formatDate(endDate)}</p>
         {alloc.source && <p className="text-muted-foreground capitalize">Source: {alloc.source}</p>}
+        <p className="text-muted-foreground/70 text-[10px]">Drag edges to resize</p>
       </TooltipContent>
     </Tooltip>
   );
