@@ -540,6 +540,7 @@ export default function TimelinePage() {
                       >
                         <div>{d.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 2)}</div>
                         <div className="tabular-nums">{d.getDate()}</div>
+                        {isToday && <span className="mx-auto mt-0.5 block h-1 w-1 rounded-full bg-primary animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite]" />}
                       </div>
                     );
                   })}
