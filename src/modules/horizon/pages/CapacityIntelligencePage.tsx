@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { cn } from "@/shared/lib/utils";
+import EngineerDetailPanel from "../components/EngineerDetailPanel";
 import {
   Users,
   UserCheck,
@@ -132,6 +133,7 @@ export default function CapacityIntelligencePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const [todayVisible, setTodayVisible] = useState(true);
+  const [selectedEngineer, setSelectedEngineer] = useState<typeof capacityData[number] | null>(null);
 
   const rangeDays = range === "2w" ? 14 : range === "4w" ? 28 : 56;
   const today = new Date();
@@ -365,6 +367,7 @@ export default function CapacityIntelligencePage() {
                   todayISO={todayISO}
                   gridWidth={gridWidth}
                   rangeStart={rangeStart}
+                  onClick={() => setSelectedEngineer(emp)}
                 />
               ))}
 
@@ -384,6 +387,13 @@ export default function CapacityIntelligencePage() {
             </span>
           ))}
         </div>
+
+        {/* ── Engineer Detail Panel ── */}
+        <EngineerDetailPanel
+          open={!!selectedEngineer}
+          onOpenChange={(open) => !open && setSelectedEngineer(null)}
+          engineer={selectedEngineer}
+        />
       </div>
     </TooltipProvider>
   );
@@ -433,12 +443,14 @@ function CapacityRow({
   todayISO,
   gridWidth,
   rangeStart,
+  onClick,
 }: {
   emp: { id: string; name: string; teamName: string; capacity: number; enrichment?: { role: string; skill: string; location: string } };
   dates: Date[];
   todayISO: string;
   gridWidth: number;
   rangeStart: Date;
+  onClick?: () => void;
 }) {
   const capacityColor = emp.capacity >= 90
     ? "text-emerald-600 dark:text-emerald-400"
@@ -453,7 +465,7 @@ function CapacityRow({
     : "bg-destructive";
 
   return (
-    <div className="flex border-b border-border/20 last:border-0 hover:bg-accent/5 transition-colors">
+    <div className="flex border-b border-border/20 last:border-0 hover:bg-accent/10 transition-colors cursor-pointer" onClick={onClick}>
       {/* Sticky label */}
       <div className="w-[220px] shrink-0 border-r border-border/50 px-3 py-2 flex items-center gap-2.5 sticky left-0 z-10 bg-card">
         <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
