@@ -315,6 +315,45 @@ export default function TimelinePage() {
 
   const conflictSet = useMemo(() => new Set(conflicts.map((c) => c.empId)), [conflicts]);
 
+  // ── Drag-to-create handlers ──
+  const handleDragStart = useCallback((empId: string, dayIndex: number) => {
+    isDragging.current = true;
+    setDragState({ empId, startDayIndex: dayIndex, currentDayIndex: dayIndex });
+  }, []);
+
+  const handleDragMove = useCallback((dayIndex: number) => {
+    if (!isDragging.current) return;
+    setDragState((prev) => prev ? { ...prev, currentDayIndex: dayIndex } : null);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    if (!isDragging.current || !dragState) {
+      isDragging.current = false;
+      setDragState(null);
+      return;
+    }
+    isDragging.current = false;
+    const minDay = Math.min(dragState.startDayIndex, dragState.currentDayIndex);
+    const maxDay = Math.max(dragState.startDayIndex, dragState.currentDayIndex);
+    // Need at least 1 day span
+    if (maxDay - minDay >= 0) {
+      const startDate = toISO(addDays(rangeStart, minDay));
+      const endDate = toISO(addDays(rangeStart, maxDay));
+      setAddAllocPrefill({ employeeId: dragState.empId, startDate, endDate });
+      setAddAllocOpen(true);
+    }
+    setDragState(null);
+  }, [dragState, rangeStart]);
+
+  // Global mouseup listener for drag
+  useEffect(() => {
+    const onMouseUp = () => {
+      if (isDragging.current) handleDragEnd();
+    };
+    window.addEventListener("mouseup", onMouseUp);
+    return () => window.removeEventListener("mouseup", onMouseUp);
+  }, [handleDragEnd]);
+
   return (
     <TooltipProvider delayDuration={200}>
       <div className="space-y-4">
