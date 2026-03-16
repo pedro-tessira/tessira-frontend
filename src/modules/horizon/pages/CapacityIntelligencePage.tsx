@@ -39,6 +39,8 @@ import {
   allocations,
 } from "../data";
 import type { AvailabilityWindow } from "../types";
+import { streams, initiatives, workAllocations } from "@/modules/work/data";
+import { Link } from "react-router-dom";
 
 // ── Constants ────────────────────────────────────────────
 const DAY_WIDTH = 36;
