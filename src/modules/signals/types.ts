@@ -59,15 +59,35 @@ export interface AlertItem {
   timestamp: string;
   rootCauses?: string[];
   recommendedActions?: string[];
+  initiativeId?: string;
+  initiativeName?: string;
 }
 
-export interface DomainRisk {
-  domainId: string;
-  domain: string;
+/** Stream Risk (renamed from Domain Risk) — maps to Value Streams */
+export interface StreamRisk {
+  streamId: string;
+  stream: string;
   spofCount: number;
   coveragePct: number;
   riskLevel: SignalStatus;
   skills: string[];
+  initiativeCount: number;
+}
+
+/** Priority risk item — top of Signals overview */
+export interface PriorityRisk {
+  id: string;
+  streamName: string;
+  streamId: string;
+  initiativeId: string;
+  initiativeName: string;
+  riskType: "allocation" | "spof" | "coverage";
+  severity: "critical" | "warning";
+  description: string;
+  impactedPersons: string[];
+  allocationPressure?: number;
+  coveragePct?: number;
+  spofCount?: number;
 }
 
 export interface OwnershipLoad {
