@@ -88,22 +88,62 @@ export const timelineStreams: TimelineStream[] = [
 
 // ── Availability ─────────────────────────────────────────
 export const availabilityWindows: AvailabilityWindow[] = [
-  { employeeId: "emp-001", employeeName: "Sarah Chen", teamName: "Platform Core", status: "available", startDate: daysFromNow(0), endDate: daysFromNow(14) },
+  // Sarah Chen — available then sick leave
+  { employeeId: "emp-001", employeeName: "Sarah Chen", teamName: "Platform Core", status: "available", startDate: daysFromNow(0), endDate: daysFromNow(8) },
+  { employeeId: "emp-001", employeeName: "Sarah Chen", teamName: "Platform Core", status: "unavailable", startDate: daysFromNow(9), endDate: daysFromNow(11), reason: "Sick leave" },
+  { employeeId: "emp-001", employeeName: "Sarah Chen", teamName: "Platform Core", status: "available", startDate: daysFromNow(12), endDate: daysFromNow(28) },
+
+  // Marcus Rivera — available then PTO
   { employeeId: "emp-002", employeeName: "Marcus Rivera", teamName: "Backend Services", status: "available", startDate: daysFromNow(0), endDate: daysFromNow(5) },
   { employeeId: "emp-002", employeeName: "Marcus Rivera", teamName: "Backend Services", status: "unavailable", startDate: daysFromNow(6), endDate: daysFromNow(10), reason: "PTO" },
+  { employeeId: "emp-002", employeeName: "Marcus Rivera", teamName: "Backend Services", status: "available", startDate: daysFromNow(11), endDate: daysFromNow(28) },
+
+  // Aisha Patel — available then vacation
   { employeeId: "emp-003", employeeName: "Aisha Patel", teamName: "Frontend", status: "available", startDate: daysFromNow(0), endDate: daysFromNow(17) },
   { employeeId: "emp-003", employeeName: "Aisha Patel", teamName: "Frontend", status: "unavailable", startDate: daysFromNow(18), endDate: daysFromNow(22), reason: "Vacation" },
+  { employeeId: "emp-003", employeeName: "Aisha Patel", teamName: "Frontend", status: "available", startDate: daysFromNow(23), endDate: daysFromNow(28) },
+
+  // Jonas Eriksson — vacation then available then sick
   { employeeId: "emp-004", employeeName: "Jonas Eriksson", teamName: "Platform Core", status: "unavailable", startDate: daysFromNow(-1), endDate: daysFromNow(3), reason: "Vacation" },
-  { employeeId: "emp-005", employeeName: "Mei Tanaka", teamName: "Backend Services", status: "available", startDate: daysFromNow(0), endDate: daysFromNow(14) },
+  { employeeId: "emp-004", employeeName: "Jonas Eriksson", teamName: "Platform Core", status: "available", startDate: daysFromNow(4), endDate: daysFromNow(20) },
+  { employeeId: "emp-004", employeeName: "Jonas Eriksson", teamName: "Platform Core", status: "unavailable", startDate: daysFromNow(21), endDate: daysFromNow(23), reason: "Sick leave" },
+  { employeeId: "emp-004", employeeName: "Jonas Eriksson", teamName: "Platform Core", status: "available", startDate: daysFromNow(24), endDate: daysFromNow(28) },
+
+  // Mei Tanaka — available full range
+  { employeeId: "emp-005", employeeName: "Mei Tanaka", teamName: "Backend Services", status: "available", startDate: daysFromNow(0), endDate: daysFromNow(28) },
+
+  // Alex Novak — available then PTO
   { employeeId: "emp-006", employeeName: "Alex Novak", teamName: "Data & Observability", status: "available", startDate: daysFromNow(0), endDate: daysFromNow(11) },
   { employeeId: "emp-006", employeeName: "Alex Novak", teamName: "Data & Observability", status: "unavailable", startDate: daysFromNow(12), endDate: daysFromNow(14), reason: "PTO" },
-  { employeeId: "emp-007", employeeName: "Priya Sharma", teamName: "Frontend", status: "available", startDate: daysFromNow(0), endDate: daysFromNow(14) },
-  { employeeId: "emp-008", employeeName: "David Okafor", teamName: "Engineering Leadership", status: "available", startDate: daysFromNow(0), endDate: daysFromNow(14) },
-  { employeeId: "emp-009", employeeName: "Lin Zhou", teamName: "Engineering Leadership", status: "available", startDate: daysFromNow(0), endDate: daysFromNow(14) },
+  { employeeId: "emp-006", employeeName: "Alex Novak", teamName: "Data & Observability", status: "available", startDate: daysFromNow(15), endDate: daysFromNow(28) },
+
+  // Priya Sharma — partial allocation mid-range
+  { employeeId: "emp-007", employeeName: "Priya Sharma", teamName: "Frontend", status: "available", startDate: daysFromNow(0), endDate: daysFromNow(6) },
+  { employeeId: "emp-007", employeeName: "Priya Sharma", teamName: "Frontend", status: "partial", startDate: daysFromNow(7), endDate: daysFromNow(14), reason: "Cross-team project allocation" },
+  { employeeId: "emp-007", employeeName: "Priya Sharma", teamName: "Frontend", status: "available", startDate: daysFromNow(15), endDate: daysFromNow(28) },
+
+  // David Okafor — available then company event overlap
+  { employeeId: "emp-008", employeeName: "David Okafor", teamName: "Engineering Leadership", status: "available", startDate: daysFromNow(0), endDate: daysFromNow(28) },
+
+  // Lin Zhou — available then sick leave
+  { employeeId: "emp-009", employeeName: "Lin Zhou", teamName: "Engineering Leadership", status: "available", startDate: daysFromNow(0), endDate: daysFromNow(13) },
+  { employeeId: "emp-009", employeeName: "Lin Zhou", teamName: "Engineering Leadership", status: "unavailable", startDate: daysFromNow(14), endDate: daysFromNow(16), reason: "Sick leave" },
+  { employeeId: "emp-009", employeeName: "Lin Zhou", teamName: "Engineering Leadership", status: "available", startDate: daysFromNow(17), endDate: daysFromNow(28) },
+
+  // Carlos Mendez — PTO then partial then available
   { employeeId: "emp-010", employeeName: "Carlos Mendez", teamName: "Data & Observability", status: "available", startDate: daysFromNow(0), endDate: daysFromNow(2) },
-  { employeeId: "emp-010", employeeName: "Carlos Mendez", teamName: "Data & Observability", status: "unavailable", startDate: daysFromNow(3), endDate: daysFromNow(4), reason: "PTO" },
-  { employeeId: "emp-011", employeeName: "Emma Wilson", teamName: "Frontend", status: "partial", startDate: daysFromNow(15), endDate: daysFromNow(29), reason: "Onboarding" },
-  { employeeId: "emp-012", employeeName: "Tomasz Kowalski", teamName: "Data & Observability", status: "available", startDate: daysFromNow(0), endDate: daysFromNow(14) },
+  { employeeId: "emp-010", employeeName: "Carlos Mendez", teamName: "Data & Observability", status: "unavailable", startDate: daysFromNow(3), endDate: daysFromNow(7), reason: "Vacation" },
+  { employeeId: "emp-010", employeeName: "Carlos Mendez", teamName: "Data & Observability", status: "partial", startDate: daysFromNow(8), endDate: daysFromNow(12), reason: "Ramp-up after PTO" },
+  { employeeId: "emp-010", employeeName: "Carlos Mendez", teamName: "Data & Observability", status: "available", startDate: daysFromNow(13), endDate: daysFromNow(28) },
+
+  // Emma Wilson — onboarding partial
+  { employeeId: "emp-011", employeeName: "Emma Wilson", teamName: "Frontend", status: "partial", startDate: daysFromNow(0), endDate: daysFromNow(14), reason: "Onboarding" },
+  { employeeId: "emp-011", employeeName: "Emma Wilson", teamName: "Frontend", status: "available", startDate: daysFromNow(15), endDate: daysFromNow(28) },
+
+  // Tomasz Kowalski — available then vacation
+  { employeeId: "emp-012", employeeName: "Tomasz Kowalski", teamName: "Data & Observability", status: "available", startDate: daysFromNow(0), endDate: daysFromNow(18) },
+  { employeeId: "emp-012", employeeName: "Tomasz Kowalski", teamName: "Data & Observability", status: "unavailable", startDate: daysFromNow(19), endDate: daysFromNow(24), reason: "Vacation" },
+  { employeeId: "emp-012", employeeName: "Tomasz Kowalski", teamName: "Data & Observability", status: "available", startDate: daysFromNow(25), endDate: daysFromNow(28) },
 ];
 
 // ── Share Links ──────────────────────────────────────────
