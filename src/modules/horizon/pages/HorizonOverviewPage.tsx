@@ -10,6 +10,7 @@ import {
   Briefcase,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { Sparkline } from "@/modules/signals/components/Sparkline";
 import { Progress } from "@/components/ui/progress";
 import {
   horizonEmployees,
