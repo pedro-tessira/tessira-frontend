@@ -911,8 +911,8 @@ function AllocationBlock({
   const topPx = topOffset + slot * (ALLOC_HEIGHT + ROW_GAP);
 
   const label = alloc.percentage < 100
-    ? `${alloc.project} – ${alloc.percentage}%`
-    : alloc.project;
+    ? `${alloc.initiative} – ${alloc.percentage}%`
+    : alloc.initiative;
 
   return (
     <Tooltip>
