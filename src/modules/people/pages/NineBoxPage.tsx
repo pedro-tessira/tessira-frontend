@@ -107,6 +107,7 @@ function getBoxLabel(perf: PerformanceLevel, pot: PotentialLevel) {
 }
 
 export default function NineBoxPage() {
+  const { teams, memberships } = usePeopleStore();
   const [teamFilter, setTeamFilter] = useState<string>("all");
   const [selectedRound, setSelectedRound] = useState<string>("q1-2026");
   const [placementsMap, setPlacementsMap] = useState<Record<string, NineBoxPlacement[]>>(() => {
