@@ -436,12 +436,14 @@ function CapacityRow({
   todayISO,
   gridWidth,
   rangeStart,
+  onClick,
 }: {
   emp: { id: string; name: string; teamName: string; capacity: number; enrichment?: { role: string; skill: string; location: string } };
   dates: Date[];
   todayISO: string;
   gridWidth: number;
   rangeStart: Date;
+  onClick?: () => void;
 }) {
   const capacityColor = emp.capacity >= 90
     ? "text-emerald-600 dark:text-emerald-400"
