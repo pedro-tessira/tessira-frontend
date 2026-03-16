@@ -91,6 +91,12 @@ const App = () => (
             <Route path="/app" element={<AppShell />}>
               <Route index element={<Navigate to="/app/overview" replace />} />
               <Route path="overview" element={<OverviewPage />} />
+              <Route path="work" element={<WorkLayout />}>
+                <Route index element={<StreamsPage />} />
+                <Route path="initiatives" element={<InitiativesPage />} />
+              </Route>
+              <Route path="work/streams/:streamId" element={<StreamDetailPage />} />
+              <Route path="work/initiatives/:initiativeId" element={<InitiativeDetailPage />} />
               <Route path="horizon" element={<HorizonLayout />}>
                 <Route index element={<HorizonOverviewPage />} />
                 <Route path="timeline" element={<TimelinePage />} />
