@@ -740,6 +740,10 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
               rangeStart={rangeStart}
               rangeDays={rangeDays}
               topOffset={ROW_PADDING + eventTopOffset}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEventClick?.(event);
+              }}
             />
           );
         })}
