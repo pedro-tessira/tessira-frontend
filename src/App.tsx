@@ -155,6 +155,7 @@ function App() {
       </TenantProvider>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  );
+}
 
 export default App;
