@@ -15,7 +15,7 @@ interface UserMenuProps {
   collapsed?: boolean;
 }
 
-export const UserMenu = forwardRef<HTMLDivElement, UserMenuProps>(
+export const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(
   function UserMenu({ collapsed }, ref) {
     const navigate = useNavigate();
     const { isPlatformAdmin } = useTenant();
