@@ -200,7 +200,7 @@ export default function TimelinePage() {
     originalStart: string;
     originalEnd: string;
     currentDayIndex: number;
-  const isResizing = useRef(false);
+  } | null>(null);
   const isResizing = useRef(false);
 
   const toggleLayer = (layer: TimelineLayer) => {
