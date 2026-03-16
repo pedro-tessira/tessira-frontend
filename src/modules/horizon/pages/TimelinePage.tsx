@@ -565,6 +565,8 @@ export default function TimelinePage() {
                   onAllocationClick={setSelectedAllocation}
                   onEventClick={setSelectedEvent}
                   className="bg-muted/5"
+                  onResizeStart={handleResizeStart}
+                  resizeState={resizeState}
                 />
               )}
 
