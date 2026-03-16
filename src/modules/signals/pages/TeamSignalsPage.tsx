@@ -14,7 +14,9 @@ import { useHealthWeights } from "../contexts/HealthWeightsContext";
 import { HealthWeightsDialog } from "../components/HealthWeightsDialog";
 
 export default function TeamSignalsPage() {
-  const sorted = [...MOCK_TEAM_SIGNALS].sort((a, b) => a.healthScore - b.healthScore);
+  const { normalized } = useHealthWeights();
+  const teamSignals = useMemo(() => computeTeamSignals(normalized), [normalized]);
+  const sorted = [...teamSignals].sort((a, b) => a.healthScore - b.healthScore);
 
   return (
     <div className="space-y-5">
@@ -25,6 +27,7 @@ export default function TeamSignalsPage() {
           { label: "Signals", href: "/app/signals" },
           { label: "Teams" },
         ]}
+        actions={<HealthWeightsDialog />}
       />
 
       <div className="space-y-4">
