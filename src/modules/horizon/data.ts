@@ -184,7 +184,7 @@ export function getHorizonStats(): HorizonStats {
   const avail = availabilityWindows.filter((a) => a.status === "available").length;
 
   return {
-    activeStreams: timelineStreams.length,
+    activeInitiatives: allocations.length,
     upcomingEvents: upcoming,
     ptoThisWeek: ptos,
     milestonesThisMonth: milestones,

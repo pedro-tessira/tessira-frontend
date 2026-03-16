@@ -957,7 +957,7 @@ function AllocationBlock({
         </div>
       </TooltipTrigger>
       <TooltipContent side="top" className="text-xs space-y-0.5">
-        <p className="font-semibold">{alloc.project}</p>
+        <p className="font-semibold">{alloc.initiative}</p>
         <p className="text-muted-foreground">Allocation: {alloc.percentage}%</p>
         <p className="text-muted-foreground">{alloc.employeeName} · {alloc.teamName}</p>
         <p className="tabular-nums">{formatDate(startDate)} → {formatDate(endDate)}</p>

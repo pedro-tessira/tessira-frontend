@@ -210,7 +210,7 @@ export default function AllocationDetailPanel({
                   size="sm"
                   className="gap-2 text-destructive hover:bg-destructive hover:text-destructive-foreground"
                   onClick={() => {
-                    toast.success(`Allocation removed: ${allocation.employeeName} → ${allocation.project}`);
+                    toast.success(`Allocation removed: ${allocation.employeeName} → ${allocation.initiative}`);
                     onOpenChange(false);
                   }}
                 >
