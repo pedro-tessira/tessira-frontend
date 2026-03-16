@@ -87,6 +87,7 @@ const App = () => (
               <Route path="horizon" element={<HorizonLayout />}>
                 <Route index element={<HorizonOverviewPage />} />
                 <Route path="timeline" element={<TimelinePage />} />
+                <Route path="capacity" element={<CapacityIntelligencePage />} />
                 <Route path="share" element={<SharePage />} />
               </Route>
               <Route path="people" element={<PeopleOverviewPage />} />
