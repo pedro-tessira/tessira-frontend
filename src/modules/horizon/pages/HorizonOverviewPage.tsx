@@ -230,8 +230,11 @@ export default function HorizonOverviewPage() {
                 className="text-muted-foreground/50"
               />
             </div>
-            <div className={cn("text-2xl font-bold tabular-nums", card.accent)}>
-              {card.value}
+            <div className="flex items-end justify-between gap-2">
+              <div className={cn("text-2xl font-bold tabular-nums", card.accent)}>
+                {card.value}
+              </div>
+              <Sparkline data={card.sparkline} color={card.sparkColor} />
             </div>
             <div className="text-xs text-muted-foreground">{card.detail}</div>
           </div>
