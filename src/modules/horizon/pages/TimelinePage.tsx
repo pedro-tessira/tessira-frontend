@@ -846,12 +846,14 @@ function EventBlock({
   rangeStart,
   rangeDays,
   topOffset,
+  onClick,
 }: {
   event: TimelineEvent;
   slot: number;
   rangeStart: Date;
   rangeDays: number;
   topOffset: number;
+  onClick?: (e: React.MouseEvent) => void;
 }) {
   const totalPx = rangeDays * DAY_WIDTH;
   const evStart = new Date(event.startDate);
@@ -870,7 +872,7 @@ function EventBlock({
       <TooltipTrigger asChild>
         <div
           className={cn(
-            "absolute rounded border flex items-center px-1.5 text-[10px] font-medium truncate cursor-default",
+            "absolute rounded border flex items-center px-1.5 text-[10px] font-medium truncate cursor-pointer hover:brightness-110 hover:shadow-sm transition-all",
             colors
           )}
           style={{
@@ -880,7 +882,7 @@ function EventBlock({
             height: ROW_EVENT_HEIGHT,
             zIndex: 2,
           }}
-          onClick={(e) => e.stopPropagation()}
+          onClick={onClick}
         >
           <span className="truncate">{event.title}</span>
         </div>
@@ -889,6 +891,7 @@ function EventBlock({
         <p className="font-semibold">{event.title}</p>
         <p className="text-muted-foreground">{eventTypeLabels[event.type]}</p>
         <p className="tabular-nums">{formatDate(event.startDate)} → {formatDate(event.endDate)}</p>
+        <p className="text-muted-foreground/70 text-[10px]">Click to edit</p>
       </TooltipContent>
     </Tooltip>
   );
