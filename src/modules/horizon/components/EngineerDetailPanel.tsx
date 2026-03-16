@@ -94,7 +94,16 @@ export default function EngineerDetailPanel({ open, onOpenChange, engineer }: En
   if (!engineer) return null;
 
   const capacityColor = engineer.capacity >= 90
+    ? "text-emerald-600 dark:text-emerald-400"
+    : engineer.capacity >= 60
+    ? "text-amber-600 dark:text-amber-400"
+    : "text-destructive";
 
+  const barColor = engineer.capacity >= 90
+    ? "bg-emerald-500"
+    : engineer.capacity >= 60
+    ? "bg-amber-500"
+    : "bg-destructive";
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[420px] sm:w-[480px] overflow-y-auto">
