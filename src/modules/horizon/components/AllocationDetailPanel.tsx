@@ -106,7 +106,7 @@ export default function AllocationDetailPanel({
         <SheetHeader className="pb-4 border-b border-border/50">
           <SheetTitle className="flex items-center gap-2">
             <Briefcase size={18} className="text-primary" />
-            {allocation.project}
+            {allocation.initiative}
           </SheetTitle>
         </SheetHeader>
 
