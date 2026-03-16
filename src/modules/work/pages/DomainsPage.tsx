@@ -1,22 +1,31 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Boxes, Users, Rocket } from "lucide-react";
-import { domains, getInitiativesForDomain, getEngineersForDomain, getDomainLoadPercent } from "../data";
-import { cn } from "@/shared/lib/utils";
-
-function loadColor(pct: number) {
-  if (pct > 200) return "text-destructive";
-  if (pct >= 100) return "text-warning";
-  return "text-success";
-}
+import { domains as initialDomains, getInitiativesForDomain, getEngineersForDomain, getDomainFTE } from "../data";
+import type { Domain } from "../types";
+import AddDomainDialog from "../components/AddDomainDialog";
 
 export default function DomainsPage() {
+  const [localDomains, setLocalDomains] = useState<Domain[]>(initialDomains);
+
+  const handleAdd = (domain: { name: string; description: string; owningTeamId: string; owningTeamName: string }) => {
+    const newDomain: Domain = {
+      id: `dom-${Date.now()}`,
+      ...domain,
+    };
+    setLocalDomains((prev) => [...prev, newDomain]);
+  };
+
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <AddDomainDialog onAdd={handleAdd} />
+      </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {domains.map((domain) => {
+        {localDomains.map((domain) => {
           const activeInits = getInitiativesForDomain(domain.id).filter((i) => i.status === "active");
           const engineers = getEngineersForDomain(domain.id);
-          const load = getDomainLoadPercent(domain.id);
+          const fte = getDomainFTE(domain.id);
 
           return (
             <Link
@@ -49,9 +58,11 @@ export default function DomainsPage() {
                   <Users size={12} />
                   {engineers.length} engineer{engineers.length !== 1 ? "s" : ""}
                 </span>
-                <span className={cn("ml-auto font-semibold tabular-nums", loadColor(load))}>
-                  {load}% load
-                </span>
+                {fte > 0 && (
+                  <span className="ml-auto font-semibold tabular-nums text-foreground">
+                    {fte} FTE
+                  </span>
+                )}
               </div>
             </Link>
           );

@@ -1,12 +1,29 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Globe, Rocket, Users, Boxes } from "lucide-react";
-import { valueStreams, getInitiativesForValueStream, getDomainsForValueStream, getEngineersForValueStream } from "../data";
+import { valueStreams as initialVS, getInitiativesForValueStream, getDomainsForValueStream, getEngineersForValueStream } from "../data";
+import type { ValueStream } from "../types";
+import AddValueStreamDialog from "../components/AddValueStreamDialog";
 
 export default function ValueStreamsPage() {
+  const [localVS, setLocalVS] = useState<ValueStream[]>(initialVS);
+
+  const handleAdd = (vs: { name: string; description: string }) => {
+    const newVS: ValueStream = {
+      id: `vs-${Date.now()}`,
+      name: vs.name,
+      description: vs.description,
+    };
+    setLocalVS((prev) => [...prev, newVS]);
+  };
+
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <AddValueStreamDialog onAdd={handleAdd} />
+      </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {valueStreams.map((vs) => {
+        {localVS.map((vs) => {
           const inits = getInitiativesForValueStream(vs.id);
           const activeInits = inits.filter((i) => i.status === "active");
           const vsdomains = getDomainsForValueStream(vs.id);

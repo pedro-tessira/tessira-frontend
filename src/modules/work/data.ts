@@ -90,6 +90,11 @@ export function getDomainLoadPercent(domainId: string): number {
   return allocs.reduce((sum, a) => sum + a.percentage, 0);
 }
 
+export function getDomainFTE(domainId: string): number {
+  const allocs = getAllocationsForDomain(domainId);
+  return Math.round(allocs.reduce((sum, a) => sum + a.percentage, 0) / 10) / 10;
+}
+
 export function getEngineersForDomain(domainId: string) {
   const allocs = getAllocationsForDomain(domainId);
   const empIds = [...new Set(allocs.map((a) => a.employeeId))];
