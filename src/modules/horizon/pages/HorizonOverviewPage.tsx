@@ -93,7 +93,7 @@ export default function HorizonOverviewPage() {
     const teams = horizonTeams.filter((t) => t.id !== "all");
     return teams.map((team) => {
       const members = horizonEmployees.filter((e) => e.teamId === team.id);
-      if (members.length === 0) return { name: team.name, load: 0, members: 0 };
+      if (members.length === 0) return { id: team.id, name: team.name, load: 0, members: 0 };
 
       const activeAllocations = allocations.filter(
         (a) =>
@@ -103,7 +103,7 @@ export default function HorizonOverviewPage() {
       );
       const total = activeAllocations.reduce((s, a) => s + a.percentage, 0);
       const avgLoad = Math.round(total / members.length);
-      return { name: team.name, load: avgLoad, members: members.length };
+      return { id: team.id, name: team.name, load: avgLoad, members: members.length };
     }).sort((a, b) => b.load - a.load);
   }, []);
 
