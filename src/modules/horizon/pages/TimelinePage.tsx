@@ -200,9 +200,7 @@ export default function TimelinePage() {
     originalStart: string;
     originalEnd: string;
     currentDayIndex: number;
-  } | null>(null);
-  // Keep allocId for backward compat in type checks
-  type ResizeState = typeof resizeState;
+  const isResizing = useRef(false);
   const isResizing = useRef(false);
 
   const toggleLayer = (layer: TimelineLayer) => {
