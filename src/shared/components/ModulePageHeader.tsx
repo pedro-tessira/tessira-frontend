@@ -10,7 +10,7 @@ interface ModulePageHeaderProps {
 }
 
 export function ModulePageHeader({ title, description, breadcrumbs, actions }: ModulePageHeaderProps) {
-  const backHref = breadcrumbs?.findLast((c) => c.href)?.href;
+  const backHref = breadcrumbs?.slice().reverse().find((c) => c.href)?.href;
 
   return (
     <div className="mb-6 space-y-2">
