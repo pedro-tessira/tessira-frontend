@@ -3,17 +3,17 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { STREAM_LOAD, streamLoadColor } from "../data";
+import { DOMAIN_LOAD, domainLoadColor } from "../data";
 
 interface Props {
-  streamFilter?: string;
+  domainFilter?: string;
 }
 
-export default function DeliveryStreamsLoad({ streamFilter }: Props) {
+export default function DomainLoadChart({ domainFilter }: Props) {
   const navigate = useNavigate();
-  const data = streamFilter && streamFilter !== "all"
-    ? STREAM_LOAD.filter((s) => s.stream === streamFilter)
-    : STREAM_LOAD;
+  const data = domainFilter && domainFilter !== "all"
+    ? DOMAIN_LOAD.filter((d) => d.domain === domainFilter)
+    : DOMAIN_LOAD;
 
   return (
     <Card
@@ -21,8 +21,8 @@ export default function DeliveryStreamsLoad({ streamFilter }: Props) {
       onClick={() => navigate("/app/horizon")}
     >
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold">Stream Load</CardTitle>
-        <p className="text-xs text-muted-foreground">FTE allocation per engineering stream</p>
+        <CardTitle className="text-sm font-semibold">Domain Load</CardTitle>
+        <p className="text-xs text-muted-foreground">FTE allocation per engineering domain</p>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="h-[220px] w-full">
@@ -43,11 +43,11 @@ export default function DeliveryStreamsLoad({ streamFilter }: Props) {
               />
               <YAxis
                 type="category"
-                dataKey="stream"
+                dataKey="domain"
                 tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
                 axisLine={false}
                 tickLine={false}
-                width={90}
+                width={110}
               />
               <Tooltip
                 contentStyle={{
@@ -60,7 +60,7 @@ export default function DeliveryStreamsLoad({ streamFilter }: Props) {
               />
               <Bar dataKey="fte" radius={[0, 4, 4, 0]} barSize={18}>
                 {data.map((entry, i) => (
-                  <Cell key={i} fill={streamLoadColor(entry.status)} />
+                  <Cell key={i} fill={domainLoadColor(entry.status)} />
                 ))}
               </Bar>
             </BarChart>

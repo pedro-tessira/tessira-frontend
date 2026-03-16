@@ -76,8 +76,8 @@ export default function AllocationDetailPanel({
 
   // Try to find matching initiative
   const matchedInit = initiatives.find((i) =>
-    i.name.toLowerCase().includes(allocation.project.toLowerCase().split(" ")[0]) ||
-    allocation.project.toLowerCase().includes(i.name.toLowerCase().split(" ")[0])
+    i.name.toLowerCase().includes(allocation.initiative.toLowerCase().split(" ")[0]) ||
+    allocation.initiative.toLowerCase().includes(i.name.toLowerCase().split(" ")[0])
   );
 
   // Find domains and value streams for matched initiative
@@ -96,7 +96,7 @@ export default function AllocationDetailPanel({
   };
 
   const handleSaveEdit = () => {
-    toast.success(`Allocation updated: ${allocation.employeeName} → ${allocation.project} at ${editPct[0]}%`);
+    toast.success(`Allocation updated: ${allocation.employeeName} → ${allocation.initiative} at ${editPct[0]}%`);
     setEditing(false);
   };
 
@@ -106,7 +106,7 @@ export default function AllocationDetailPanel({
         <SheetHeader className="pb-4 border-b border-border/50">
           <SheetTitle className="flex items-center gap-2">
             <Briefcase size={18} className="text-primary" />
-            {allocation.project}
+            {allocation.initiative}
           </SheetTitle>
         </SheetHeader>
 
@@ -210,7 +210,7 @@ export default function AllocationDetailPanel({
                   size="sm"
                   className="gap-2 text-destructive hover:bg-destructive hover:text-destructive-foreground"
                   onClick={() => {
-                    toast.success(`Allocation removed: ${allocation.employeeName} → ${allocation.project}`);
+                    toast.success(`Allocation removed: ${allocation.employeeName} → ${allocation.initiative}`);
                     onOpenChange(false);
                   }}
                 >

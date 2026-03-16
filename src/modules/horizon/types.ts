@@ -51,7 +51,7 @@ export interface AvailabilityWindow {
 }
 
 export interface HorizonStats {
-  activeStreams: number;
+  activeInitiatives: number;
   upcomingEvents: number;
   ptoThisWeek: number;
   milestonesThisMonth: number;
@@ -74,7 +74,7 @@ export interface Allocation {
   id: string;
   employeeId: string;
   employeeName: string;
-  project: string;
+  initiative: string;
   percentage: number;
   startDate: string;
   endDate: string;

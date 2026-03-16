@@ -388,7 +388,7 @@ export default function TimelinePage() {
     if (newStart <= newEnd) {
       if (resizeState.itemType === "allocation") {
         const alloc = allocations.find((a) => a.id === resizeState.itemId);
-        if (alloc) toast.success(`Allocation resized: ${alloc.employeeName} → ${alloc.project} (${formatDate(newStart)} – ${formatDate(newEnd)})`);
+        if (alloc) toast.success(`Allocation resized: ${alloc.employeeName} → ${alloc.initiative} (${formatDate(newStart)} – ${formatDate(newEnd)})`);
       } else {
         const evt = timelineEvents.find((e) => e.id === resizeState.itemId);
         if (evt) toast.success(`Event resized: ${evt.title} (${formatDate(newStart)} – ${formatDate(newEnd)})`);
@@ -911,8 +911,8 @@ function AllocationBlock({
   const topPx = topOffset + slot * (ALLOC_HEIGHT + ROW_GAP);
 
   const label = alloc.percentage < 100
-    ? `${alloc.project} – ${alloc.percentage}%`
-    : alloc.project;
+    ? `${alloc.initiative} – ${alloc.percentage}%`
+    : alloc.initiative;
 
   return (
     <Tooltip>
@@ -957,7 +957,7 @@ function AllocationBlock({
         </div>
       </TooltipTrigger>
       <TooltipContent side="top" className="text-xs space-y-0.5">
-        <p className="font-semibold">{alloc.project}</p>
+        <p className="font-semibold">{alloc.initiative}</p>
         <p className="text-muted-foreground">Allocation: {alloc.percentage}%</p>
         <p className="text-muted-foreground">{alloc.employeeName} · {alloc.teamName}</p>
         <p className="tabular-nums">{formatDate(startDate)} → {formatDate(endDate)}</p>
