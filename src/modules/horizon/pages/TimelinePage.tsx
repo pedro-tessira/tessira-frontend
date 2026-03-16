@@ -972,6 +972,10 @@ function EventBlock({
   rangeDays,
   topOffset,
   onClick,
+  onResizeStart,
+  displayStart,
+  displayEnd,
+  isResizing: resizing,
 }: {
   event: TimelineEvent;
   slot: number;
@@ -979,10 +983,16 @@ function EventBlock({
   rangeDays: number;
   topOffset: number;
   onClick?: (e: React.MouseEvent) => void;
+  onResizeStart?: (itemId: string, itemType: "allocation" | "event", edge: "left" | "right", originalStart: string, originalEnd: string, e: React.MouseEvent) => void;
+  displayStart?: string;
+  displayEnd?: string;
+  isResizing?: boolean;
 }) {
   const totalPx = rangeDays * DAY_WIDTH;
-  const evStart = new Date(event.startDate);
-  const evEnd = new Date(event.endDate);
+  const startDate = displayStart || event.startDate;
+  const endDate = displayEnd || event.endDate;
+  const evStart = new Date(startDate);
+  const evEnd = new Date(endDate);
   evStart.setHours(0, 0, 0, 0);
   evEnd.setHours(0, 0, 0, 0);
 
@@ -997,27 +1007,48 @@ function EventBlock({
       <TooltipTrigger asChild>
         <div
           className={cn(
-            "absolute rounded border flex items-center px-1.5 text-[10px] font-medium truncate cursor-pointer hover:brightness-110 hover:shadow-sm transition-all",
-            colors
+            "absolute rounded border flex items-center px-1.5 text-[10px] font-medium truncate cursor-pointer hover:brightness-110 hover:shadow-sm transition-all group",
+            colors,
+            resizing && "ring-2 ring-primary/50 shadow-md"
           )}
           style={{
             left: leftPx,
             width: widthPx,
             top: topPx,
             height: ROW_EVENT_HEIGHT,
-            zIndex: 4,
+            zIndex: resizing ? 10 : 4,
           }}
           onMouseDown={(e) => e.stopPropagation()}
           onClick={onClick}
         >
+          {/* Left resize handle */}
+          {onResizeStart && (
+            <div
+              className="absolute left-0 top-0 bottom-0 w-2 cursor-col-resize opacity-0 group-hover:opacity-100 hover:bg-foreground/10 rounded-l transition-opacity z-10"
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                onResizeStart(event.id, "event", "left", event.startDate, event.endDate, e);
+              }}
+            />
+          )}
           <span className="truncate">{event.title}</span>
+          {/* Right resize handle */}
+          {onResizeStart && (
+            <div
+              className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize opacity-0 group-hover:opacity-100 hover:bg-foreground/10 rounded-r transition-opacity z-10"
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                onResizeStart(event.id, "event", "right", event.startDate, event.endDate, e);
+              }}
+            />
+          )}
         </div>
       </TooltipTrigger>
       <TooltipContent side="top" className="text-xs space-y-0.5">
         <p className="font-semibold">{event.title}</p>
         <p className="text-muted-foreground">{eventTypeLabels[event.type]}</p>
-        <p className="tabular-nums">{formatDate(event.startDate)} → {formatDate(event.endDate)}</p>
-        <p className="text-muted-foreground/70 text-[10px]">Click to edit</p>
+        <p className="tabular-nums">{formatDate(startDate)} → {formatDate(endDate)}</p>
+        <p className="text-muted-foreground/70 text-[10px]">Drag edges to resize</p>
       </TooltipContent>
     </Tooltip>
   );
