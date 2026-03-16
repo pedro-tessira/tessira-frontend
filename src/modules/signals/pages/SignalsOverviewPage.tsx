@@ -16,6 +16,7 @@ import {
   healthScoreRisk, freeCapacityRisk, coverageRisk, spofRisk, busFactorRisk,
   riskText,
 } from "@/shared/lib/risk-colors";
+import { RiskLegend } from "../components/RiskLegend";
 
 const ALERT_ICON = {
   critical: AlertCircle,
