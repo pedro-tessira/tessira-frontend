@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { StatCard } from "@/shared/components/StatCard";
 import { NineBoxCard, type MovementRecord } from "../components/NineBoxCard";
+import EmployeeDetailPanel from "../components/EmployeeDetailPanel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -116,6 +117,7 @@ export default function NineBoxPage() {
   const [movements, setMovements] = useState<MovementRecord[]>([]);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
 
   const currentPlacements = placementsMap[selectedRound] ?? [];
   const currentRound = REVIEW_ROUNDS.find((r) => r.id === selectedRound);
@@ -290,6 +292,7 @@ export default function NineBoxPage() {
                           movement={movements.find((m) => m.employeeId === p.employeeId)}
                           boxLabels={BOX_LABELS}
                           onDragStart={setDraggingId}
+                          onSelect={setSelectedEmployeeId}
                         />
                       ))}
                       {people.length === 0 && (
@@ -320,6 +323,12 @@ export default function NineBoxPage() {
           </span>
         </div>
       </div>
+
+      <EmployeeDetailPanel
+        open={!!selectedEmployeeId}
+        onOpenChange={(open) => { if (!open) setSelectedEmployeeId(null); }}
+        employeeId={selectedEmployeeId}
+      />
     </div>
   );
 }

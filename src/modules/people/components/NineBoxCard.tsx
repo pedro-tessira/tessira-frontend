@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { AvatarInitials } from "./AvatarInitials";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
@@ -22,6 +21,7 @@ interface NineBoxCardProps {
   movement?: MovementRecord;
   boxLabels: Record<string, { label: string }>;
   onDragStart: (employeeId: string) => void;
+  onSelect: (employeeId: string) => void;
 }
 
 function getTenureMonths(startDate: string): number {
@@ -59,7 +59,7 @@ function getEvidenceSummary(employeeId: string) {
   return { positive, concerns, topDims, total: notes.length };
 }
 
-export function NineBoxCard({ employeeId, note, movement, onDragStart }: NineBoxCardProps) {
+export function NineBoxCard({ employeeId, note, movement, onDragStart, onSelect }: NineBoxCardProps) {
   const emp = MOCK_EMPLOYEES.find((e) => e.id === employeeId);
   if (!emp) return null;
 
@@ -81,12 +81,12 @@ export function NineBoxCard({ employeeId, note, movement, onDragStart }: NineBox
             }}
             className="cursor-grab active:cursor-grabbing"
           >
-            <Link
-              to={`/app/people/employees/${emp.id}`}
-              className="flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-background/60 tessira-transition group"
+            <button
+              type="button"
+              className="flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-background/60 tessira-transition group w-full text-left"
               onClick={(e) => {
-                // Prevent navigation during drag
                 if (e.defaultPrevented) return;
+                onSelect(employeeId);
               }}
             >
               <AvatarInitials firstName={emp.firstName} lastName={emp.lastName} size="sm" />
@@ -114,7 +114,7 @@ export function NineBoxCard({ employeeId, note, movement, onDragStart }: NineBox
                   </div>
                 )}
               </div>
-            </Link>
+            </button>
           </div>
         </TooltipTrigger>
         {evidence.total > 0 && (
