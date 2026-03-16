@@ -1,6 +1,6 @@
-import { useMemo, forwardRef } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Shield, AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { getStreamRisks } from "../data";
 import {
@@ -8,11 +8,11 @@ import {
   riskText, riskBg, riskBgSubtle, riskBorder, riskLabel,
 } from "@/shared/lib/risk-colors";
 
-export const StreamRiskMap = forwardRef<HTMLDivElement>(function StreamRiskMap(_props, ref) {
+export function StreamRiskMap() {
   const streamRisks = useMemo(() => getStreamRisks(), []);
 
   return (
-    <div ref={ref} className="rounded-lg border border-border/50 bg-card">
+    <div className="rounded-lg border border-border/50 bg-card">
       <div className="flex items-center justify-between border-b border-border/50 px-5 py-3">
         <div>
           <h3 className="text-sm font-semibold">Stream Risk Map</h3>
@@ -92,4 +92,5 @@ export const StreamRiskMap = forwardRef<HTMLDivElement>(function StreamRiskMap(_
       </div>
     </div>
   );
-});
+}
+
