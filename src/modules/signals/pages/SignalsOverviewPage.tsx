@@ -16,6 +16,7 @@ import {
   healthScoreRisk, freeCapacityRisk, coverageRisk, spofRisk, busFactorRisk,
   riskText,
 } from "@/shared/lib/risk-colors";
+import { RiskLegend } from "../components/RiskLegend";
 
 const ALERT_ICON = {
   critical: AlertCircle,
@@ -198,6 +199,9 @@ export default function SignalsOverviewPage() {
           </div>
         </div>
       </div>
+
+      {/* Risk legend */}
+      <RiskLegend />
 
       {/* Team health ranking */}
       <div className="rounded-lg border border-border/50 bg-card">
