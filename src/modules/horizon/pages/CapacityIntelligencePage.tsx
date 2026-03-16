@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { cn } from "@/shared/lib/utils";
+import EngineerDetailPanel from "../components/EngineerDetailPanel";
 import {
   Users,
   UserCheck,
