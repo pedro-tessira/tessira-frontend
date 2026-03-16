@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Users2, UserCheck, Globe, Clock, ArrowRight, UserX } from "lucide-react";
 import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
-import { StatCard } from "../components/StatCard";
+import { StatCard } from "@/shared/components/StatCard";
 import { StatusBadge } from "../components/StatusBadge";
 import { AvatarInitials } from "../components/AvatarInitials";
 import { getPeopleStats, MOCK_EMPLOYEES, MOCK_TEAMS } from "../data";
