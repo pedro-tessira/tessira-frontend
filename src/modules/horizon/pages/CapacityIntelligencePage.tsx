@@ -475,15 +475,12 @@ export default function CapacityIntelligencePage() {
                     return (
                       <div
                         key={i}
-                        style={{
-                          width: DAY_WIDTH,
-                          ...(isToday ? { boxShadow: "inset 2px 0 0 hsl(var(--primary) / 0.5), inset -2px 0 0 hsl(var(--primary) / 0.5)" } : {}),
-                        }}
+                        style={{ width: DAY_WIDTH }}
                         className={cn(
                           "text-center py-1.5 text-[9px]",
                           isMonday && !isToday && "border-l-2 border-border/40",
                           !isMonday && !isToday && "border-r border-border/10",
-                          isToday && "font-semibold text-primary",
+                          isToday && "font-semibold text-primary bg-primary/10 border-x border-primary/30",
                           isWeekend && !isToday && "bg-muted/20 text-muted-foreground/40"
                         )}
                       >
