@@ -144,12 +144,9 @@ export function DateGridHeader({ rangeStart, days }: { rangeStart: Date; days: n
           return (
             <div
               key={i}
-              style={{
-                ...(isToday ? { boxShadow: "inset 2px 0 0 hsl(var(--primary) / 0.5), inset -2px 0 0 hsl(var(--primary) / 0.5)" } : {}),
-              }}
               className={cn(
                 "flex-1 text-center py-1.5 text-[10px] border-r border-border/30 last:border-0",
-                isToday && "font-semibold text-primary",
+                isToday && "font-semibold text-primary bg-primary/10 border-x border-primary/30",
                 isWeekend && !isToday && "bg-muted/30 text-muted-foreground/50"
               )}
             >
