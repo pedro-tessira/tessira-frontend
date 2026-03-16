@@ -125,11 +125,11 @@ export default function NineBoxPage() {
 
   const filteredPlacements = useMemo(() => {
     if (teamFilter === "all") return currentPlacements;
-    const memberIds = MOCK_MEMBERSHIPS
+    const memberIds = memberships
       .filter((m) => m.teamId === teamFilter)
       .map((m) => m.employeeId);
     return currentPlacements.filter((p) => memberIds.includes(p.employeeId));
-  }, [teamFilter, currentPlacements]);
+  }, [teamFilter, currentPlacements, memberships]);
 
   // Stats
   const stars = filteredPlacements.filter((p) => p.performance === "high" && p.potential === "high").length;
