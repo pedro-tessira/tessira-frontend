@@ -13,9 +13,12 @@ import {
   PanelLeftClose,
   PanelLeft,
   Briefcase,
+  Menu,
+  X,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { TenantSwitcher } from "@/shared/components/TenantSwitcher";
 import { UserMenu } from "@/shared/components/UserMenu";
 
