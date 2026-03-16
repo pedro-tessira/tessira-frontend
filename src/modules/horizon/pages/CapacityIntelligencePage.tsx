@@ -297,14 +297,14 @@ export default function CapacityIntelligencePage() {
             label="Free Capacity"
             value={`${totalCapacity}%`}
             detail={`${capacityData.length} engineers`}
-            accent={totalCapacity >= 80 ? "emerald" : totalCapacity >= 60 ? "amber" : "red"}
+            accent={totalCapacity >= 40 ? "emerald" : totalCapacity >= 20 ? "amber" : totalCapacity >= 10 ? "orange" : "red"}
           />
           <KPICard
             icon={TrendingDown}
             label="Avg Allocation"
             value={`${totalAllocation}%`}
             detail={`Availability: ${totalAvailability}%`}
-            accent={totalAllocation >= 80 ? "red" : totalAllocation >= 50 ? "amber" : "emerald"}
+            accent="neutral"
           />
           <KPICard icon={UserCheck} label="Available" value={availableCount} detail="≥ 90% free" accent="emerald" />
           <KPICard icon={Clock} label="Partial" value={partialCount} detail="50–89% free" accent="amber" />
