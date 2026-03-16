@@ -114,13 +114,13 @@ export default function HorizonOverviewPage() {
       (a) => a.startDate <= today && a.endDate >= today
     );
     const totalPct = activeAllocs.reduce((s, a) => s + a.percentage, 0);
-    const byProject: Record<string, number> = {};
+    const byInitiative: Record<string, number> = {};
     activeAllocs.forEach((a) => {
-      byProject[a.project] = (byProject[a.project] || 0) + a.percentage;
+      byInitiative[a.initiative] = (byInitiative[a.initiative] || 0) + a.percentage;
     });
-    return Object.entries(byProject)
-      .map(([project, pct]) => ({
-        project,
+    return Object.entries(byInitiative)
+      .map(([initiative, pct]) => ({
+        initiative,
         pct,
         share: totalPct > 0 ? Math.round((pct / totalPct) * 100) : 0,
       }))
