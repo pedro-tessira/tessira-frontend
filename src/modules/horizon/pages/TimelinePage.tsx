@@ -648,14 +648,37 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
   const eventTopOffset = allocSectionHeight;
 
   return (
-    <div className={cn("flex border-b border-border/30 last:border-0 hover:bg-accent/5 transition-colors cursor-pointer", className)} onClick={onToggle}>
+    <div
+      className={cn("flex border-b border-border/30 last:border-0 hover:bg-accent/5 transition-colors", onDragStart ? "cursor-crosshair" : "cursor-pointer", className)}
+      onClick={!onDragStart ? onToggle : undefined}
+    >
       {/* Sticky label */}
-      <div className="w-48 shrink-0 border-r border-border/50 px-3 py-2 flex items-center gap-2 sticky left-0 z-10 bg-card" style={{ minHeight: Math.max(36, rowHeight) }}>
+      <div className="w-48 shrink-0 border-r border-border/50 px-3 py-2 flex items-center gap-2 sticky left-0 z-10 bg-card cursor-pointer" style={{ minHeight: Math.max(36, rowHeight) }} onClick={onToggle}>
         {label}
       </div>
 
       {/* Grid area */}
-      <div className="relative" style={{ width: gridWidth, minHeight: Math.max(36, rowHeight) }}>
+      <div
+        className="relative select-none"
+        style={{ width: gridWidth, minHeight: Math.max(36, rowHeight) }}
+        onMouseDown={(e) => {
+          if (!onDragStart) return;
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const dayIndex = Math.floor(x / DAY_WIDTH);
+          if (dayIndex >= 0 && dayIndex < rangeDays) {
+            e.preventDefault();
+            onDragStart(dayIndex);
+          }
+        }}
+        onMouseMove={(e) => {
+          if (!onDragMove) return;
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const dayIndex = Math.max(0, Math.min(rangeDays - 1, Math.floor(x / DAY_WIDTH)));
+          onDragMove(dayIndex);
+        }}
+      >
         {/* Availability background cells */}
         {availFn && (
           <div className="flex absolute inset-0">
