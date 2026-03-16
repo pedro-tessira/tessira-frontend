@@ -727,7 +727,7 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
 
       {/* Grid area */}
       <div
-        className="relative select-none"
+        className={cn("relative select-none", onDragStart ? "cursor-crosshair" : "")}
         style={{ width: gridWidth, minHeight: Math.max(36, rowHeight) }}
         onMouseDown={(e) => {
           if (!onDragStart || resizeState) return;
