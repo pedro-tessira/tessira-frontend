@@ -547,7 +547,13 @@ export default function TimelinePage() {
         onOpenChange={(open) => !open && setSelectedAllocation(null)}
         allocation={selectedAllocation}
       />
-      <AddAllocationDialog open={addAllocOpen} onOpenChange={setAddAllocOpen} />
+      <AddAllocationDialog
+        open={addAllocOpen}
+        onOpenChange={setAddAllocOpen}
+        prefillEmployeeId={addAllocPrefill.employeeId}
+        prefillStartDate={addAllocPrefill.startDate}
+        prefillEndDate={addAllocPrefill.endDate}
+      />
     </TooltipProvider>
   );
 }
