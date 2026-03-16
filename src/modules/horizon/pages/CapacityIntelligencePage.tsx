@@ -35,6 +35,7 @@ import {
   horizonTeams,
   availabilityWindows,
   timelineEvents,
+  allocations,
 } from "../data";
 import type { AvailabilityWindow } from "../types";
 
@@ -110,17 +111,35 @@ function hasCompanyEvent(dayISO: string): boolean {
   );
 }
 
-function getEmployeeCapacity(empId: string, dates: Date[]): number {
+function getEmployeeCapacity(empId: string, dates: Date[]): { availability: number; allocation: number; free: number } {
   let availDays = 0;
-  for (const d of dates) {
+  const workdays = dates.filter((d) => d.getDay() !== 0 && d.getDay() !== 6);
+  for (const d of workdays) {
     const iso = toISO(d);
-    if (d.getDay() === 0 || d.getDay() === 6) continue; // skip weekends
     const src = resolveAvailSource(empId, iso);
     if (src === "available") availDays++;
     else if (src === "partial") availDays += 0.5;
   }
-  const workdays = dates.filter((d) => d.getDay() !== 0 && d.getDay() !== 6).length;
-  return workdays > 0 ? Math.round((availDays / workdays) * 100) : 100;
+  const totalWorkdays = workdays.length;
+  const availPct = totalWorkdays > 0 ? Math.round((availDays / totalWorkdays) * 100) : 100;
+
+  // Calculate allocation: average of daily allocation percentages across workdays
+  const empAllocs = allocations.filter((a) => a.employeeId === empId);
+  let totalAllocPct = 0;
+  for (const d of workdays) {
+    const iso = toISO(d);
+    let dayAlloc = 0;
+    for (const a of empAllocs) {
+      if (a.startDate <= iso && a.endDate >= iso) {
+        dayAlloc += a.percentage;
+      }
+    }
+    totalAllocPct += Math.min(100, dayAlloc);
+  }
+  const allocPct = totalWorkdays > 0 ? Math.round(totalAllocPct / totalWorkdays) : 0;
+  const freePct = Math.max(0, availPct - allocPct);
+
+  return { availability: availPct, allocation: allocPct, free: freePct };
 }
 
 // ── Component ────────────────────────────────────────────
@@ -170,32 +189,42 @@ export default function CapacityIntelligencePage() {
     }));
   }, [filteredEmployees, dates]);
 
-  // Aggregates
+  // Aggregates — use "free" as effective capacity
   const totalCapacity = capacityData.length > 0
-    ? Math.round(capacityData.reduce((s, e) => s + e.capacity, 0) / capacityData.length)
+    ? Math.round(capacityData.reduce((s, e) => s + e.capacity.free, 0) / capacityData.length)
     : 0;
-  const availableCount = capacityData.filter((e) => e.capacity >= 90).length;
-  const partialCount = capacityData.filter((e) => e.capacity >= 50 && e.capacity < 90).length;
-  const unavailableCount = capacityData.filter((e) => e.capacity < 50).length;
+  const totalAvailability = capacityData.length > 0
+    ? Math.round(capacityData.reduce((s, e) => s + e.capacity.availability, 0) / capacityData.length)
+    : 0;
+  const totalAllocation = capacityData.length > 0
+    ? Math.round(capacityData.reduce((s, e) => s + e.capacity.allocation, 0) / capacityData.length)
+    : 0;
+  const availableCount = capacityData.filter((e) => e.capacity.free >= 90).length;
+  const partialCount = capacityData.filter((e) => e.capacity.free >= 50 && e.capacity.free < 90).length;
+  const unavailableCount = capacityData.filter((e) => e.capacity.free < 50).length;
 
   // Capacity alerts
   const alerts = capacityData
-    .filter((e) => e.capacity < CAPACITY_THRESHOLD)
-    .sort((a, b) => a.capacity - b.capacity);
+    .filter((e) => e.capacity.free < CAPACITY_THRESHOLD)
+    .sort((a, b) => a.capacity.free - b.capacity.free);
 
   // Team-level capacity
   const teamCapacity = useMemo(() => {
-    const teams = new Map<string, { name: string; total: number; count: number }>();
+    const teams = new Map<string, { name: string; totalFree: number; totalAvail: number; totalAlloc: number; count: number }>();
     capacityData.forEach((e) => {
-      const existing = teams.get(e.teamId) || { name: e.teamName, total: 0, count: 0 };
-      existing.total += e.capacity;
+      const existing = teams.get(e.teamId) || { name: e.teamName, totalFree: 0, totalAvail: 0, totalAlloc: 0, count: 0 };
+      existing.totalFree += e.capacity.free;
+      existing.totalAvail += e.capacity.availability;
+      existing.totalAlloc += e.capacity.allocation;
       existing.count++;
       teams.set(e.teamId, existing);
     });
     return Array.from(teams.entries()).map(([id, v]) => ({
       id,
       name: v.name,
-      capacity: Math.round(v.total / v.count),
+      capacity: Math.round(v.totalFree / v.count),
+      availability: Math.round(v.totalAvail / v.count),
+      allocation: Math.round(v.totalAlloc / v.count),
     }));
   }, [capacityData]);
 
@@ -226,17 +255,24 @@ export default function CapacityIntelligencePage() {
     <TooltipProvider delayDuration={200}>
       <div className="space-y-5">
         {/* ── KPI Header ── */}
-        <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-3 grid-cols-2 lg:grid-cols-6">
           <KPICard
             icon={Activity}
-            label="Team Capacity"
+            label="Free Capacity"
             value={`${totalCapacity}%`}
             detail={`${capacityData.length} engineers`}
             accent={totalCapacity >= 80 ? "emerald" : totalCapacity >= 60 ? "amber" : "red"}
           />
-          <KPICard icon={UserCheck} label="Available" value={availableCount} detail="≥ 90% capacity" accent="emerald" />
-          <KPICard icon={Clock} label="Partial" value={partialCount} detail="50–89% capacity" accent="amber" />
-          <KPICard icon={UserMinus} label="Unavailable" value={unavailableCount} detail="< 50% capacity" accent="red" />
+          <KPICard
+            icon={TrendingDown}
+            label="Avg Allocation"
+            value={`${totalAllocation}%`}
+            detail={`Availability: ${totalAvailability}%`}
+            accent={totalAllocation >= 80 ? "red" : totalAllocation >= 50 ? "amber" : "emerald"}
+          />
+          <KPICard icon={UserCheck} label="Available" value={availableCount} detail="≥ 90% free" accent="emerald" />
+          <KPICard icon={Clock} label="Partial" value={partialCount} detail="50–89% free" accent="amber" />
+          <KPICard icon={UserMinus} label="Unavailable" value={unavailableCount} detail="< 50% free" accent="red" />
           <KPICard
             icon={AlertTriangle}
             label="Alerts"
@@ -294,7 +330,7 @@ export default function CapacityIntelligencePage() {
             <div className="flex flex-wrap gap-2">
               {alerts.map((a) => (
                 <Badge key={a.id} variant="secondary" className="text-[11px] bg-destructive/10 text-destructive border-destructive/20">
-                  {a.name} — {a.capacity}%
+                  {a.name} — {a.capacity.free}% free (avail {a.capacity.availability}%, alloc {a.capacity.allocation}%)
                 </Badge>
               ))}
             </div>
@@ -445,22 +481,23 @@ function CapacityRow({
   rangeStart,
   onClick,
 }: {
-  emp: { id: string; name: string; teamName: string; capacity: number; enrichment?: { role: string; skill: string; location: string } };
+  emp: { id: string; name: string; teamName: string; capacity: { availability: number; allocation: number; free: number }; enrichment?: { role: string; skill: string; location: string } };
   dates: Date[];
   todayISO: string;
   gridWidth: number;
   rangeStart: Date;
   onClick?: () => void;
 }) {
-  const capacityColor = emp.capacity >= 90
+  const free = emp.capacity.free;
+  const capacityColor = free >= 90
     ? "text-emerald-600 dark:text-emerald-400"
-    : emp.capacity >= 60
+    : free >= 60
     ? "text-amber-600 dark:text-amber-400"
     : "text-destructive";
 
-  const barColor = emp.capacity >= 90
+  const barColor = free >= 90
     ? "bg-emerald-500"
-    : emp.capacity >= 60
+    : free >= 60
     ? "bg-amber-500"
     : "bg-destructive";
 
@@ -476,9 +513,19 @@ function CapacityRow({
           <p className="text-[10px] text-muted-foreground truncate">{emp.enrichment?.role} · {emp.teamName}</p>
         </div>
         <div className="flex flex-col items-end gap-0.5 shrink-0">
-          <span className={cn("text-[11px] font-bold tabular-nums", capacityColor)}>{emp.capacity}%</span>
-          <div className="w-10 h-1 rounded-full bg-muted overflow-hidden">
-            <div className={cn("h-full rounded-full transition-all", barColor)} style={{ width: `${emp.capacity}%` }} />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className={cn("text-[11px] font-bold tabular-nums cursor-help", capacityColor)}>{free}%</span>
+            </TooltipTrigger>
+            <TooltipContent side="left" className="text-xs space-y-0.5">
+              <p>Availability: {emp.capacity.availability}%</p>
+              <p>Allocation: {emp.capacity.allocation}%</p>
+              <p className="font-semibold">Free capacity: {free}%</p>
+            </TooltipContent>
+          </Tooltip>
+          <div className="w-12 h-1.5 rounded-full bg-muted overflow-hidden flex">
+            <div className={cn("h-full transition-all bg-indigo-500")} style={{ width: `${emp.capacity.allocation}%` }} />
+            <div className={cn("h-full transition-all", barColor)} style={{ width: `${free}%` }} />
           </div>
         </div>
       </div>

@@ -5,6 +5,7 @@ import type {
   HorizonStats,
   ShareLink,
   HorizonEmployee,
+  Allocation,
 } from "./types";
 
 // ── Helpers ──────────────────────────────────────────────
@@ -144,6 +145,23 @@ export const availabilityWindows: AvailabilityWindow[] = [
   { employeeId: "emp-012", employeeName: "Tomasz Kowalski", teamName: "Data & Observability", status: "available", startDate: daysFromNow(0), endDate: daysFromNow(18) },
   { employeeId: "emp-012", employeeName: "Tomasz Kowalski", teamName: "Data & Observability", status: "unavailable", startDate: daysFromNow(19), endDate: daysFromNow(24), reason: "Vacation" },
   { employeeId: "emp-012", employeeName: "Tomasz Kowalski", teamName: "Data & Observability", status: "available", startDate: daysFromNow(25), endDate: daysFromNow(28) },
+];
+
+// ── Allocations ─────────────────────────────────────────
+export const allocations: Allocation[] = [
+  { id: "alloc-01", employeeId: "emp-001", employeeName: "Sarah Chen", project: "Auth Refactor", percentage: 60, startDate: daysFromNow(-5), endDate: daysFromNow(9), teamId: "team-001", teamName: "Platform Core", source: "jira" },
+  { id: "alloc-02", employeeId: "emp-001", employeeName: "Sarah Chen", project: "API Gateway", percentage: 30, startDate: daysFromNow(10), endDate: daysFromNow(20), teamId: "team-001", teamName: "Platform Core", source: "jira" },
+  { id: "alloc-03", employeeId: "emp-002", employeeName: "Marcus Rivera", project: "Payment Service", percentage: 80, startDate: daysFromNow(0), endDate: daysFromNow(14), teamId: "team-002", teamName: "Backend Services", source: "linear" },
+  { id: "alloc-04", employeeId: "emp-003", employeeName: "Aisha Patel", project: "Design System", percentage: 50, startDate: daysFromNow(0), endDate: daysFromNow(17), teamId: "team-003", teamName: "Frontend", source: "manual" },
+  { id: "alloc-05", employeeId: "emp-003", employeeName: "Aisha Patel", project: "Dashboard v2", percentage: 40, startDate: daysFromNow(0), endDate: daysFromNow(12), teamId: "team-003", teamName: "Frontend", source: "jira" },
+  { id: "alloc-06", employeeId: "emp-004", employeeName: "Jonas Eriksson", project: "API Gateway", percentage: 70, startDate: daysFromNow(4), endDate: daysFromNow(18), teamId: "team-001", teamName: "Platform Core", source: "jira" },
+  { id: "alloc-07", employeeId: "emp-005", employeeName: "Mei Tanaka", project: "Checkout Platform", percentage: 100, startDate: daysFromNow(0), endDate: daysFromNow(28), teamId: "team-002", teamName: "Backend Services", source: "linear" },
+  { id: "alloc-08", employeeId: "emp-006", employeeName: "Alex Novak", project: "Pipeline Perf", percentage: 50, startDate: daysFromNow(0), endDate: daysFromNow(11), teamId: "team-004", teamName: "Data & Observability", source: "jira" },
+  { id: "alloc-09", employeeId: "emp-006", employeeName: "Alex Novak", project: "Monitoring v2", percentage: 40, startDate: daysFromNow(15), endDate: daysFromNow(28), teamId: "team-004", teamName: "Data & Observability", source: "manual" },
+  { id: "alloc-10", employeeId: "emp-007", employeeName: "Priya Sharma", project: "Dashboard v2", percentage: 80, startDate: daysFromNow(-5), endDate: daysFromNow(9), teamId: "team-003", teamName: "Frontend", source: "jira" },
+  { id: "alloc-11", employeeId: "emp-008", employeeName: "David Okafor", project: "Eng Strategy", percentage: 40, startDate: daysFromNow(0), endDate: daysFromNow(28), teamId: "team-005", teamName: "Engineering Leadership", source: "manual" },
+  { id: "alloc-12", employeeId: "emp-010", employeeName: "Carlos Mendez", project: "Pipeline Perf", percentage: 70, startDate: daysFromNow(0), endDate: daysFromNow(11), teamId: "team-004", teamName: "Data & Observability", source: "jira" },
+  { id: "alloc-13", employeeId: "emp-012", employeeName: "Tomasz Kowalski", project: "Data Lake Migration", percentage: 90, startDate: daysFromNow(0), endDate: daysFromNow(18), teamId: "team-004", teamName: "Data & Observability", source: "linear" },
 ];
 
 // ── Share Links ──────────────────────────────────────────

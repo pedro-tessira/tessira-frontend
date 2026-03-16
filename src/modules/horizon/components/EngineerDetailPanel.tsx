@@ -55,7 +55,7 @@ interface EngineerDetailPanelProps {
     id: string;
     name: string;
     teamName: string;
-    capacity: number;
+    capacity: number | { availability: number; allocation: number; free: number };
     enrichment?: { role: string; skill: string; location: string };
   } | null;
 }
@@ -93,15 +93,25 @@ export default function EngineerDetailPanel({ open, onOpenChange, engineer }: En
 
   if (!engineer) return null;
 
-  const capacityColor = engineer.capacity >= 90
+  const capValue = typeof engineer.capacity === "number"
+    ? engineer.capacity
+    : engineer.capacity.free;
+  const capAvail = typeof engineer.capacity === "number"
+    ? engineer.capacity
+    : engineer.capacity.availability;
+  const capAlloc = typeof engineer.capacity === "number"
+    ? 0
+    : engineer.capacity.allocation;
+
+  const capacityColor = capValue >= 90
     ? "text-emerald-600 dark:text-emerald-400"
-    : engineer.capacity >= 60
+    : capValue >= 60
     ? "text-amber-600 dark:text-amber-400"
     : "text-destructive";
 
-  const barColor = engineer.capacity >= 90
+  const barColor = capValue >= 90
     ? "bg-emerald-500"
-    : engineer.capacity >= 60
+    : capValue >= 60
     ? "bg-amber-500"
     : "bg-destructive";
   return (
@@ -138,12 +148,18 @@ export default function EngineerDetailPanel({ open, onOpenChange, engineer }: En
         <div className="rounded-lg border border-border/50 bg-muted/30 p-4 space-y-3 mb-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-              <TrendingUp size={12} /> Current Capacity
+              <TrendingUp size={12} /> Effective Capacity
             </span>
-            <span className={cn("text-lg font-bold tabular-nums", capacityColor)}>{engineer.capacity}%</span>
+            <span className={cn("text-lg font-bold tabular-nums", capacityColor)}>{capValue}%</span>
           </div>
-          <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-            <div className={cn("h-full rounded-full transition-all", barColor)} style={{ width: `${engineer.capacity}%` }} />
+          <div className="w-full h-2.5 rounded-full bg-muted overflow-hidden flex">
+            <div className="h-full transition-all bg-indigo-500" style={{ width: `${capAlloc}%` }} />
+            <div className={cn("h-full transition-all", barColor)} style={{ width: `${capValue}%` }} />
+          </div>
+          <div className="flex justify-between text-[10px] text-muted-foreground">
+            <span>Availability: {capAvail}%</span>
+            <span>Allocated: {capAlloc}%</span>
+            <span>Free: {capValue}%</span>
           </div>
         </div>
 

@@ -10,6 +10,10 @@ import {
   Search,
   Globe,
   User,
+  Layers,
+  Briefcase,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import {
   Select,
@@ -24,20 +28,25 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   timelineEvents,
   horizonEmployees,
   horizonTeams,
   availabilityWindows,
+  allocations,
 } from "../data";
-import type { EventType, TimelineEvent, AvailabilityWindow } from "../types";
+import type { EventType, TimelineEvent, AvailabilityWindow, Allocation } from "../types";
+import AllocationDetailPanel from "../components/AllocationDetailPanel";
+import AddAllocationDialog from "../components/AddAllocationDialog";
 
 // ── Constants ────────────────────────────────────────────
 const MAX_VISIBLE_EVENTS = 2;
-const ROW_EVENT_HEIGHT = 26;
+const ROW_EVENT_HEIGHT = 22;
+const ALLOC_HEIGHT = 20;
 const ROW_GAP = 2;
-const ROW_PADDING = 4;
-const DAY_WIDTH = 40; // px per day column
+const ROW_PADDING = 3;
+const DAY_WIDTH = 40;
 
 const EVENT_TYPE_FILTERS: { type: EventType | "all"; label: string }[] = [
   { type: "all", label: "All" },
@@ -108,11 +117,10 @@ function getMonthLabel(start: Date, end: Date): string {
   return sm === em ? sm : `${start.toLocaleDateString(undefined, { month: "short" })} – ${end.toLocaleDateString(undefined, { month: "short", year: "numeric" })}`;
 }
 
-/** Assigns vertical slot indices to overlapping events */
 function assignEventSlots(events: TimelineEvent[]): { event: TimelineEvent; slot: number }[] {
   const sorted = [...events].sort((a, b) => a.startDate.localeCompare(b.startDate) || a.endDate.localeCompare(b.endDate));
   const result: { event: TimelineEvent; slot: number }[] = [];
-  const slotEnds: string[] = []; // track end date per slot
+  const slotEnds: string[] = [];
 
   for (const ev of sorted) {
     let placed = false;
@@ -132,10 +140,35 @@ function assignEventSlots(events: TimelineEvent[]): { event: TimelineEvent; slot
   return result;
 }
 
+function assignAllocSlots(allocs: Allocation[]): { alloc: Allocation; slot: number }[] {
+  const sorted = [...allocs].sort((a, b) => a.startDate.localeCompare(b.startDate));
+  const result: { alloc: Allocation; slot: number }[] = [];
+  const slotEnds: string[] = [];
+
+  for (const a of sorted) {
+    let placed = false;
+    for (let s = 0; s < slotEnds.length; s++) {
+      if (a.startDate > slotEnds[s]) {
+        slotEnds[s] = a.endDate;
+        result.push({ alloc: a, slot: s });
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) {
+      result.push({ alloc: a, slot: slotEnds.length });
+      slotEnds.push(a.endDate);
+    }
+  }
+  return result;
+}
+
+// ── Layer Types ──────────────────────────────────────────
+type TimelineLayer = "availability" | "allocations" | "events";
+
 // ── Component ────────────────────────────────────────────
 export default function TimelinePage() {
   const [range, setRange] = useState<"2w" | "4w" | "8w">("4w");
-  const [view, setView] = useState<"timeline" | "availability">("timeline");
   const [teamFilter, setTeamFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState<EventType | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -143,6 +176,18 @@ export default function TimelinePage() {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
   const [todayVisible, setTodayVisible] = useState(true);
+  const [layers, setLayers] = useState<Set<TimelineLayer>>(new Set(["availability", "allocations", "events"]));
+  const [selectedAllocation, setSelectedAllocation] = useState<Allocation | null>(null);
+  const [addAllocOpen, setAddAllocOpen] = useState(false);
+
+  const toggleLayer = (layer: TimelineLayer) => {
+    setLayers((prev) => {
+      const next = new Set(prev);
+      if (next.has(layer)) next.delete(layer);
+      else next.add(layer);
+      return next;
+    });
+  };
 
   const rangeDays = range === "2w" ? 14 : range === "4w" ? 28 : 56;
   const today = new Date();
@@ -152,7 +197,6 @@ export default function TimelinePage() {
   const todayISO = toISO(today);
   const gridWidth = rangeDays * DAY_WIDTH;
 
-  // Track whether today column is visible in the scroll container
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -160,7 +204,6 @@ export default function TimelinePage() {
     const check = () => {
       const scrollLeft = el.scrollLeft;
       const viewWidth = el.clientWidth;
-      // Today is visible if its pixel position is within the scrolled viewport AND within the rendered range
       const inRange = todayPx >= 192 && todayPx <= 192 + gridWidth;
       const inView = inRange && todayPx >= scrollLeft && todayPx <= scrollLeft + viewWidth;
       setTodayVisible(inView);
@@ -171,9 +214,7 @@ export default function TimelinePage() {
   }, [rangeStart, rangeDays, offset, gridWidth]);
 
   const scrollToToday = useCallback(() => {
-    // Reset offset to 0 to ensure today is in the rendered range, then scroll
     setOffset(0);
-    // After state update and re-render, scroll to center today
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         const el = scrollRef.current;
@@ -225,6 +266,15 @@ export default function TimelinePage() {
     });
   }, [typeFilter, rangeStart, rangeEnd]);
 
+  const getAllocsForLane = useCallback((empId: string): Allocation[] => {
+    return allocations.filter((a) => {
+      if (a.employeeId !== empId) return false;
+      const aEnd = new Date(a.endDate);
+      const aStart = new Date(a.startDate);
+      return !(aEnd < rangeStart || aStart > rangeEnd);
+    });
+  }, [rangeStart, rangeEnd]);
+
   const getAvailForDay = (empId: string, dayISO: string): AvailabilityWindow["status"] | null => {
     const w = availabilityWindows.find(
       (a) => a.employeeId === empId && a.startDate <= dayISO && a.endDate >= dayISO
@@ -254,6 +304,9 @@ export default function TimelinePage() {
           <Button size="sm" className="h-8 text-xs gap-1.5">
             <Plus size={13} /> Add Event
           </Button>
+          <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => setAddAllocOpen(true)}>
+            <Briefcase size={13} /> Add Allocation
+          </Button>
 
           <div className="flex items-center gap-1 ml-auto">
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setOffset((o) => o - 1)}>
@@ -273,26 +326,38 @@ export default function TimelinePage() {
               <Button key={r} variant={range === r ? "secondary" : "ghost"} size="sm" className="h-6 text-[11px] px-2" onClick={() => setRange(r)}>{r}</Button>
             ))}
           </div>
-
-          <div className="flex gap-0.5 rounded-md border border-border/50 p-0.5">
-            {(["timeline", "availability"] as const).map((v) => (
-              <Button key={v} variant={view === v ? "secondary" : "ghost"} size="sm" className="h-6 text-[11px] px-2 capitalize" onClick={() => setView(v)}>{v}</Button>
-            ))}
-          </div>
         </div>
 
-        {/* ── Event Type Filters ── */}
-        <div className="flex flex-wrap gap-1.5">
-          {EVENT_TYPE_FILTERS.map((f) => (
-            <Button key={f.type} variant={typeFilter === f.type ? "secondary" : "ghost"} size="sm" className="h-6 text-[11px] px-2" onClick={() => setTypeFilter(f.type)}>
-              {f.label}
-            </Button>
-          ))}
+        {/* ── Layer Toggles + Event Type Filters ── */}
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-3 rounded-lg border border-border/50 bg-card px-3 py-1.5">
+            <Layers size={13} className="text-muted-foreground" />
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Layers</span>
+            {(["availability", "allocations", "events"] as TimelineLayer[]).map((layer) => (
+              <label key={layer} className="flex items-center gap-1.5 cursor-pointer">
+                <Checkbox
+                  checked={layers.has(layer)}
+                  onCheckedChange={() => toggleLayer(layer)}
+                  className="h-3.5 w-3.5"
+                />
+                <span className="text-[11px] capitalize">{layer}</span>
+              </label>
+            ))}
+          </div>
+
+          {layers.has("events") && (
+            <div className="flex flex-wrap gap-1.5">
+              {EVENT_TYPE_FILTERS.map((f) => (
+                <Button key={f.type} variant={typeFilter === f.type ? "secondary" : "ghost"} size="sm" className="h-6 text-[11px] px-2" onClick={() => setTypeFilter(f.type)}>
+                  {f.label}
+                </Button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* ── Calendar Grid ── */}
         <div className="rounded-lg border border-border/50 bg-card overflow-hidden relative">
-          {/* Floating "Go to today" button */}
           {!todayVisible && (
             <Button
               size="sm"
@@ -338,19 +403,23 @@ export default function TimelinePage() {
               </div>
 
               {/* Global lane */}
-              <TimelineLane
-                id="global"
-                label={<><Globe size={13} className="text-primary" /><span className="text-xs font-semibold">Global</span></>}
-                events={getEventsForLane(null)}
-                rangeStart={rangeStart}
-                rangeDays={rangeDays}
-                dates={dates}
-                todayISO={todayISO}
-                view={view}
-                expanded={expandedRows.has("global")}
-                onToggle={() => toggleRow("global")}
-                className="bg-muted/5"
-              />
+              {layers.has("events") && (
+                <TimelineLane
+                  id="global"
+                  label={<><Globe size={13} className="text-primary" /><span className="text-xs font-semibold">Global</span></>}
+                  events={getEventsForLane(null)}
+                  allocations={[]}
+                  rangeStart={rangeStart}
+                  rangeDays={rangeDays}
+                  dates={dates}
+                  todayISO={todayISO}
+                  layers={layers}
+                  expanded={expandedRows.has("global")}
+                  onToggle={() => toggleRow("global")}
+                  onAllocationClick={setSelectedAllocation}
+                  className="bg-muted/5"
+                />
+              )}
 
               {/* Employee lanes */}
               {filteredEmployees.map((emp) => (
@@ -368,15 +437,17 @@ export default function TimelinePage() {
                       </div>
                     </>
                   }
-                  events={getEventsForLane(emp.id)}
+                  events={layers.has("events") ? getEventsForLane(emp.id) : []}
+                  allocations={layers.has("allocations") ? getAllocsForLane(emp.id) : []}
                   rangeStart={rangeStart}
                   rangeDays={rangeDays}
                   dates={dates}
                   todayISO={todayISO}
-                  view={view}
+                  layers={layers}
                   expanded={expandedRows.has(emp.id)}
                   onToggle={() => toggleRow(emp.id)}
-                  availFn={view === "availability" ? (dayISO: string) => getAvailForDay(emp.id, dayISO) : undefined}
+                  onAllocationClick={setSelectedAllocation}
+                  availFn={layers.has("availability") ? (dayISO: string) => getAvailForDay(emp.id, dayISO) : undefined}
                 />
               ))}
 
@@ -388,14 +459,37 @@ export default function TimelinePage() {
         </div>
 
         {/* Legend */}
-        {view === "availability" && (
-          <div className="flex gap-4 text-[11px] text-muted-foreground">
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-emerald-500/30" /> Available</span>
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-amber-500/30" /> Partial</span>
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-destructive/30" /> Unavailable</span>
-          </div>
-        )}
+        <div className="flex flex-wrap gap-5 text-[11px] text-muted-foreground">
+          {layers.has("availability") && (
+            <div className="flex gap-3 items-center">
+              <span className="font-semibold uppercase tracking-wider text-[10px]">Availability</span>
+              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-emerald-500/30" /> Available</span>
+              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-amber-500/30" /> Partial</span>
+              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-destructive/30" /> Unavailable</span>
+            </div>
+          )}
+          {layers.has("allocations") && (
+            <div className="flex gap-3 items-center">
+              <span className="font-semibold uppercase tracking-wider text-[10px]">Allocations</span>
+              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-indigo-500/70" /> Project bars</span>
+            </div>
+          )}
+          {layers.has("events") && (
+            <div className="flex gap-3 items-center">
+              <span className="font-semibold uppercase tracking-wider text-[10px]">Events</span>
+              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-primary/30" /> Event markers</span>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Panels */}
+      <AllocationDetailPanel
+        open={!!selectedAllocation}
+        onOpenChange={(open) => !open && setSelectedAllocation(null)}
+        allocation={selectedAllocation}
+      />
+      <AddAllocationDialog open={addAllocOpen} onOpenChange={setAddAllocOpen} />
     </TooltipProvider>
   );
 }
@@ -405,25 +499,41 @@ interface TimelineLaneProps {
   id: string;
   label: React.ReactNode;
   events: TimelineEvent[];
+  allocations: Allocation[];
   rangeStart: Date;
   rangeDays: number;
   dates: Date[];
   todayISO: string;
-  view: "timeline" | "availability";
+  layers: Set<TimelineLayer>;
   expanded: boolean;
   onToggle: () => void;
+  onAllocationClick: (a: Allocation) => void;
   className?: string;
   availFn?: (dayISO: string) => AvailabilityWindow["status"] | null;
 }
 
-function TimelineLane({ id, label, events, rangeStart, rangeDays, dates, todayISO, view, expanded, onToggle, className, availFn }: TimelineLaneProps) {
+function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rangeDays, dates, todayISO, layers, expanded, onToggle, onAllocationClick, className, availFn }: TimelineLaneProps) {
   const slottedEvents = useMemo(() => assignEventSlots(events), [events]);
-  const maxSlot = slottedEvents.length > 0 ? Math.max(...slottedEvents.map((s) => s.slot)) : 0;
-  const totalSlots = maxSlot + 1;
-  const visibleSlots = expanded ? totalSlots : Math.min(totalSlots, MAX_VISIBLE_EVENTS);
-  const hiddenCount = expanded ? 0 : Math.max(0, totalSlots - MAX_VISIBLE_EVENTS);
-  const rowHeight = visibleSlots * (ROW_EVENT_HEIGHT + ROW_GAP) + ROW_PADDING * 2 + (hiddenCount > 0 ? 18 : 0);
+  const slottedAllocs = useMemo(() => assignAllocSlots(allocs), [allocs]);
+
+  const eventMaxSlot = slottedEvents.length > 0 ? Math.max(...slottedEvents.map((s) => s.slot)) + 1 : 0;
+  const allocMaxSlot = slottedAllocs.length > 0 ? Math.max(...slottedAllocs.map((s) => s.slot)) + 1 : 0;
+
+  const visibleEventSlots = expanded ? eventMaxSlot : Math.min(eventMaxSlot, MAX_VISIBLE_EVENTS);
+  const hiddenCount = expanded ? 0 : Math.max(0, eventMaxSlot - MAX_VISIBLE_EVENTS);
+
+  // Calculate total row height: availability bg + alloc bars + event bars
+  const availHeight = availFn ? 0 : 0; // availability is rendered as cell backgrounds, no extra height
+  const allocSectionHeight = allocMaxSlot > 0 ? allocMaxSlot * (ALLOC_HEIGHT + ROW_GAP) + ROW_GAP : 0;
+  const eventSectionHeight = visibleEventSlots > 0 ? visibleEventSlots * (ROW_EVENT_HEIGHT + ROW_GAP) + ROW_GAP : 0;
+  const overflowHeight = hiddenCount > 0 ? 16 : 0;
+
+  const totalContentHeight = allocSectionHeight + eventSectionHeight + overflowHeight;
+  const rowHeight = Math.max(32, ROW_PADDING * 2 + totalContentHeight);
   const gridWidth = rangeDays * DAY_WIDTH;
+
+  // Offset for event layer (below alloc layer)
+  const eventTopOffset = allocSectionHeight;
 
   return (
     <div className={cn("flex border-b border-border/30 last:border-0 hover:bg-accent/5 transition-colors cursor-pointer", className)} onClick={onToggle}>
@@ -434,41 +544,12 @@ function TimelineLane({ id, label, events, rangeStart, rangeDays, dates, todayIS
 
       {/* Grid area */}
       <div className="relative" style={{ width: gridWidth, minHeight: Math.max(36, rowHeight) }}>
-        {view === "timeline" ? (
-          <>
-            {/* Event blocks */}
-            {slottedEvents.map(({ event, slot }) => {
-              if (!expanded && slot >= MAX_VISIBLE_EVENTS) return null;
-              return (
-                <EventBlock
-                  key={event.id}
-                  event={event}
-                  slot={slot}
-                  rangeStart={rangeStart}
-                  rangeDays={rangeDays}
-                />
-              );
-            })}
-
-            {/* +N indicator */}
-            {hiddenCount > 0 && (
-              <div
-                className="absolute left-2 text-[10px] font-medium text-primary cursor-pointer hover:underline"
-                style={{ top: MAX_VISIBLE_EVENTS * (ROW_EVENT_HEIGHT + ROW_GAP) + ROW_PADDING }}
-              >
-                +{hiddenCount} more
-              </div>
-            )}
-
-            {/* Today line */}
-            <TodayLine rangeStart={rangeStart} rangeDays={rangeDays} todayISO={todayISO} />
-          </>
-        ) : (
-          /* Availability cells */
-          <div className="flex h-full">
+        {/* Availability background cells */}
+        {availFn && (
+          <div className="flex absolute inset-0">
             {dates.map((d, i) => {
               const iso = toISO(d);
-              const status = availFn?.(iso) ?? null;
+              const status = availFn(iso);
               const isWeekend = d.getDay() === 0 || d.getDay() === 6;
               const isToday = iso === todayISO;
               return (
@@ -481,14 +562,116 @@ function TimelineLane({ id, label, events, rangeStart, rangeDays, dates, todayIS
                     isWeekend && "bg-muted/15",
                     isToday && "ring-1 ring-inset ring-primary/30"
                   )}
-                  title={status ? `${status}` : undefined}
                 />
               );
             })}
           </div>
         )}
+
+        {/* Allocation bars */}
+        {slottedAllocs.map(({ alloc, slot }) => (
+          <AllocationBlock
+            key={alloc.id}
+            alloc={alloc}
+            slot={slot}
+            rangeStart={rangeStart}
+            rangeDays={rangeDays}
+            topOffset={ROW_PADDING}
+            onClick={(e) => {
+              e.stopPropagation();
+              onAllocationClick(alloc);
+            }}
+          />
+        ))}
+
+        {/* Event blocks */}
+        {slottedEvents.map(({ event, slot }) => {
+          if (!expanded && slot >= MAX_VISIBLE_EVENTS) return null;
+          return (
+            <EventBlock
+              key={event.id}
+              event={event}
+              slot={slot}
+              rangeStart={rangeStart}
+              rangeDays={rangeDays}
+              topOffset={ROW_PADDING + eventTopOffset}
+            />
+          );
+        })}
+
+        {/* +N indicator */}
+        {hiddenCount > 0 && (
+          <div
+            className="absolute left-2 text-[10px] font-medium text-primary cursor-pointer hover:underline"
+            style={{ top: ROW_PADDING + eventTopOffset + MAX_VISIBLE_EVENTS * (ROW_EVENT_HEIGHT + ROW_GAP) }}
+          >
+            +{hiddenCount} more
+          </div>
+        )}
+
+        {/* Today line */}
+        <TodayLine rangeStart={rangeStart} rangeDays={rangeDays} todayISO={todayISO} />
       </div>
     </div>
+  );
+}
+
+// ── AllocationBlock ──────────────────────────────────────
+function AllocationBlock({
+  alloc,
+  slot,
+  rangeStart,
+  rangeDays,
+  topOffset,
+  onClick,
+}: {
+  alloc: Allocation;
+  slot: number;
+  rangeStart: Date;
+  rangeDays: number;
+  topOffset: number;
+  onClick: (e: React.MouseEvent) => void;
+}) {
+  const totalPx = rangeDays * DAY_WIDTH;
+  const aStart = new Date(alloc.startDate);
+  const aEnd = new Date(alloc.endDate);
+  aStart.setHours(0, 0, 0, 0);
+  aEnd.setHours(0, 0, 0, 0);
+
+  const leftPx = Math.max(0, ((aStart.getTime() - rangeStart.getTime()) / 86400000) * DAY_WIDTH);
+  const widthPx = Math.max(DAY_WIDTH * 0.8, Math.min(totalPx - leftPx, ((aEnd.getTime() - aStart.getTime()) / 86400000 + 1) * DAY_WIDTH));
+  const topPx = topOffset + slot * (ALLOC_HEIGHT + ROW_GAP);
+
+  const label = alloc.percentage < 100
+    ? `${alloc.project} – ${alloc.percentage}%`
+    : alloc.project;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div
+          className="absolute rounded-md flex items-center px-1.5 text-[10px] font-semibold truncate cursor-pointer border border-indigo-500/40 bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-500/30 transition-colors"
+          style={{
+            left: leftPx,
+            width: widthPx,
+            top: topPx,
+            height: ALLOC_HEIGHT,
+            zIndex: 3,
+          }}
+          onClick={onClick}
+        >
+          <Briefcase size={10} className="mr-1 shrink-0 opacity-70" />
+          <span className="truncate">{label}</span>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="text-xs space-y-0.5">
+        <p className="font-semibold">{alloc.project}</p>
+        <p className="text-muted-foreground">Allocation: {alloc.percentage}%</p>
+        <p className="text-muted-foreground">{alloc.employeeName} · {alloc.teamName}</p>
+        <p className="tabular-nums">{formatDate(alloc.startDate)} → {formatDate(alloc.endDate)}</p>
+        {alloc.source && <p className="text-muted-foreground capitalize">Source: {alloc.source}</p>}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -498,11 +681,13 @@ function EventBlock({
   slot,
   rangeStart,
   rangeDays,
+  topOffset,
 }: {
   event: TimelineEvent;
   slot: number;
   rangeStart: Date;
   rangeDays: number;
+  topOffset: number;
 }) {
   const totalPx = rangeDays * DAY_WIDTH;
   const evStart = new Date(event.startDate);
@@ -512,7 +697,7 @@ function EventBlock({
 
   const leftPx = Math.max(0, ((evStart.getTime() - rangeStart.getTime()) / 86400000) * DAY_WIDTH);
   const widthPx = Math.max(DAY_WIDTH * 0.8, Math.min(totalPx - leftPx, ((evEnd.getTime() - evStart.getTime()) / 86400000 + 1) * DAY_WIDTH));
-  const topPx = ROW_PADDING + slot * (ROW_EVENT_HEIGHT + ROW_GAP);
+  const topPx = topOffset + slot * (ROW_EVENT_HEIGHT + ROW_GAP);
 
   const colors = eventColors[event.type] || eventColors.custom;
 
