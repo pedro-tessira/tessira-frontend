@@ -10,6 +10,7 @@ import {
   Briefcase,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { Sparkline } from "@/modules/signals/components/Sparkline";
 import { Progress } from "@/components/ui/progress";
 import {
   horizonEmployees,
@@ -178,6 +179,8 @@ export default function HorizonOverviewPage() {
       detail: `Across ${snapshot.totalEngineers} engineers`,
       icon: Zap,
       accent: snapshot.freeCapacity < 30 ? "text-destructive" : "text-success",
+      sparkline: [38, 42, 35, 40, snapshot.freeCapacity] as number[],
+      sparkColor: (snapshot.freeCapacity < 30 ? "destructive" : "success") as "destructive" | "success" | "warning" | "default",
     },
     {
       label: "Avg Allocation",
@@ -185,6 +188,8 @@ export default function HorizonOverviewPage() {
       detail: "Based on active allocations",
       icon: BarChart3,
       accent: snapshot.avgAllocation > 80 ? "text-destructive" : snapshot.avgAllocation > 60 ? "text-warning" : "text-primary",
+      sparkline: [52, 55, 60, 57, snapshot.avgAllocation] as number[],
+      sparkColor: (snapshot.avgAllocation > 80 ? "destructive" : snapshot.avgAllocation > 60 ? "warning" : "default") as "destructive" | "success" | "warning" | "default",
     },
     {
       label: "Unavailable",
@@ -192,6 +197,8 @@ export default function HorizonOverviewPage() {
       detail: "Engineers currently out",
       icon: UserX,
       accent: snapshot.unavailableCount > 3 ? "text-destructive" : "text-muted-foreground",
+      sparkline: [2, 4, 3, 5, snapshot.unavailableCount] as number[],
+      sparkColor: (snapshot.unavailableCount > 3 ? "destructive" : "default") as "destructive" | "success" | "warning" | "default",
     },
     {
       label: "Upcoming Absences",
@@ -199,6 +206,8 @@ export default function HorizonOverviewPage() {
       detail: "This week",
       icon: CalendarClock,
       accent: "text-muted-foreground",
+      sparkline: [1, 3, 2, 4, snapshot.upcomingAbsences] as number[],
+      sparkColor: "default" as "destructive" | "success" | "warning" | "default",
     },
   ];
 
@@ -221,8 +230,11 @@ export default function HorizonOverviewPage() {
                 className="text-muted-foreground/50"
               />
             </div>
-            <div className={cn("text-2xl font-bold tabular-nums", card.accent)}>
-              {card.value}
+            <div className="flex items-end justify-between gap-2">
+              <div className={cn("text-2xl font-bold tabular-nums", card.accent)}>
+                {card.value}
+              </div>
+              <Sparkline data={card.sparkline} color={card.sparkColor} />
             </div>
             <div className="text-xs text-muted-foreground">{card.detail}</div>
           </div>
