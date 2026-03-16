@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Search, Filter, Download } from "lucide-react";
-import { ModulePageHeader } from "../components/ModulePageHeader";
+import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { StatusBadge } from "../components/StatusBadge";
 import { AvatarInitials } from "../components/AvatarInitials";
 import { MOCK_EMPLOYEES } from "../data";

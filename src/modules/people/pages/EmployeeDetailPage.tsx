@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import {
   Mail, MapPin, Clock, Calendar, Users2, Shield, Zap, Activity,
 } from "lucide-react";
-import { ModulePageHeader } from "../components/ModulePageHeader";
+import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { StatusBadge } from "../components/StatusBadge";
 import { AvatarInitials } from "../components/AvatarInitials";
 import { FollowUpNotes } from "../components/FollowUpNotes";
