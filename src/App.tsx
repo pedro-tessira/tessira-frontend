@@ -76,6 +76,7 @@ function App() {
     <TooltipProvider>
       <TenantProvider>
       <HealthWeightsProvider>
+      <PeopleStoreProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
