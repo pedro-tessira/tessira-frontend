@@ -69,13 +69,13 @@ export default function TeamSignalsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Velocity Trend</div>
-                  <TrendIndicator direction={team.sprintVelocityTrend} value={
-                    team.sprintVelocityTrend === "up" ? "Improving" :
-                    team.sprintVelocityTrend === "down" ? "Declining" : "Stable"
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Capacity Trend</div>
+                  <TrendIndicator direction={team.capacityTrend} value={
+                    team.capacityTrend === "up" ? "Increasing" :
+                    team.capacityTrend === "down" ? "Decreasing" : "Stable"
                   } />
                   <div className="text-xs text-muted-foreground">
-                    {team.openEscalations > 0 ? `${team.openEscalations} open escalation${team.openEscalations > 1 ? "s" : ""}` : "No escalations"}
+                    {team.allocation >= 90 ? "Near ceiling" : team.allocation >= 80 ? "Moderate pressure" : "Healthy buffer"}
                   </div>
                 </div>
 
