@@ -35,6 +35,7 @@ import {
   horizonTeams,
   availabilityWindows,
   timelineEvents,
+  allocations,
 } from "../data";
 import type { AvailabilityWindow } from "../types";
 
