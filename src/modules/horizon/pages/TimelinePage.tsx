@@ -12,8 +12,7 @@ import {
   User,
   Layers,
   Briefcase,
-  Eye,
-  EyeOff,
+  AlertTriangle,
 } from "lucide-react";
 import {
   Select,
