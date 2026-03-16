@@ -39,6 +39,22 @@ export default function SignalsOverviewPage() {
   const { normalized } = useHealthWeights();
   const teamSignals = useMemo(() => computeTeamSignals(normalized), [normalized]);
   const stats = getSignalsStats();
+  const dynamicAvgHealth = useMemo(
+    () => +(teamSignals.reduce((s, t) => s + t.healthScore, 0) / teamSignals.length).toFixed(1),
+    [teamSignals],
+  );
+  const dynamicOrgSignals = useMemo(() => {
+    return MOCK_ORG_SIGNALS.map((sig) =>
+      sig.id === "sig-01"
+        ? {
+            ...sig,
+            value: dynamicAvgHealth,
+            status: (dynamicAvgHealth >= 7 ? "healthy" : dynamicAvgHealth >= 5.5 ? "warning" : "critical") as "healthy" | "warning" | "critical",
+            history: [...sig.history.slice(0, -1), dynamicAvgHealth],
+          }
+        : sig,
+    );
+  }, [dynamicAvgHealth]);
   const topAlerts = MOCK_ALERTS.slice(0, 5);
   const teamsSorted = [...teamSignals].sort((a, b) => a.healthScore - b.healthScore);
   const [expandedAlert, setExpandedAlert] = useState<string | null>(null);
@@ -53,7 +69,7 @@ export default function SignalsOverviewPage() {
 
       {/* Stats row */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Org Health" value={stats.avgHealthScore} icon={Activity} detail="Avg across teams" />
+        <StatCard label="Org Health" value={dynamicAvgHealth} icon={Activity} detail="Avg across teams" />
         <StatCard label="Teams At Risk" value={stats.teamsAtRisk} icon={Users2} detail={`of ${teamSignals.length} teams`} className={stats.teamsAtRisk > 0 ? "border-warning/30" : ""} />
         <StatCard label="Critical Alerts" value={stats.criticalAlerts} icon={AlertTriangle} detail="Requiring attention" className={stats.criticalAlerts > 0 ? "border-warning/30" : ""} />
         <StatCard label="Critical Resilience" value={stats.criticalResilience} icon={Shield} detail="Areas needing backup" className={stats.criticalResilience > 0 ? "border-destructive/30" : ""} />
@@ -93,7 +109,7 @@ export default function SignalsOverviewPage() {
             <p className="text-[11px] text-muted-foreground">Last 7 periods</p>
           </div>
           <div className="divide-y divide-border/50">
-            {MOCK_ORG_SIGNALS.map((sig) => (
+            {dynamicOrgSignals.map((sig) => (
               <div key={sig.id} className="flex items-center gap-4 px-5 py-3">
                 <SignalDot status={sig.status} size="md" />
                 <div className="flex-1 min-w-0">
