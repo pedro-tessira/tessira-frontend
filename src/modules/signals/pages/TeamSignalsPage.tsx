@@ -7,8 +7,8 @@ import { cn } from "@/shared/lib/utils";
 import { AlertTriangle, Shield, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
-  allocationRisk, freeCapacityRisk, coverageRisk, spofRisk, busFactorRisk,
-  riskText, riskBg,
+  allocationRisk, coverageRisk, spofRisk,
+  riskText, riskBg, riskBgSubtle, riskBorder,
 } from "@/shared/lib/risk-colors";
 import { useHealthWeights } from "../contexts/HealthWeightsContext";
 import { HealthWeightsDialog } from "../components/HealthWeightsDialog";
