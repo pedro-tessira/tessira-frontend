@@ -87,23 +87,19 @@ export default function TeamSignalsPage() {
                     </Tooltip>
                   </TooltipProvider>
 
-                  {/* Allocation + Free Capacity */}
+                  {/* Allocation */}
                   <div className="space-y-2">
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider">Free Capacity</div>
-                    <div className={cn("text-xl font-bold tabular-nums", riskText(freeRisk))}>
-                      {freeCapacity}%
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider">Allocation</div>
+                    <div className={cn("text-xl font-bold tabular-nums", riskText(aRisk))}>
+                      {team.allocation}%
                     </div>
                     <div className="text-xs text-muted-foreground tabular-nums">
-                      Allocation: {team.allocation}%
+                      {freeCapacity}% free capacity
                     </div>
                     <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden flex">
                       <div
-                        className="h-full bg-primary/40"
+                        className={cn("h-full", riskBg(aRisk))}
                         style={{ width: `${team.allocation}%` }}
-                      />
-                      <div
-                        className={cn("h-full", riskBg(freeRisk))}
-                        style={{ width: `${freeCapacity}%` }}
                       />
                     </div>
                   </div>
