@@ -24,7 +24,7 @@ export const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
-            ref={ref as React.Ref<HTMLButtonElement>}
+            ref={ref}
             className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent tessira-transition outline-none w-full"
           >
             <div className="h-6 w-6 shrink-0 rounded-full bg-primary/20 border border-primary/30" />
