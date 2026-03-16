@@ -39,6 +39,7 @@ import {
 import type { EventType, TimelineEvent, AvailabilityWindow, Allocation } from "../types";
 import AllocationDetailPanel from "../components/AllocationDetailPanel";
 import AddAllocationDialog from "../components/AddAllocationDialog";
+import EventDetailPanel from "../components/EventDetailPanel";
 
 // ── Constants ────────────────────────────────────────────
 const MAX_VISIBLE_EVENTS = 2;
@@ -179,6 +180,7 @@ export default function TimelinePage() {
   const [layers, setLayers] = useState<Set<TimelineLayer>>(new Set(["availability", "allocations", "events"]));
   const [selectedAllocation, setSelectedAllocation] = useState<Allocation | null>(null);
   const [addAllocOpen, setAddAllocOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null);
   const [addAllocPrefill, setAddAllocPrefill] = useState<{ employeeId?: string; startDate?: string; endDate?: string }>({});
 
   // Drag-to-create state
@@ -508,6 +510,7 @@ export default function TimelinePage() {
                   expanded={expandedRows.has("global")}
                   onToggle={() => toggleRow("global")}
                   onAllocationClick={setSelectedAllocation}
+                  onEventClick={setSelectedEvent}
                   className="bg-muted/5"
                 />
               )}
@@ -544,6 +547,7 @@ export default function TimelinePage() {
                   expanded={expandedRows.has(emp.id)}
                   onToggle={() => toggleRow(emp.id)}
                   onAllocationClick={setSelectedAllocation}
+                  onEventClick={setSelectedEvent}
                   availFn={layers.has("availability") ? (dayISO: string) => getAvailForDay(emp.id, dayISO) : undefined}
                   onDragStart={(dayIndex) => handleDragStart(emp.id, dayIndex)}
                   onDragMove={handleDragMove}
@@ -599,6 +603,11 @@ export default function TimelinePage() {
         prefillStartDate={addAllocPrefill.startDate}
         prefillEndDate={addAllocPrefill.endDate}
       />
+      <EventDetailPanel
+        open={!!selectedEvent}
+        onOpenChange={(open) => !open && setSelectedEvent(null)}
+        event={selectedEvent}
+      />
     </TooltipProvider>
   );
 }
@@ -617,6 +626,7 @@ interface TimelineLaneProps {
   expanded: boolean;
   onToggle: () => void;
   onAllocationClick: (a: Allocation) => void;
+  onEventClick?: (e: TimelineEvent) => void;
   className?: string;
   availFn?: (dayISO: string) => AvailabilityWindow["status"] | null;
   onDragStart?: (dayIndex: number) => void;
@@ -624,7 +634,7 @@ interface TimelineLaneProps {
   dragSelection?: { startIndex: number; endIndex: number };
 }
 
-function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rangeDays, dates, todayISO, layers, expanded, onToggle, onAllocationClick, className, availFn, onDragStart, onDragMove, dragSelection }: TimelineLaneProps) {
+function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rangeDays, dates, todayISO, layers, expanded, onToggle, onAllocationClick, onEventClick, className, availFn, onDragStart, onDragMove, dragSelection }: TimelineLaneProps) {
   const slottedEvents = useMemo(() => assignEventSlots(events), [events]);
   const slottedAllocs = useMemo(() => assignAllocSlots(allocs), [allocs]);
 
@@ -730,6 +740,10 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
               rangeStart={rangeStart}
               rangeDays={rangeDays}
               topOffset={ROW_PADDING + eventTopOffset}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEventClick?.(event);
+              }}
             />
           );
         })}
@@ -800,6 +814,7 @@ function AllocationBlock({
     <Tooltip>
       <TooltipTrigger asChild>
         <div
+          onMouseDown={(e) => e.stopPropagation()}
           className="absolute rounded-md flex items-center px-1.5 text-[10px] font-semibold truncate cursor-pointer border border-indigo-500/40 bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-500/30 transition-colors"
           style={{
             left: leftPx,
@@ -832,12 +847,14 @@ function EventBlock({
   rangeStart,
   rangeDays,
   topOffset,
+  onClick,
 }: {
   event: TimelineEvent;
   slot: number;
   rangeStart: Date;
   rangeDays: number;
   topOffset: number;
+  onClick?: (e: React.MouseEvent) => void;
 }) {
   const totalPx = rangeDays * DAY_WIDTH;
   const evStart = new Date(event.startDate);
@@ -856,7 +873,7 @@ function EventBlock({
       <TooltipTrigger asChild>
         <div
           className={cn(
-            "absolute rounded border flex items-center px-1.5 text-[10px] font-medium truncate cursor-default",
+            "absolute rounded border flex items-center px-1.5 text-[10px] font-medium truncate cursor-pointer hover:brightness-110 hover:shadow-sm transition-all",
             colors
           )}
           style={{
@@ -864,9 +881,10 @@ function EventBlock({
             width: widthPx,
             top: topPx,
             height: ROW_EVENT_HEIGHT,
-            zIndex: 2,
+            zIndex: 4,
           }}
-          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={onClick}
         >
           <span className="truncate">{event.title}</span>
         </div>
@@ -875,6 +893,7 @@ function EventBlock({
         <p className="font-semibold">{event.title}</p>
         <p className="text-muted-foreground">{eventTypeLabels[event.type]}</p>
         <p className="tabular-nums">{formatDate(event.startDate)} → {formatDate(event.endDate)}</p>
+        <p className="text-muted-foreground/70 text-[10px]">Click to edit</p>
       </TooltipContent>
     </Tooltip>
   );
