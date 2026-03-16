@@ -232,31 +232,30 @@ export default function CapacityIntelligencePage() {
     }));
   }, [capacityData]);
 
-  // Stream-level capacity: how loaded is each delivery stream
-  const streamCapacity = useMemo(() => {
-    return streams.map((stream) => {
-      const streamInits = initiatives.filter((i) => i.streamIds.includes(stream.id));
-      const initIds = new Set(streamInits.map((i) => i.id));
-      const streamAllocs = workAllocations.filter((wa) => initIds.has(wa.initiativeId));
-      const uniqueEngIds = new Set(streamAllocs.map((wa) => wa.employeeId));
-      const totalAllocPct = streamAllocs.reduce((sum, wa) => sum + wa.percentage, 0);
+  // Domain-level capacity: how loaded is each engineering domain
+  const domainCapacity = useMemo(() => {
+    return domains.map((domain) => {
+      const domainInits = initiatives.filter((i) => i.domainIds.includes(domain.id));
+      const initIds = new Set(domainInits.map((i) => i.id));
+      const domainAllocs = workAllocations.filter((wa) => initIds.has(wa.initiativeId));
+      const uniqueEngIds = new Set(domainAllocs.map((wa) => wa.employeeId));
+      const totalAllocPct = domainAllocs.reduce((sum, wa) => sum + wa.percentage, 0);
       const avgAlloc = uniqueEngIds.size > 0 ? Math.round(totalAllocPct / uniqueEngIds.size) : 0;
       const loadPct = Math.min(100, avgAlloc);
-      const activeInits = streamInits.filter((i) => i.status === "active").length;
+      const activeInits = domainInits.filter((i) => i.status === "active").length;
 
-      // Generate a 4-week trend based on the current load with realistic variation
-      const seed = stream.id.charCodeAt(stream.id.length - 1);
+      const seed = domain.id.charCodeAt(domain.id.length - 1);
       const weeklyTrend = Array.from({ length: 4 }, (_, i) => {
         const variance = ((seed * (i + 1) * 7) % 25) - 12;
         return Math.max(0, Math.min(100, loadPct + variance - (3 - i) * 3));
       });
 
       return {
-        id: stream.id,
-        name: stream.name,
-        owningTeam: stream.owningTeamName,
+        id: domain.id,
+        name: domain.name,
+        owningTeam: domain.owningTeamName,
         engineerCount: uniqueEngIds.size,
-        initiativeCount: streamInits.length,
+        initiativeCount: domainInits.length,
         activeInitiatives: activeInits,
         loadPct,
         totalAllocPct,
