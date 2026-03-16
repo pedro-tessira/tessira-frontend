@@ -39,6 +39,7 @@ import {
 import type { EventType, TimelineEvent, AvailabilityWindow, Allocation } from "../types";
 import AllocationDetailPanel from "../components/AllocationDetailPanel";
 import AddAllocationDialog from "../components/AddAllocationDialog";
+import EventDetailPanel from "../components/EventDetailPanel";
 
 // ── Constants ────────────────────────────────────────────
 const MAX_VISIBLE_EVENTS = 2;
