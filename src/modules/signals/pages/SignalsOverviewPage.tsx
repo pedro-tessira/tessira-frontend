@@ -36,9 +36,11 @@ function sparklineColor(status: string): "success" | "warning" | "destructive" |
 }
 
 export default function SignalsOverviewPage() {
+  const { normalized } = useHealthWeights();
+  const teamSignals = useMemo(() => computeTeamSignals(normalized), [normalized]);
   const stats = getSignalsStats();
   const topAlerts = MOCK_ALERTS.slice(0, 5);
-  const teamsSorted = [...MOCK_TEAM_SIGNALS].sort((a, b) => a.healthScore - b.healthScore);
+  const teamsSorted = [...teamSignals].sort((a, b) => a.healthScore - b.healthScore);
   const [expandedAlert, setExpandedAlert] = useState<string | null>(null);
 
   return (
