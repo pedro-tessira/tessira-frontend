@@ -323,6 +323,12 @@ export default function NineBoxPage() {
           </span>
         </div>
       </div>
+
+      <EmployeeDetailPanel
+        open={!!selectedEmployeeId}
+        onOpenChange={(open) => { if (!open) setSelectedEmployeeId(null); }}
+        employeeId={selectedEmployeeId}
+      />
     </div>
   );
 }
