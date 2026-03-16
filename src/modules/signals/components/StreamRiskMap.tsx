@@ -92,4 +92,4 @@ export const StreamRiskMap = forwardRef<HTMLDivElement>(function StreamRiskMap(_
       </div>
     </div>
   );
-}
+});
