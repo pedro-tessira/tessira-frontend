@@ -475,12 +475,17 @@ export default function CapacityIntelligencePage() {
                     return (
                       <div
                         key={i}
-                        style={{ width: DAY_WIDTH }}
+                        style={{
+                          width: DAY_WIDTH,
+                          ...(isToday
+                            ? { boxShadow: "inset 2px 0 0 hsl(var(--primary) / 0.35), inset -2px 0 0 hsl(var(--primary) / 0.35)" }
+                            : {}),
+                        }}
                         className={cn(
                           "text-center py-1.5 text-[9px]",
                           isMonday && !isToday && "border-l-2 border-border/40",
                           !isMonday && !isToday && "border-r border-border/10",
-                          isToday && "font-semibold text-primary bg-primary/10 border-x border-primary/30",
+                          isToday && "font-semibold text-primary bg-primary/10",
                           isWeekend && !isToday && "bg-muted/20 text-muted-foreground/40"
                         )}
                       >
@@ -649,7 +654,7 @@ function CapacityRow({
                     ...(isToday
                       ? {
                           backgroundImage: "linear-gradient(hsl(var(--primary) / 0.14), hsl(var(--primary) / 0.14))",
-                          boxShadow: "inset -2px 0 0 hsl(var(--primary) / 0.3), inset 2px 0 0 hsl(var(--primary) / 0.3)",
+                          boxShadow: "inset 2px 0 0 hsl(var(--primary) / 0.35), inset -2px 0 0 hsl(var(--primary) / 0.35)",
                         }
                       : {}),
                   }}
