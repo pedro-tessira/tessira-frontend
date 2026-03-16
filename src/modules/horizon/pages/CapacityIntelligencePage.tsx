@@ -323,7 +323,7 @@ export default function CapacityIntelligencePage() {
             <div className="flex flex-wrap gap-2">
               {alerts.map((a) => (
                 <Badge key={a.id} variant="secondary" className="text-[11px] bg-destructive/10 text-destructive border-destructive/20">
-                  {a.name} — {a.capacity}%
+                  {a.name} — {a.capacity.free}% free (avail {a.capacity.availability}%, alloc {a.capacity.allocation}%)
                 </Badge>
               ))}
             </div>
