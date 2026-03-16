@@ -292,6 +292,7 @@ export default function NineBoxPage() {
                           movement={movements.find((m) => m.employeeId === p.employeeId)}
                           boxLabels={BOX_LABELS}
                           onDragStart={setDraggingId}
+                          onSelect={setSelectedEmployeeId}
                         />
                       ))}
                       {people.length === 0 && (
