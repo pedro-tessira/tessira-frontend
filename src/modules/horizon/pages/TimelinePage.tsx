@@ -619,9 +619,12 @@ interface TimelineLaneProps {
   onAllocationClick: (a: Allocation) => void;
   className?: string;
   availFn?: (dayISO: string) => AvailabilityWindow["status"] | null;
+  onDragStart?: (dayIndex: number) => void;
+  onDragMove?: (dayIndex: number) => void;
+  dragSelection?: { startIndex: number; endIndex: number };
 }
 
-function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rangeDays, dates, todayISO, layers, expanded, onToggle, onAllocationClick, className, availFn }: TimelineLaneProps) {
+function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rangeDays, dates, todayISO, layers, expanded, onToggle, onAllocationClick, className, availFn, onDragStart, onDragMove, dragSelection }: TimelineLaneProps) {
   const slottedEvents = useMemo(() => assignEventSlots(events), [events]);
   const slottedAllocs = useMemo(() => assignAllocSlots(allocs), [allocs]);
 
