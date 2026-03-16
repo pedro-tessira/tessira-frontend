@@ -234,9 +234,15 @@ export default function HorizonOverviewPage() {
         <h2 className="text-sm font-semibold mb-4">Team Load</h2>
         <div className="space-y-3">
           {teamLoad.map((team) => (
-            <div key={team.name} className="space-y-1">
+            <Link
+              key={team.id}
+              to={`/app/horizon/timeline?team=${team.id}`}
+              className="block space-y-1 group hover:bg-accent/30 -mx-2 px-2 py-1.5 rounded transition-colors"
+            >
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">{team.name}</span>
+                <span className="font-medium group-hover:text-primary transition-colors">
+                  {team.name}
+                </span>
                 <span
                   className={cn(
                     "text-xs font-semibold tabular-nums",
@@ -258,7 +264,7 @@ export default function HorizonOverviewPage() {
               <p className="text-[11px] text-muted-foreground">
                 {team.members} engineer{team.members !== 1 ? "s" : ""}
               </p>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
