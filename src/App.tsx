@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { TenantProvider } from "@/shared/contexts/TenantContext";
 import { HealthWeightsProvider } from "@/modules/signals/contexts/HealthWeightsContext";
+import { PeopleStoreProvider } from "@/modules/people/contexts/PeopleStoreContext";
 
 import { AppShell } from "@/shared/layouts/AppShell";
 import LandingPage from "@/modules/landing/pages/LandingPage";
