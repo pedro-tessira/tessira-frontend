@@ -201,6 +201,9 @@ export default function SignalsOverviewPage() {
         </div>
       </div>
 
+      {/* Domain Risk Map */}
+      <DomainRiskMap />
+
       {/* Risk legend */}
       <RiskLegend />
 
