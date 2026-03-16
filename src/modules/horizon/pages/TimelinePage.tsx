@@ -533,9 +533,9 @@ export default function TimelinePage() {
                         style={{ width: DAY_WIDTH }}
                         className={cn(
                           "text-center py-1.5 text-[10px] border-r border-border/20 last:border-0",
-                          isToday && "bg-primary/10 font-semibold text-primary",
+                          isToday && "font-semibold text-primary border-x border-primary/30",
                           isWeekend && !isToday && "bg-muted/20 text-muted-foreground/40",
-                          isMonday && "border-l border-border/40"
+                          isMonday && !isToday && "border-l border-border/40"
                         )}
                       >
                         <div>{d.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 2)}</div>
