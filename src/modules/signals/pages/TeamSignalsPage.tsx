@@ -3,7 +3,8 @@ import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { SignalBadge, TrendIndicator, CapacityBar, ScoreGauge } from "../components/SignalIndicators";
 import { MOCK_TEAM_SIGNALS } from "../data";
 import { cn } from "@/shared/lib/utils";
-import { AlertTriangle, Shield } from "lucide-react";
+import { AlertTriangle, Shield, Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function TeamSignalsPage() {
   const sorted = [...MOCK_TEAM_SIGNALS].sort((a, b) => a.healthScore - b.healthScore);
