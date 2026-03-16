@@ -5,7 +5,7 @@ import { CapacityBar, SignalBadge, TrendIndicator } from "../components/SignalIn
 import { MOCK_CAPACITY } from "../data";
 import { Gauge, AlertTriangle, Users2 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
-import { freeCapacityRisk, riskText } from "@/shared/lib/risk-colors";
+import { allocationRisk, riskText } from "@/shared/lib/risk-colors";
 
 export default function CapacityPage() {
   const totalCapacity = Math.round(MOCK_CAPACITY.reduce((s, c) => s + c.totalCapacity, 0) * 10) / 10;
@@ -13,27 +13,27 @@ export default function CapacityPage() {
   const totalAvailable = Math.round(MOCK_CAPACITY.reduce((s, c) => s + c.available, 0) * 10) / 10;
   const totalOnLeave = MOCK_CAPACITY.reduce((s, c) => s + c.onLeave, 0);
   const overloadedTeams = MOCK_CAPACITY.filter((c) => c.riskLevel !== "healthy").length;
-  const orgFreeCapacity = Math.round((totalAvailable / totalCapacity) * 100);
-  const orgFreeRisk = freeCapacityRisk(orgFreeCapacity);
+  const orgAllocationPct = Math.round((totalAllocated / totalCapacity) * 100);
+  const orgAllocRisk = allocationRisk(orgAllocationPct);
 
   const sorted = [...MOCK_CAPACITY].sort((a, b) => (a.available / a.totalCapacity) - (b.available / b.totalCapacity));
 
   return (
     <div className="space-y-5">
       <ModulePageHeader
-        title="Capacity & Load"
-        description="Team allocation, free capacity, and load distribution across the engineering org."
+        title="Delivery Pressure"
+        description="Allocation distribution, free capacity, and load across the engineering org."
         breadcrumbs={[
           { label: "Signals", href: "/app/signals" },
-          { label: "Capacity" },
+          { label: "Delivery Pressure" },
         ]}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Total Capacity" value={`${totalCapacity} FTE`} icon={Users2} detail={`${totalAllocated} allocated`} />
-        <StatCard label="Free Capacity" value={`${totalAvailable} FTE`} icon={Gauge} detail={<span className={riskText(orgFreeRisk)}>{orgFreeCapacity}% org-wide</span>} />
+        <StatCard label="Allocation" value={`${orgAllocationPct}%`} icon={Gauge} detail={<span className={riskText(orgAllocRisk)}>{totalAvailable} FTE free</span>} />
         <StatCard label="On Leave" value={totalOnLeave} icon={Users2} detail="Currently unavailable" />
-        <StatCard label="Teams At Risk" value={overloadedTeams} icon={AlertTriangle} detail={`of ${MOCK_CAPACITY.length} teams`} className={overloadedTeams > 0 ? "border-warning/30" : ""} />
+        <StatCard label="Teams Under Pressure" value={overloadedTeams} icon={AlertTriangle} detail={`of ${MOCK_CAPACITY.length} teams`} className={overloadedTeams > 0 ? "border-warning/30" : ""} />
       </div>
 
       {/* Org-wide bar */}
@@ -62,8 +62,8 @@ export default function CapacityPage() {
             </thead>
             <tbody className="divide-y divide-border/50">
               {sorted.map((c) => {
-                const freePct = Math.round((c.available / c.totalCapacity) * 100);
-                const freeRisk = freeCapacityRisk(freePct);
+                const allocPct = Math.round((c.allocated / c.totalCapacity) * 100);
+                const aRisk = allocationRisk(allocPct);
                 return (
                   <tr key={c.teamId} className="hover:bg-accent/10 tessira-transition">
                     <td className="px-4 py-3">
@@ -75,7 +75,7 @@ export default function CapacityPage() {
                       <CapacityBar allocated={c.allocated} total={c.totalCapacity} />
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className={cn("tabular-nums font-medium", riskText(freeRisk))}>{c.available}</span>
+                      <span className={cn("tabular-nums font-medium", riskText(aRisk))}>{c.available}</span>
                     </td>
                     <td className="px-4 py-3 text-center">
                       {c.onLeave > 0
@@ -108,12 +108,12 @@ export default function CapacityPage() {
         <div className="rounded-lg border border-warning/30 bg-warning/5 p-5">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle size={16} className="text-warning" />
-            <h3 className="text-sm font-semibold">Capacity Risk Insight</h3>
+            <h3 className="text-sm font-semibold">Delivery Pressure Insight</h3>
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            {overloadedTeams} team{overloadedTeams > 1 ? "s have" : " has"} free capacity below 20%.
+            {overloadedTeams} team{overloadedTeams > 1 ? "s have" : " has"} allocation above 85%.
             At this level, teams lack buffer to absorb unplanned work, PTO, or context-switching.
-            Consider rebalancing allocation or deferring lower-priority streams.
+            Consider rebalancing allocation or deferring lower-priority initiatives.
           </p>
         </div>
       )}
