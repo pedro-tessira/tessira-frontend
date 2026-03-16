@@ -319,61 +319,6 @@ export default function CapacityIntelligencePage() {
           />
         </div>
 
-        {/* ── Filters ── */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Filter size={14} className="text-muted-foreground" />
-          <Select value={teamFilter} onValueChange={setTeamFilter}>
-            <SelectTrigger className="w-[160px] h-8 text-xs"><SelectValue placeholder="Team" /></SelectTrigger>
-            <SelectContent>
-              {horizonTeams.map((t) => <SelectItem key={t.id} value={t.id} className="text-xs">{t.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className="w-[160px] h-8 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {roles.map((r) => <SelectItem key={r} value={r} className="text-xs">{r}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={skillFilter} onValueChange={setSkillFilter}>
-            <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {skills.map((s) => <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={locationFilter} onValueChange={setLocationFilter}>
-            <SelectTrigger className="w-[160px] h-8 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {locations.map((l) => <SelectItem key={l} value={l} className="text-xs">{l}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <div className="relative ml-auto">
-            <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search engineers..." className="h-8 text-xs pl-7 w-[180px] bg-transparent border-border/50" />
-          </div>
-          <div className="flex gap-0.5 rounded-md border border-border/50 p-0.5">
-            {(["2w", "4w", "8w"] as const).map((r) => (
-              <Button key={r} variant={range === r ? "secondary" : "ghost"} size="sm" className="h-6 text-[11px] px-2" onClick={() => setRange(r)}>{r}</Button>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Capacity Alerts ── */}
-        {alerts.length > 0 && (
-          <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 space-y-2">
-            <div className="flex items-center gap-2">
-              <AlertTriangle size={14} className="text-destructive" />
-              <span className="text-xs font-semibold text-destructive">Capacity Alerts — {alerts.length} engineer{alerts.length !== 1 ? "s" : ""} below {CAPACITY_THRESHOLD}%</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {alerts.map((a) => (
-                <Badge key={a.id} variant="secondary" className="text-[11px] bg-destructive/10 text-destructive border-destructive/20">
-                  {a.name} — {a.capacity.free}% free (avail {a.capacity.availability}%, alloc {a.capacity.allocation}%)
-                </Badge>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* ── Team Capacity Summary ── */}
         <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
           {teamCapacity.map((t) => (
@@ -450,6 +395,61 @@ export default function CapacityIntelligencePage() {
             })}
           </div>
         </div>
+
+        {/* ── Filters ── */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Filter size={14} className="text-muted-foreground" />
+          <Select value={teamFilter} onValueChange={setTeamFilter}>
+            <SelectTrigger className="w-[160px] h-8 text-xs"><SelectValue placeholder="Team" /></SelectTrigger>
+            <SelectContent>
+              {horizonTeams.map((t) => <SelectItem key={t.id} value={t.id} className="text-xs">{t.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="w-[160px] h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {roles.map((r) => <SelectItem key={r} value={r} className="text-xs">{r}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={skillFilter} onValueChange={setSkillFilter}>
+            <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {skills.map((s) => <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={locationFilter} onValueChange={setLocationFilter}>
+            <SelectTrigger className="w-[160px] h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {locations.map((l) => <SelectItem key={l} value={l} className="text-xs">{l}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <div className="relative ml-auto">
+            <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search engineers..." className="h-8 text-xs pl-7 w-[180px] bg-transparent border-border/50" />
+          </div>
+          <div className="flex gap-0.5 rounded-md border border-border/50 p-0.5">
+            {(["2w", "4w", "8w"] as const).map((r) => (
+              <Button key={r} variant={range === r ? "secondary" : "ghost"} size="sm" className="h-6 text-[11px] px-2" onClick={() => setRange(r)}>{r}</Button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Capacity Alerts ── */}
+        {alerts.length > 0 && (
+          <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <AlertTriangle size={14} className="text-destructive" />
+              <span className="text-xs font-semibold text-destructive">Capacity Alerts — {alerts.length} engineer{alerts.length !== 1 ? "s" : ""} below {CAPACITY_THRESHOLD}%</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {alerts.map((a) => (
+                <Badge key={a.id} variant="secondary" className="text-[11px] bg-destructive/10 text-destructive border-destructive/20">
+                  {a.name} — {a.capacity.free}% free (avail {a.capacity.availability}%, alloc {a.capacity.allocation}%)
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ── Capacity Timeline Grid ── */}
         <div className="rounded-lg border border-border/50 bg-card overflow-hidden relative">
