@@ -9,7 +9,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/shared/lib/utils";
-import { MOCK_TEAMS, MOCK_MEMBERSHIPS } from "../data";
+import { usePeopleStore } from "../contexts/PeopleStoreContext";
 import { Users2, AlertTriangle, Star, TrendingUp } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -107,6 +107,7 @@ function getBoxLabel(perf: PerformanceLevel, pot: PotentialLevel) {
 }
 
 export default function NineBoxPage() {
+  const { teams, memberships } = usePeopleStore();
   const [teamFilter, setTeamFilter] = useState<string>("all");
   const [selectedRound, setSelectedRound] = useState<string>("q1-2026");
   const [placementsMap, setPlacementsMap] = useState<Record<string, NineBoxPlacement[]>>(() => {
@@ -124,11 +125,11 @@ export default function NineBoxPage() {
 
   const filteredPlacements = useMemo(() => {
     if (teamFilter === "all") return currentPlacements;
-    const memberIds = MOCK_MEMBERSHIPS
+    const memberIds = memberships
       .filter((m) => m.teamId === teamFilter)
       .map((m) => m.employeeId);
     return currentPlacements.filter((p) => memberIds.includes(p.employeeId));
-  }, [teamFilter, currentPlacements]);
+  }, [teamFilter, currentPlacements, memberships]);
 
   // Stats
   const stars = filteredPlacements.filter((p) => p.performance === "high" && p.potential === "high").length;
@@ -217,7 +218,7 @@ export default function NineBoxPage() {
             >
               All
             </Button>
-            {MOCK_TEAMS.map((t) => (
+            {teams.map((t) => (
               <Button
                 key={t.id}
                 variant={teamFilter === t.id ? "secondary" : "ghost"}
