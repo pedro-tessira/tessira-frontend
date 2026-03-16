@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { cn } from "@/shared/lib/utils";
+import { freeCapacityRisk, riskBgSubtle, riskText, riskBorder } from "@/shared/lib/risk-colors";
 import EngineerDetailPanel from "../components/EngineerDetailPanel";
 import {
   Users,
@@ -415,11 +416,14 @@ export default function CapacityIntelligencePage() {
               <span className="text-xs font-semibold text-destructive">Capacity Alerts — {alerts.length} engineer{alerts.length !== 1 ? "s" : ""} below {CAPACITY_THRESHOLD}%</span>
             </div>
             <div className="flex flex-wrap gap-2">
-              {alerts.map((a) => (
-                <Badge key={a.id} variant="secondary" className="text-[11px] bg-destructive/10 text-destructive border-destructive/20">
-                  {a.name} — {a.capacity.free}% free (avail {a.capacity.availability}%, alloc {a.capacity.allocation}%)
-                </Badge>
-              ))}
+              {alerts.map((a) => {
+                const risk = freeCapacityRisk(a.capacity.free);
+                return (
+                  <Badge key={a.id} variant="secondary" className={cn("text-[11px]", riskBgSubtle(risk), riskText(risk), riskBorder(risk))}>
+                    {a.name} — {a.capacity.free}% free (avail {a.capacity.availability}%, alloc {a.capacity.allocation}%)
+                  </Badge>
+                );
+              })}
             </div>
           </div>
         )}
