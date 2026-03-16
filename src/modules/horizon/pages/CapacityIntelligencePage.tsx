@@ -478,9 +478,9 @@ export default function CapacityIntelligencePage() {
                         style={{ width: DAY_WIDTH }}
                         className={cn(
                           "text-center py-1.5 text-[9px]",
-                          isMonday && "border-l-2 border-border/40",
-                          !isMonday && "border-r border-border/10",
-                          isToday && "bg-primary/10 font-semibold text-primary",
+                          isMonday && !isToday && "border-l-2 border-border/40",
+                          !isMonday && !isToday && "border-r border-border/10",
+                          isToday && "font-semibold text-primary border-x border-primary/30",
                           isWeekend && !isToday && "bg-muted/20 text-muted-foreground/40"
                         )}
                       >
@@ -646,10 +646,10 @@ function CapacityRow({
                   style={{ width: DAY_WIDTH }}
                   className={cn(
                     "h-8",
-                    isMonday && "border-l-2 border-border/40",
-                    !isMonday && "border-r border-border/10",
+                    isMonday && !isToday && "border-l-2 border-border/40",
+                    !isMonday && !isToday && "border-r border-border/10",
                     isWeekend ? "bg-muted/15" : cfg.color,
-                    isToday && "ring-1 ring-inset ring-primary/40"
+                    isToday && "border-x border-primary/30"
                   )}
                 />
               </TooltipTrigger>
