@@ -367,6 +367,7 @@ export default function CapacityIntelligencePage() {
                   todayISO={todayISO}
                   gridWidth={gridWidth}
                   rangeStart={rangeStart}
+                  onClick={() => setSelectedEngineer(emp)}
                 />
               ))}
 
