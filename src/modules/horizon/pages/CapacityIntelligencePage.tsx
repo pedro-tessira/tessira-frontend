@@ -386,6 +386,60 @@ export default function CapacityIntelligencePage() {
           ))}
         </div>
 
+        {/* ── Stream Capacity ── */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Layers size={14} className="text-primary" />
+            <h3 className="text-sm font-semibold">Stream Load</h3>
+            <span className="text-[11px] text-muted-foreground">— Average allocation per engineer by delivery stream</span>
+          </div>
+          <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {streamCapacity.map((s) => {
+              const loadColor = s.loadPct >= 80
+                ? "text-destructive"
+                : s.loadPct >= 50
+                ? "text-amber-600 dark:text-amber-400"
+                : "text-emerald-600 dark:text-emerald-400";
+              const barColor = s.loadPct >= 80
+                ? "bg-destructive"
+                : s.loadPct >= 50
+                ? "bg-amber-500"
+                : "bg-emerald-500";
+              return (
+                <Link
+                  key={s.id}
+                  to={`/app/work/streams/${s.id}`}
+                  className="rounded-lg border border-border/50 bg-card p-4 space-y-3 hover:border-primary/30 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold truncate">{s.name}</p>
+                      <p className="text-[11px] text-muted-foreground">{s.owningTeam}</p>
+                    </div>
+                    <span className={cn("text-lg font-bold tabular-nums shrink-0", loadColor)}>
+                      {s.loadPct}%
+                    </span>
+                  </div>
+                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={cn("h-full rounded-full transition-all", barColor)}
+                      style={{ width: `${s.loadPct}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Users size={11} /> {s.engineerCount} engineer{s.engineerCount !== 1 ? "s" : ""}
+                    </span>
+                    <span>
+                      {s.activeInitiatives}/{s.initiativeCount} initiative{s.initiativeCount !== 1 ? "s" : ""} active
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
         {/* ── Capacity Timeline Grid ── */}
         <div className="rounded-lg border border-border/50 bg-card overflow-hidden relative">
           {!todayVisible && (
