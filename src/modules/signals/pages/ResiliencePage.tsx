@@ -268,7 +268,7 @@ export default function ResiliencePage() {
           </thead>
           <tbody className="divide-y divide-border/50">
             {filtered.map((r) => {
-              const barColor = r.coverageScore >= 75 ? "bg-success" : r.coverageScore >= 50 ? "bg-warning" : "bg-destructive";
+              const barColor = r.coverageScore >= 75 ? "bg-success" : r.coverageScore >= 55 ? "bg-warning" : r.coverageScore >= 35 ? "bg-orange" : "bg-destructive";
               return (
                 <tr key={r.area} className="hover:bg-accent/10 tessira-transition group">
                   <td className="px-4 py-3">
