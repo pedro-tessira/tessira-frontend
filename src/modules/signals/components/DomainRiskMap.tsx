@@ -80,7 +80,7 @@ export function DomainRiskMap() {
               <div className={cn("text-[10px] font-medium uppercase tracking-wider", riskText(covRisk))}>
                 {riskLabel(covRisk)}
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>
