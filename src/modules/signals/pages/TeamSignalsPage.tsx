@@ -3,7 +3,8 @@ import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { SignalBadge, TrendIndicator, CapacityBar, ScoreGauge } from "../components/SignalIndicators";
 import { MOCK_TEAM_SIGNALS } from "../data";
 import { cn } from "@/shared/lib/utils";
-import { AlertTriangle, Shield } from "lucide-react";
+import { AlertTriangle, Shield, Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function TeamSignalsPage() {
   const sorted = [...MOCK_TEAM_SIGNALS].sort((a, b) => a.healthScore - b.healthScore);
@@ -50,7 +51,25 @@ export default function TeamSignalsPage() {
             {/* Metrics */}
             <div className="p-5">
               <div className="grid gap-6 sm:grid-cols-4">
-                <ScoreGauge score={team.healthScore} label="Health Score" />
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="cursor-help">
+                        <ScoreGauge score={team.healthScore} label="Health Score" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-[240px] text-xs leading-relaxed">
+                      <p className="font-semibold mb-1">Health Score (0–10)</p>
+                      <p>Weighted composite of:</p>
+                      <ul className="list-disc pl-3.5 mt-0.5 space-y-0.5 text-muted-foreground">
+                        <li>Allocation pressure (30%)</li>
+                        <li>Coverage score (30%)</li>
+                        <li>SPOF count (20%)</li>
+                        <li>Bus factor (20%)</li>
+                      </ul>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
 
                 <div className="space-y-2">
                   <div className="text-xs text-muted-foreground uppercase tracking-wider">Allocation</div>
@@ -68,29 +87,61 @@ export default function TeamSignalsPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Capacity Trend</div>
-                  <TrendIndicator direction={team.capacityTrend} value={
-                    team.capacityTrend === "up" ? "Increasing" :
-                    team.capacityTrend === "down" ? "Decreasing" : "Stable"
-                  } />
-                  <div className="text-xs text-muted-foreground">
-                    {team.allocation >= 90 ? "Near ceiling" : team.allocation >= 80 ? "Moderate pressure" : "Healthy buffer"}
-                  </div>
-                </div>
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="space-y-2 cursor-help">
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground uppercase tracking-wider">
+                          Capacity Trend
+                          <Info size={10} className="text-muted-foreground/50" />
+                        </div>
+                        <TrendIndicator direction={team.capacityTrend} value={
+                          team.capacityTrend === "up" ? "Increasing" :
+                          team.capacityTrend === "down" ? "Decreasing" : "Stable"
+                        } />
+                        <div className="text-xs text-muted-foreground">
+                          {team.allocation >= 90 ? "Near ceiling" : team.allocation >= 80 ? "Moderate pressure" : "Healthy buffer"}
+                        </div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-[240px] text-xs leading-relaxed">
+                      <p className="font-semibold mb-1">Capacity Trend</p>
+                      <p className="text-muted-foreground">Direction of allocation pressure over recent periods. Derived from team FTE allocation vs total capacity.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
 
-                <div className="space-y-2">
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Coverage</div>
-                  <div className="text-xl font-bold tabular-nums">
-                    {team.coverageScore}%
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {team.spofCount > 0
-                      ? <span className="text-destructive font-medium">{team.spofCount} SPOF{team.spofCount > 1 ? "s" : ""}</span>
-                      : <span className="text-success">No SPOFs</span>
-                    }
-                  </div>
-                </div>
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="space-y-2 cursor-help">
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground uppercase tracking-wider">
+                          Coverage
+                          <Info size={10} className="text-muted-foreground/50" />
+                        </div>
+                        <div className="text-xl font-bold tabular-nums">
+                          {team.coverageScore}%
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {team.spofCount > 0
+                            ? <span className="text-destructive font-medium">{team.spofCount} SPOF{team.spofCount > 1 ? "s" : ""}</span>
+                            : <span className="text-success">No SPOFs</span>
+                          }
+                        </div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-[240px] text-xs leading-relaxed">
+                      <p className="font-semibold mb-1">Coverage Score (0–100%)</p>
+                      <p className="text-muted-foreground">Per-skill score weighted by role:</p>
+                      <ul className="list-disc pl-3.5 mt-0.5 space-y-0.5 text-muted-foreground">
+                        <li>Owner = 1.0</li>
+                        <li>Backup = 0.6</li>
+                        <li>Learner = 0.3</li>
+                      </ul>
+                      <p className="mt-1 text-muted-foreground">Averaged across all team skills, normalized to 100%.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
 
               {/* Alerts */}
