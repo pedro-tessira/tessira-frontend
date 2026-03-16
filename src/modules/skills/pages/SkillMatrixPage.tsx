@@ -48,9 +48,8 @@ export default function SkillMatrixPage() {
           className="rounded-md border border-border/50 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary tessira-transition"
         >
           <option value="all">All Types</option>
-          <option value="technology">Technology</option>
-          <option value="system">System</option>
-          <option value="domain">Domain</option>
+          <option value="technical">Technical</option>
+          <option value="functional">Functional</option>
           <option value="operational">Operational</option>
         </select>
         <div className="flex items-center gap-3 text-xs text-muted-foreground ml-auto">
