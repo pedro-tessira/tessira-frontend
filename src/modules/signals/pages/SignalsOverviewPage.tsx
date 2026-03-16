@@ -48,6 +48,7 @@ export default function SignalsOverviewPage() {
       <ModulePageHeader
         title="Signals"
         description="Operational health, delivery pressure, and organizational resilience indicators."
+        actions={<HealthWeightsDialog />}
       />
 
       {/* Stats row */}
