@@ -192,9 +192,10 @@ export default function TimelinePage() {
   } | null>(null);
   const isDragging = useRef(false);
 
-  // Drag-to-resize state
+  // Drag-to-resize state (works for both allocations and events)
   const [resizeState, setResizeState] = useState<{
-    allocId: string;
+    itemId: string;
+    itemType: "allocation" | "event";
     edge: "left" | "right";
     originalStart: string;
     originalEnd: string;
@@ -359,15 +360,14 @@ export default function TimelinePage() {
   }, [dragState, rangeStart]);
 
   // ── Drag-to-resize handlers ──
-  const handleResizeStart = useCallback((allocId: string, edge: "left" | "right", originalStart: string, originalEnd: string, e: React.MouseEvent) => {
+  const handleResizeStart = useCallback((itemId: string, itemType: "allocation" | "event", edge: "left" | "right", originalStart: string, originalEnd: string, e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     isResizing.current = true;
-    // Calculate current day index from the edge being dragged
     const edgeDate = new Date(edge === "left" ? originalStart : originalEnd);
     edgeDate.setHours(0, 0, 0, 0);
     const dayIndex = Math.round((edgeDate.getTime() - rangeStart.getTime()) / 86400000);
-    setResizeState({ allocId, edge, originalStart, originalEnd, currentDayIndex: dayIndex });
+    setResizeState({ itemId, itemType, edge, originalStart, originalEnd, currentDayIndex: dayIndex });
   }, [rangeStart]);
 
   const handleResizeMove = useCallback((dayIndex: number) => {
@@ -383,12 +383,15 @@ export default function TimelinePage() {
     }
     isResizing.current = false;
     const newDate = toISO(addDays(rangeStart, resizeState.currentDayIndex));
-    const alloc = allocations.find((a) => a.id === resizeState.allocId);
-    if (alloc) {
-      const newStart = resizeState.edge === "left" ? newDate : resizeState.originalStart;
-      const newEnd = resizeState.edge === "right" ? newDate : resizeState.originalEnd;
-      if (newStart <= newEnd) {
-        toast.success(`Allocation resized: ${alloc.employeeName} → ${alloc.project} (${formatDate(newStart)} – ${formatDate(newEnd)})`);
+    const newStart = resizeState.edge === "left" ? newDate : resizeState.originalStart;
+    const newEnd = resizeState.edge === "right" ? newDate : resizeState.originalEnd;
+    if (newStart <= newEnd) {
+      if (resizeState.itemType === "allocation") {
+        const alloc = allocations.find((a) => a.id === resizeState.itemId);
+        if (alloc) toast.success(`Allocation resized: ${alloc.employeeName} → ${alloc.project} (${formatDate(newStart)} – ${formatDate(newEnd)})`);
+      } else {
+        const evt = timelineEvents.find((e) => e.id === resizeState.itemId);
+        if (evt) toast.success(`Event resized: ${evt.title} (${formatDate(newStart)} – ${formatDate(newEnd)})`);
       }
     }
     setResizeState(null);
@@ -560,6 +563,8 @@ export default function TimelinePage() {
                   onAllocationClick={setSelectedAllocation}
                   onEventClick={setSelectedEvent}
                   className="bg-muted/5"
+                  onResizeStart={handleResizeStart}
+                  resizeState={resizeState}
                 />
               )}
 
@@ -682,8 +687,8 @@ interface TimelineLaneProps {
   onDragStart?: (dayIndex: number) => void;
   onDragMove?: (dayIndex: number) => void;
   dragSelection?: { startIndex: number; endIndex: number };
-  onResizeStart?: (allocId: string, edge: "left" | "right", originalStart: string, originalEnd: string, e: React.MouseEvent) => void;
-  resizeState?: { allocId: string; edge: "left" | "right"; originalStart: string; originalEnd: string; currentDayIndex: number } | null;
+  onResizeStart?: (itemId: string, itemType: "allocation" | "event", edge: "left" | "right", originalStart: string, originalEnd: string, e: React.MouseEvent) => void;
+  resizeState?: { itemId: string; itemType: "allocation" | "event"; edge: "left" | "right"; originalStart: string; originalEnd: string; currentDayIndex: number } | null;
 }
 
 function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rangeDays, dates, todayISO, layers, expanded, onToggle, onAllocationClick, onEventClick, className, availFn, onDragStart, onDragMove, dragSelection, onResizeStart, resizeState }: TimelineLaneProps) {
@@ -768,7 +773,7 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
         {/* Allocation bars */}
         {slottedAllocs.map(({ alloc, slot }) => {
           // Compute resize overrides
-          const isBeingResized = resizeState?.allocId === alloc.id;
+          const isBeingResized = resizeState?.itemId === alloc.id && resizeState?.itemType === "allocation";
           let displayStart = alloc.startDate;
           let displayEnd = alloc.endDate;
           if (isBeingResized && resizeState) {
@@ -802,6 +807,17 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
         {/* Event blocks */}
         {slottedEvents.map(({ event, slot }) => {
           if (!expanded && slot >= MAX_VISIBLE_EVENTS) return null;
+          const isBeingResized = resizeState?.itemId === event.id && resizeState?.itemType === "event";
+          let evDisplayStart = event.startDate;
+          let evDisplayEnd = event.endDate;
+          if (isBeingResized && resizeState) {
+            const newDate = toISO(addDays(rangeStart, resizeState.currentDayIndex));
+            if (resizeState.edge === "left") {
+              evDisplayStart = newDate <= evDisplayEnd ? newDate : evDisplayEnd;
+            } else {
+              evDisplayEnd = newDate >= evDisplayStart ? newDate : evDisplayStart;
+            }
+          }
           return (
             <EventBlock
               key={event.id}
@@ -814,6 +830,10 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
                 e.stopPropagation();
                 onEventClick?.(event);
               }}
+              onResizeStart={onResizeStart}
+              displayStart={evDisplayStart}
+              displayEnd={evDisplayEnd}
+              isResizing={isBeingResized}
             />
           );
         })}
@@ -869,7 +889,7 @@ function AllocationBlock({
   rangeDays: number;
   topOffset: number;
   onClick: (e: React.MouseEvent) => void;
-  onResizeStart?: (allocId: string, edge: "left" | "right", originalStart: string, originalEnd: string, e: React.MouseEvent) => void;
+  onResizeStart?: (itemId: string, itemType: "allocation" | "event", edge: "left" | "right", originalStart: string, originalEnd: string, e: React.MouseEvent) => void;
   displayStart?: string;
   displayEnd?: string;
   isResizing?: boolean;
@@ -914,7 +934,7 @@ function AllocationBlock({
               className="absolute left-0 top-0 bottom-0 w-2 cursor-col-resize opacity-0 group-hover:opacity-100 hover:bg-primary/30 rounded-l-md transition-opacity z-10"
               onMouseDown={(e) => {
                 e.stopPropagation();
-                onResizeStart(alloc.id, "left", alloc.startDate, alloc.endDate, e);
+                onResizeStart(alloc.id, "allocation", "left", alloc.startDate, alloc.endDate, e);
               }}
             />
           )}
@@ -926,7 +946,7 @@ function AllocationBlock({
               className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize opacity-0 group-hover:opacity-100 hover:bg-primary/30 rounded-r-md transition-opacity z-10"
               onMouseDown={(e) => {
                 e.stopPropagation();
-                onResizeStart(alloc.id, "right", alloc.startDate, alloc.endDate, e);
+                onResizeStart(alloc.id, "allocation", "right", alloc.startDate, alloc.endDate, e);
               }}
             />
           )}
@@ -952,6 +972,10 @@ function EventBlock({
   rangeDays,
   topOffset,
   onClick,
+  onResizeStart,
+  displayStart,
+  displayEnd,
+  isResizing: resizing,
 }: {
   event: TimelineEvent;
   slot: number;
@@ -959,10 +983,16 @@ function EventBlock({
   rangeDays: number;
   topOffset: number;
   onClick?: (e: React.MouseEvent) => void;
+  onResizeStart?: (itemId: string, itemType: "allocation" | "event", edge: "left" | "right", originalStart: string, originalEnd: string, e: React.MouseEvent) => void;
+  displayStart?: string;
+  displayEnd?: string;
+  isResizing?: boolean;
 }) {
   const totalPx = rangeDays * DAY_WIDTH;
-  const evStart = new Date(event.startDate);
-  const evEnd = new Date(event.endDate);
+  const startDate = displayStart || event.startDate;
+  const endDate = displayEnd || event.endDate;
+  const evStart = new Date(startDate);
+  const evEnd = new Date(endDate);
   evStart.setHours(0, 0, 0, 0);
   evEnd.setHours(0, 0, 0, 0);
 
@@ -977,27 +1007,48 @@ function EventBlock({
       <TooltipTrigger asChild>
         <div
           className={cn(
-            "absolute rounded border flex items-center px-1.5 text-[10px] font-medium truncate cursor-pointer hover:brightness-110 hover:shadow-sm transition-all",
-            colors
+            "absolute rounded border flex items-center px-1.5 text-[10px] font-medium truncate cursor-pointer hover:brightness-110 hover:shadow-sm transition-all group",
+            colors,
+            resizing && "ring-2 ring-primary/50 shadow-md"
           )}
           style={{
             left: leftPx,
             width: widthPx,
             top: topPx,
             height: ROW_EVENT_HEIGHT,
-            zIndex: 4,
+            zIndex: resizing ? 10 : 4,
           }}
           onMouseDown={(e) => e.stopPropagation()}
           onClick={onClick}
         >
+          {/* Left resize handle */}
+          {onResizeStart && (
+            <div
+              className="absolute left-0 top-0 bottom-0 w-2 cursor-col-resize opacity-0 group-hover:opacity-100 hover:bg-foreground/10 rounded-l transition-opacity z-10"
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                onResizeStart(event.id, "event", "left", event.startDate, event.endDate, e);
+              }}
+            />
+          )}
           <span className="truncate">{event.title}</span>
+          {/* Right resize handle */}
+          {onResizeStart && (
+            <div
+              className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize opacity-0 group-hover:opacity-100 hover:bg-foreground/10 rounded-r transition-opacity z-10"
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                onResizeStart(event.id, "event", "right", event.startDate, event.endDate, e);
+              }}
+            />
+          )}
         </div>
       </TooltipTrigger>
       <TooltipContent side="top" className="text-xs space-y-0.5">
         <p className="font-semibold">{event.title}</p>
         <p className="text-muted-foreground">{eventTypeLabels[event.type]}</p>
-        <p className="tabular-nums">{formatDate(event.startDate)} → {formatDate(event.endDate)}</p>
-        <p className="text-muted-foreground/70 text-[10px]">Click to edit</p>
+        <p className="tabular-nums">{formatDate(startDate)} → {formatDate(endDate)}</p>
+        <p className="text-muted-foreground/70 text-[10px]">Drag edges to resize</p>
       </TooltipContent>
     </Tooltip>
   );
