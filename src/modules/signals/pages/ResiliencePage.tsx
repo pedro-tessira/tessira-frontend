@@ -175,7 +175,7 @@ export default function ResiliencePage() {
                     </div>
                     <span className={cn(
                       "text-sm font-bold tabular-nums",
-                      bf < 2 ? "text-destructive" : bf < 3 ? "text-warning" : "text-success"
+                      bf < 2 ? "text-destructive" : bf < 3 ? "text-orange" : "text-success"
                     )}>
                       {bf}
                     </span>
