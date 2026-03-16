@@ -41,6 +41,7 @@ import {
 import type { AvailabilityWindow } from "../types";
 import { streams, initiatives, workAllocations } from "@/modules/work/data";
 import { Link } from "react-router-dom";
+import { Sparkline } from "@/modules/signals/components/Sparkline";
 
 // ── Constants ────────────────────────────────────────────
 const DAY_WIDTH = 36;
@@ -234,19 +235,21 @@ export default function CapacityIntelligencePage() {
   // Stream-level capacity: how loaded is each delivery stream
   const streamCapacity = useMemo(() => {
     return streams.map((stream) => {
-      // Find initiatives in this stream
       const streamInits = initiatives.filter((i) => i.streamIds.includes(stream.id));
       const initIds = new Set(streamInits.map((i) => i.id));
-      // Find work allocations for those initiatives
       const streamAllocs = workAllocations.filter((wa) => initIds.has(wa.initiativeId));
-      // Unique engineers allocated
       const uniqueEngIds = new Set(streamAllocs.map((wa) => wa.employeeId));
-      // Average allocation across those engineers (weighted by their allocation %)
       const totalAllocPct = streamAllocs.reduce((sum, wa) => sum + wa.percentage, 0);
       const avgAlloc = uniqueEngIds.size > 0 ? Math.round(totalAllocPct / uniqueEngIds.size) : 0;
-      // Stream load: total allocation headcount-adjusted
       const loadPct = Math.min(100, avgAlloc);
       const activeInits = streamInits.filter((i) => i.status === "active").length;
+
+      // Generate a 4-week trend based on the current load with realistic variation
+      const seed = stream.id.charCodeAt(stream.id.length - 1);
+      const weeklyTrend = Array.from({ length: 4 }, (_, i) => {
+        const variance = ((seed * (i + 1) * 7) % 25) - 12;
+        return Math.max(0, Math.min(100, loadPct + variance - (3 - i) * 3));
+      });
 
       return {
         id: stream.id,
@@ -257,6 +260,7 @@ export default function CapacityIntelligencePage() {
         activeInitiatives: activeInits,
         loadPct,
         totalAllocPct,
+        weeklyTrend,
       };
     }).sort((a, b) => b.loadPct - a.loadPct);
   }, []);
@@ -432,6 +436,13 @@ export default function CapacityIntelligencePage() {
                     </span>
                     <span>
                       {s.activeInitiatives}/{s.initiativeCount} initiative{s.initiativeCount !== 1 ? "s" : ""} active
+                    </span>
+                    <span className="ml-auto flex items-center gap-1.5">
+                      <span className="text-[10px] text-muted-foreground/70">4w trend</span>
+                      <Sparkline
+                        data={s.weeklyTrend}
+                        color={s.loadPct >= 80 ? "destructive" : s.loadPct >= 50 ? "warning" : "success"}
+                      />
                     </span>
                   </div>
                 </Link>
