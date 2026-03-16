@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { TenantProvider } from "@/shared/contexts/TenantContext";
+import { HealthWeightsProvider } from "@/modules/signals/contexts/HealthWeightsContext";
 
 import { AppShell } from "@/shared/layouts/AppShell";
 import LandingPage from "@/modules/landing/pages/LandingPage";
