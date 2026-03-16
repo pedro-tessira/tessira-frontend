@@ -322,11 +322,11 @@ export default function CapacityIntelligencePage() {
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Layers size={14} className="text-primary" />
-            <h3 className="text-sm font-semibold">Stream Load</h3>
-            <span className="text-[11px] text-muted-foreground">— Average allocation per engineer by delivery stream</span>
+            <h3 className="text-sm font-semibold">Domain Load</h3>
+            <span className="text-[11px] text-muted-foreground">— Average allocation per engineer by domain</span>
           </div>
           <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {streamCapacity.map((s) => {
+            {domainCapacity.map((s) => {
               const loadColor = s.loadPct >= 80
                 ? "text-destructive"
                 : s.loadPct >= 50
@@ -340,7 +340,7 @@ export default function CapacityIntelligencePage() {
               return (
                 <Link
                   key={s.id}
-                  to={`/app/work/streams/${s.id}`}
+                  to={`/app/work/domains/${s.id}`}
                   className="rounded-lg border border-border/50 bg-card p-4 space-y-3 hover:border-primary/30 transition-colors"
                 >
                   <div className="flex items-start justify-between gap-2">
