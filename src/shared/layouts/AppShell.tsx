@@ -74,6 +74,38 @@ export function AppShell() {
     setMobileOpen(false);
   }, [location.pathname]);
 
+  // Swipe gesture support
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStart.current = { x: touch.clientX, y: touch.clientY };
+  }, []);
+
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (!touchStart.current || !isMobile) return;
+      const touch = e.changedTouches[0];
+      const dx = touch.clientX - touchStart.current.x;
+      const dy = touch.clientY - touchStart.current.y;
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+
+      // Must be a horizontal swipe (not diagonal/vertical)
+      if (absDx > 50 && absDx > absDy * 1.5) {
+        if (dx > 0 && touchStart.current.x < 40 && !mobileOpen) {
+          // Swipe right from left edge → open
+          setMobileOpen(true);
+        } else if (dx < 0 && mobileOpen) {
+          // Swipe left while open → close
+          setMobileOpen(false);
+        }
+      }
+      touchStart.current = null;
+    },
+    [isMobile, mobileOpen]
+  );
+
   const sidebarContent = (
     <>
       {/* Logo */}
