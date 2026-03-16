@@ -133,6 +133,7 @@ export default function CapacityIntelligencePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const [todayVisible, setTodayVisible] = useState(true);
+  const [selectedEngineer, setSelectedEngineer] = useState<typeof capacityData[number] | null>(null);
 
   const rangeDays = range === "2w" ? 14 : range === "4w" ? 28 : 56;
   const today = new Date();
