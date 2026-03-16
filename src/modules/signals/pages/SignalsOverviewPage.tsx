@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity, Users2, Gauge, Shield, ArrowRight, AlertTriangle, AlertCircle, Info,
@@ -8,7 +8,9 @@ import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { StatCard } from "@/shared/components/StatCard";
 import { SignalDot, TrendIndicator, SignalBadge } from "../components/SignalIndicators";
 import { Sparkline } from "../components/Sparkline";
-import { MOCK_ORG_SIGNALS, MOCK_ALERTS, MOCK_TEAM_SIGNALS, getSignalsStats } from "../data";
+import { MOCK_ORG_SIGNALS, MOCK_ALERTS, computeTeamSignals, getSignalsStats } from "../data";
+import { useHealthWeights } from "../contexts/HealthWeightsContext";
+import { HealthWeightsDialog } from "../components/HealthWeightsDialog";
 import { cn } from "@/shared/lib/utils";
 import {
   healthScoreRisk, freeCapacityRisk, coverageRisk, spofRisk, busFactorRisk,
@@ -34,9 +36,11 @@ function sparklineColor(status: string): "success" | "warning" | "destructive" |
 }
 
 export default function SignalsOverviewPage() {
+  const { normalized } = useHealthWeights();
+  const teamSignals = useMemo(() => computeTeamSignals(normalized), [normalized]);
   const stats = getSignalsStats();
   const topAlerts = MOCK_ALERTS.slice(0, 5);
-  const teamsSorted = [...MOCK_TEAM_SIGNALS].sort((a, b) => a.healthScore - b.healthScore);
+  const teamsSorted = [...teamSignals].sort((a, b) => a.healthScore - b.healthScore);
   const [expandedAlert, setExpandedAlert] = useState<string | null>(null);
 
   return (
@@ -44,12 +48,13 @@ export default function SignalsOverviewPage() {
       <ModulePageHeader
         title="Signals"
         description="Operational health, delivery pressure, and organizational resilience indicators."
+        actions={<HealthWeightsDialog />}
       />
 
       {/* Stats row */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Org Health" value={stats.avgHealthScore} icon={Activity} detail="Avg across teams" />
-        <StatCard label="Teams At Risk" value={stats.teamsAtRisk} icon={Users2} detail={`of ${MOCK_TEAM_SIGNALS.length} teams`} className={stats.teamsAtRisk > 0 ? "border-warning/30" : ""} />
+        <StatCard label="Teams At Risk" value={stats.teamsAtRisk} icon={Users2} detail={`of ${teamSignals.length} teams`} className={stats.teamsAtRisk > 0 ? "border-warning/30" : ""} />
         <StatCard label="Critical Alerts" value={stats.criticalAlerts} icon={AlertTriangle} detail="Requiring attention" className={stats.criticalAlerts > 0 ? "border-warning/30" : ""} />
         <StatCard label="Critical Resilience" value={stats.criticalResilience} icon={Shield} detail="Areas needing backup" className={stats.criticalResilience > 0 ? "border-destructive/30" : ""} />
       </div>

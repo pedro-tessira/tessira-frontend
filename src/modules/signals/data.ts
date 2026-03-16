@@ -69,16 +69,19 @@ function computeTeamCoverage(teamId: string): { coverageScore: number; spofCount
 
 /**
  * Health Score = weighted composite (0-10):
- *   - Allocation pressure (30%): lower allocation = healthier
- *   - Coverage score (30%): higher coverage = healthier
- *   - SPOF count (20%): fewer SPOFs = healthier
- *   - Bus factor (20%): higher bus factor = healthier
+ *   - Allocation pressure: lower allocation = healthier
+ *   - Coverage score: higher coverage = healthier
+ *   - SPOF count: fewer SPOFs = healthier
+ *   - Bus factor: higher bus factor = healthier
+ *
+ * Weights are normalized so they always sum to 1.0.
  */
-function computeHealthScore(
+export function computeHealthScore(
   allocationPct: number,
   coverageScore: number,
   spofCount: number,
   busFactor: number,
+  weights = { allocation: 0.3, coverage: 0.3, spof: 0.2, busFactor: 0.2 },
 ): number {
   // Allocation: 100%→0, 50%→10. Invert and scale.
   const allocScore = Math.max(0, Math.min(10, (100 - allocationPct) / 5));
@@ -89,7 +92,11 @@ function computeHealthScore(
   // Bus factor: 0→0, 4+→10
   const bfScore = Math.min(busFactor * 2.5, 10);
 
-  const weighted = allocScore * 0.3 + covScore * 0.3 + spofScore * 0.2 + bfScore * 0.2;
+  const weighted =
+    allocScore * weights.allocation +
+    covScore * weights.coverage +
+    spofScore * weights.spof +
+    bfScore * weights.busFactor;
   return Math.round(weighted * 10) / 10;
 }
 
@@ -155,12 +162,15 @@ function generateTeamAlerts(
 
 /**
  * Compute all team signals from skills + capacity source data.
+ * Accepts optional normalized weights for health score computation.
  */
-export function computeTeamSignals(): TeamSignal[] {
+export function computeTeamSignals(
+  weights?: { allocation: number; coverage: number; spof: number; busFactor: number },
+): TeamSignal[] {
   return MOCK_CAPACITY.map((cap) => {
     const allocationPct = Math.round((cap.allocated / cap.totalCapacity) * 100);
     const { coverageScore, spofCount, busFactor } = computeTeamCoverage(cap.teamId);
-    const healthScore = computeHealthScore(allocationPct, coverageScore, spofCount, busFactor);
+    const healthScore = computeHealthScore(allocationPct, coverageScore, spofCount, busFactor, weights);
     const deliveryLoad = deriveDeliveryLoad(allocationPct);
     const alerts = generateTeamAlerts(cap.teamName, cap.teamId, allocationPct, spofCount, busFactor, cap.onLeave);
 
@@ -180,7 +190,7 @@ export function computeTeamSignals(): TeamSignal[] {
   });
 }
 
-// Backwards-compatible export (now computed)
+// Backwards-compatible export (default weights)
 export const MOCK_TEAM_SIGNALS: TeamSignal[] = computeTeamSignals();
 
 // ── Org Signals (derived from team signals) ──
