@@ -328,6 +328,13 @@ export default function NineBoxPage() {
         open={!!selectedEmployeeId}
         onOpenChange={(open) => { if (!open) setSelectedEmployeeId(null); }}
         employeeId={selectedEmployeeId}
+        boxLabel={
+          selectedEmployeeId
+            ? BOX_LABELS[
+                `${currentPlacements.find((p) => p.employeeId === selectedEmployeeId)?.performance}-${currentPlacements.find((p) => p.employeeId === selectedEmployeeId)?.potential}`
+              ]?.label
+            : undefined
+        }
       />
     </div>
   );
