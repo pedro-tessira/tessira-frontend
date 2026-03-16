@@ -717,7 +717,7 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
 
   return (
     <div
-      className={cn("flex border-b border-border/30 last:border-0 hover:bg-accent/5 transition-colors", onDragStart ? "cursor-crosshair" : "cursor-pointer", className)}
+      className={cn("flex border-b border-border/30 last:border-0 hover:bg-accent/5 transition-colors cursor-default", className)}
       onClick={!onDragStart ? onToggle : undefined}
     >
       {/* Sticky label */}
@@ -727,7 +727,7 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
 
       {/* Grid area */}
       <div
-        className="relative select-none"
+        className={cn("relative select-none", onDragStart ? "cursor-crosshair" : "")}
         style={{ width: gridWidth, minHeight: Math.max(36, rowHeight) }}
         onMouseDown={(e) => {
           if (!onDragStart || resizeState) return;
@@ -747,34 +747,32 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
           onDragMove(dayIndex);
         }}
       >
-        {/* Availability background cells */}
-        {availFn && (
-          <div className="flex absolute inset-0">
-            {dates.map((d, i) => {
-              const iso = toISO(d);
-              const status = availFn(iso);
-              const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-              const isToday = iso === todayISO;
-              return (
-                <div
-                  key={i}
-                  style={{
-                    width: DAY_WIDTH,
-                    ...(isToday
-                      ? { backgroundImage: "linear-gradient(hsl(var(--primary) / 0.14), hsl(var(--primary) / 0.14))" }
-                      : {}),
-                  }}
-                  className={cn(
-                    "border-r border-border/10 h-full",
-                    status ? availStatusColors[status] : "",
-                    isWeekend && "bg-muted/15",
-                    isToday && "border-x border-primary/30"
-                  )}
-                />
-              );
-            })}
-          </div>
-        )}
+        {/* Background cells (availability + today overlay) */}
+        <div className="flex absolute inset-0">
+          {dates.map((d, i) => {
+            const iso = toISO(d);
+            const status = availFn ? availFn(iso) : null;
+            const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+            const isToday = iso === todayISO;
+            return (
+              <div
+                key={i}
+                style={{
+                  width: DAY_WIDTH,
+                  ...(isToday
+                    ? { backgroundImage: "linear-gradient(hsl(var(--primary) / 0.14), hsl(var(--primary) / 0.14))" }
+                    : {}),
+                }}
+                className={cn(
+                  "border-r border-border/10 h-full",
+                  status ? availStatusColors[status] : "",
+                  isWeekend && "bg-muted/15",
+                  isToday && "border-x border-primary/30"
+                )}
+              />
+            );
+          })}
+        </div>
 
         {/* Allocation bars */}
         {slottedAllocs.map(({ alloc, slot }) => {
