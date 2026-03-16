@@ -218,7 +218,7 @@ export default function NineBoxPage() {
             >
               All
             </Button>
-            {MOCK_TEAMS.map((t) => (
+            {teams.map((t) => (
               <Button
                 key={t.id}
                 variant={teamFilter === t.id ? "secondary" : "ghost"}
