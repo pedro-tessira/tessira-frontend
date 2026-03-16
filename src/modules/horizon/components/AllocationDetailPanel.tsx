@@ -183,10 +183,23 @@ export default function AllocationDetailPanel({
                 </Link>
               )}
 
-              {/* Edit button */}
-              <Button variant="outline" size="sm" className="w-full gap-2" onClick={handleStartEdit}>
-                <Pencil size={13} /> Edit Allocation
-              </Button>
+              {/* Action buttons */}
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="flex-1 gap-2" onClick={handleStartEdit}>
+                  <Pencil size={13} /> Edit
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  onClick={() => {
+                    toast.success(`Allocation removed: ${allocation.employeeName} → ${allocation.project}`);
+                    onOpenChange(false);
+                  }}
+                >
+                  <Trash2 size={13} /> Remove
+                </Button>
+              </div>
             </>
           ) : (
             <>
