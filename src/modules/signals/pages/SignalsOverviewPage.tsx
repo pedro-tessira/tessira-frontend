@@ -39,6 +39,22 @@ export default function SignalsOverviewPage() {
   const { normalized } = useHealthWeights();
   const teamSignals = useMemo(() => computeTeamSignals(normalized), [normalized]);
   const stats = getSignalsStats();
+  const dynamicAvgHealth = useMemo(
+    () => +(teamSignals.reduce((s, t) => s + t.healthScore, 0) / teamSignals.length).toFixed(1),
+    [teamSignals],
+  );
+  const dynamicOrgSignals = useMemo(() => {
+    return MOCK_ORG_SIGNALS.map((sig) =>
+      sig.id === "sig-01"
+        ? {
+            ...sig,
+            value: dynamicAvgHealth,
+            status: (dynamicAvgHealth >= 7 ? "healthy" : dynamicAvgHealth >= 5.5 ? "warning" : "critical") as "healthy" | "warning" | "critical",
+            history: [...sig.history.slice(0, -1), dynamicAvgHealth],
+          }
+        : sig,
+    );
+  }, [dynamicAvgHealth]);
   const topAlerts = MOCK_ALERTS.slice(0, 5);
   const teamsSorted = [...teamSignals].sort((a, b) => a.healthScore - b.healthScore);
   const [expandedAlert, setExpandedAlert] = useState<string | null>(null);
