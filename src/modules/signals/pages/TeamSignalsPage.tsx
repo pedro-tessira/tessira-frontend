@@ -33,7 +33,7 @@ export default function TeamSignalsPage() {
       <div className="space-y-4">
         {sorted.map((team) => {
           const freeCapacity = 100 - team.allocation;
-          const freeRisk = freeCapacityRisk(freeCapacity);
+          const aRisk = allocationRisk(team.allocation);
           const covRisk = coverageRisk(team.coverageScore);
           const spRisk = spofRisk(team.spofCount);
 
