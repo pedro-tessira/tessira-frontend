@@ -760,12 +760,15 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
                   key={i}
                   style={{
                     width: DAY_WIDTH,
-                    ...(isToday ? { boxShadow: "inset 2px 0 0 hsl(var(--primary) / 0.5), inset -2px 0 0 hsl(var(--primary) / 0.5)" } : {}),
+                    ...(isToday
+                      ? { backgroundImage: "linear-gradient(hsl(var(--primary) / 0.14), hsl(var(--primary) / 0.14))" }
+                      : {}),
                   }}
                   className={cn(
                     "border-r border-border/10 h-full",
                     status ? availStatusColors[status] : "",
                     isWeekend && "bg-muted/15",
+                    isToday && "border-x border-primary/30"
                   )}
                 />
               );

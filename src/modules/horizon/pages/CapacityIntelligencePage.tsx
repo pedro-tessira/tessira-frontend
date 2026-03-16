@@ -646,13 +646,16 @@ function CapacityRow({
                 <div
                   style={{
                     width: DAY_WIDTH,
-                    ...(isToday ? { boxShadow: "inset 2px 0 0 hsl(var(--primary) / 0.5), inset -2px 0 0 hsl(var(--primary) / 0.5)" } : {}),
+                    ...(isToday
+                      ? { backgroundImage: "linear-gradient(hsl(var(--primary) / 0.14), hsl(var(--primary) / 0.14))" }
+                      : {}),
                   }}
                   className={cn(
                     "h-8",
                     isMonday && !isToday && "border-l-2 border-border/40",
                     !isMonday && !isToday && "border-r border-border/10",
                     isWeekend ? "bg-muted/15" : cfg.color,
+                    isToday && "border-x border-primary/30"
                   )}
                 />
               </TooltipTrigger>
