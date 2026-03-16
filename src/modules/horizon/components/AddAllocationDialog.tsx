@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -46,13 +46,15 @@ export default function AddAllocationDialog({
   const [endDate, setEndDate] = useState(prefillEndDate ?? "");
 
   // Reset on open with prefills
-  useState(() => {
+  useEffect(() => {
     if (open) {
+      setInitiativeId("");
+      setPercentage([50]);
       setEmployeeId(prefillEmployeeId ?? "");
       setStartDate(prefillStartDate ?? "");
       setEndDate(prefillEndDate ?? "");
     }
-  });
+  }, [open, prefillEmployeeId, prefillStartDate, prefillEndDate]);
 
   // Calculate current free capacity for selected engineer
   const freeCapacity = useMemo(() => {

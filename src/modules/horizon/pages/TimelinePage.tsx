@@ -179,6 +179,15 @@ export default function TimelinePage() {
   const [layers, setLayers] = useState<Set<TimelineLayer>>(new Set(["availability", "allocations", "events"]));
   const [selectedAllocation, setSelectedAllocation] = useState<Allocation | null>(null);
   const [addAllocOpen, setAddAllocOpen] = useState(false);
+  const [addAllocPrefill, setAddAllocPrefill] = useState<{ employeeId?: string; startDate?: string; endDate?: string }>({});
+
+  // Drag-to-create state
+  const [dragState, setDragState] = useState<{
+    empId: string;
+    startDayIndex: number;
+    currentDayIndex: number;
+  } | null>(null);
+  const isDragging = useRef(false);
 
   const toggleLayer = (layer: TimelineLayer) => {
     setLayers((prev) => {
@@ -305,6 +314,45 @@ export default function TimelinePage() {
   }, [filteredEmployees, dates]);
 
   const conflictSet = useMemo(() => new Set(conflicts.map((c) => c.empId)), [conflicts]);
+
+  // ── Drag-to-create handlers ──
+  const handleDragStart = useCallback((empId: string, dayIndex: number) => {
+    isDragging.current = true;
+    setDragState({ empId, startDayIndex: dayIndex, currentDayIndex: dayIndex });
+  }, []);
+
+  const handleDragMove = useCallback((dayIndex: number) => {
+    if (!isDragging.current) return;
+    setDragState((prev) => prev ? { ...prev, currentDayIndex: dayIndex } : null);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    if (!isDragging.current || !dragState) {
+      isDragging.current = false;
+      setDragState(null);
+      return;
+    }
+    isDragging.current = false;
+    const minDay = Math.min(dragState.startDayIndex, dragState.currentDayIndex);
+    const maxDay = Math.max(dragState.startDayIndex, dragState.currentDayIndex);
+    // Need at least 1 day span
+    if (maxDay - minDay >= 0) {
+      const startDate = toISO(addDays(rangeStart, minDay));
+      const endDate = toISO(addDays(rangeStart, maxDay));
+      setAddAllocPrefill({ employeeId: dragState.empId, startDate, endDate });
+      setAddAllocOpen(true);
+    }
+    setDragState(null);
+  }, [dragState, rangeStart]);
+
+  // Global mouseup listener for drag
+  useEffect(() => {
+    const onMouseUp = () => {
+      if (isDragging.current) handleDragEnd();
+    };
+    window.addEventListener("mouseup", onMouseUp);
+    return () => window.removeEventListener("mouseup", onMouseUp);
+  }, [handleDragEnd]);
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -497,6 +545,12 @@ export default function TimelinePage() {
                   onToggle={() => toggleRow(emp.id)}
                   onAllocationClick={setSelectedAllocation}
                   availFn={layers.has("availability") ? (dayISO: string) => getAvailForDay(emp.id, dayISO) : undefined}
+                  onDragStart={(dayIndex) => handleDragStart(emp.id, dayIndex)}
+                  onDragMove={handleDragMove}
+                  dragSelection={dragState?.empId === emp.id ? {
+                    startIndex: Math.min(dragState.startDayIndex, dragState.currentDayIndex),
+                    endIndex: Math.max(dragState.startDayIndex, dragState.currentDayIndex),
+                  } : undefined}
                 />
               ))}
 
@@ -538,7 +592,13 @@ export default function TimelinePage() {
         onOpenChange={(open) => !open && setSelectedAllocation(null)}
         allocation={selectedAllocation}
       />
-      <AddAllocationDialog open={addAllocOpen} onOpenChange={setAddAllocOpen} />
+      <AddAllocationDialog
+        open={addAllocOpen}
+        onOpenChange={setAddAllocOpen}
+        prefillEmployeeId={addAllocPrefill.employeeId}
+        prefillStartDate={addAllocPrefill.startDate}
+        prefillEndDate={addAllocPrefill.endDate}
+      />
     </TooltipProvider>
   );
 }
@@ -559,9 +619,12 @@ interface TimelineLaneProps {
   onAllocationClick: (a: Allocation) => void;
   className?: string;
   availFn?: (dayISO: string) => AvailabilityWindow["status"] | null;
+  onDragStart?: (dayIndex: number) => void;
+  onDragMove?: (dayIndex: number) => void;
+  dragSelection?: { startIndex: number; endIndex: number };
 }
 
-function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rangeDays, dates, todayISO, layers, expanded, onToggle, onAllocationClick, className, availFn }: TimelineLaneProps) {
+function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rangeDays, dates, todayISO, layers, expanded, onToggle, onAllocationClick, className, availFn, onDragStart, onDragMove, dragSelection }: TimelineLaneProps) {
   const slottedEvents = useMemo(() => assignEventSlots(events), [events]);
   const slottedAllocs = useMemo(() => assignAllocSlots(allocs), [allocs]);
 
@@ -585,14 +648,37 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
   const eventTopOffset = allocSectionHeight;
 
   return (
-    <div className={cn("flex border-b border-border/30 last:border-0 hover:bg-accent/5 transition-colors cursor-pointer", className)} onClick={onToggle}>
+    <div
+      className={cn("flex border-b border-border/30 last:border-0 hover:bg-accent/5 transition-colors", onDragStart ? "cursor-crosshair" : "cursor-pointer", className)}
+      onClick={!onDragStart ? onToggle : undefined}
+    >
       {/* Sticky label */}
-      <div className="w-48 shrink-0 border-r border-border/50 px-3 py-2 flex items-center gap-2 sticky left-0 z-10 bg-card" style={{ minHeight: Math.max(36, rowHeight) }}>
+      <div className="w-48 shrink-0 border-r border-border/50 px-3 py-2 flex items-center gap-2 sticky left-0 z-10 bg-card cursor-pointer" style={{ minHeight: Math.max(36, rowHeight) }} onClick={onToggle}>
         {label}
       </div>
 
       {/* Grid area */}
-      <div className="relative" style={{ width: gridWidth, minHeight: Math.max(36, rowHeight) }}>
+      <div
+        className="relative select-none"
+        style={{ width: gridWidth, minHeight: Math.max(36, rowHeight) }}
+        onMouseDown={(e) => {
+          if (!onDragStart) return;
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const dayIndex = Math.floor(x / DAY_WIDTH);
+          if (dayIndex >= 0 && dayIndex < rangeDays) {
+            e.preventDefault();
+            onDragStart(dayIndex);
+          }
+        }}
+        onMouseMove={(e) => {
+          if (!onDragMove) return;
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const dayIndex = Math.max(0, Math.min(rangeDays - 1, Math.floor(x / DAY_WIDTH)));
+          onDragMove(dayIndex);
+        }}
+      >
         {/* Availability background cells */}
         {availFn && (
           <div className="flex absolute inset-0">
@@ -655,6 +741,21 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
             style={{ top: ROW_PADDING + eventTopOffset + MAX_VISIBLE_EVENTS * (ROW_EVENT_HEIGHT + ROW_GAP) }}
           >
             +{hiddenCount} more
+          </div>
+        )}
+
+        {/* Drag selection overlay */}
+        {dragSelection && (
+          <div
+            className="absolute top-0 bottom-0 bg-primary/15 border border-primary/40 rounded-sm pointer-events-none z-[5]"
+            style={{
+              left: dragSelection.startIndex * DAY_WIDTH,
+              width: (dragSelection.endIndex - dragSelection.startIndex + 1) * DAY_WIDTH,
+            }}
+          >
+            <span className="absolute top-1 left-1.5 text-[10px] font-medium text-primary">
+              {dragSelection.endIndex - dragSelection.startIndex + 1}d
+            </span>
           </div>
         )}
 
