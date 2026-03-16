@@ -814,6 +814,7 @@ function AllocationBlock({
     <Tooltip>
       <TooltipTrigger asChild>
         <div
+          onMouseDown={(e) => e.stopPropagation()}
           className="absolute rounded-md flex items-center px-1.5 text-[10px] font-semibold truncate cursor-pointer border border-indigo-500/40 bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-500/30 transition-colors"
           style={{
             left: leftPx,
