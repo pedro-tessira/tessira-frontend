@@ -179,6 +179,15 @@ export default function TimelinePage() {
   const [layers, setLayers] = useState<Set<TimelineLayer>>(new Set(["availability", "allocations", "events"]));
   const [selectedAllocation, setSelectedAllocation] = useState<Allocation | null>(null);
   const [addAllocOpen, setAddAllocOpen] = useState(false);
+  const [addAllocPrefill, setAddAllocPrefill] = useState<{ employeeId?: string; startDate?: string; endDate?: string }>({});
+
+  // Drag-to-create state
+  const [dragState, setDragState] = useState<{
+    empId: string;
+    startDayIndex: number;
+    currentDayIndex: number;
+  } | null>(null);
+  const isDragging = useRef(false);
 
   const toggleLayer = (layer: TimelineLayer) => {
     setLayers((prev) => {
