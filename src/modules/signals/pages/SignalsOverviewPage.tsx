@@ -82,6 +82,32 @@ export default function SignalsOverviewPage() {
         actions={<HealthWeightsDialog />}
       />
 
+      {/* Quick navigation */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        {[
+          { to: "/app/signals/teams", icon: Activity, label: "Team Signals", desc: "Per-team health and alerts" },
+          { to: "/app/signals/capacity", icon: Gauge, label: "Delivery Pressure", desc: "Full allocation breakdown" },
+          { to: "/app/signals/resilience", icon: Shield, label: "Resilience Detail", desc: "SPOF, bus factor, forecasts" },
+        ].map((link) => (
+          <Link
+            key={link.to}
+            to={link.to}
+            className="group rounded-lg border border-border/50 bg-card p-5 hover:border-primary/20 tessira-transition flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary">
+                <link.icon size={18} strokeWidth={1.8} />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold">{link.label}</h3>
+                <p className="text-xs text-muted-foreground">{link.desc}</p>
+              </div>
+            </div>
+            <ArrowRight size={14} className="text-muted-foreground/30 group-hover:text-primary tessira-transition" />
+          </Link>
+        ))}
+      </div>
+
       {/* ═══════════════ A) PRIORITY ZONE ═══════════════ */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
@@ -415,31 +441,8 @@ export default function SignalsOverviewPage() {
         </div>
       </section>
 
-      {/* Quick navigation */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        {[
-          { to: "/app/signals/teams", icon: Activity, label: "Team Signals", desc: "Per-team health and alerts" },
-          { to: "/app/signals/capacity", icon: Gauge, label: "Delivery Pressure", desc: "Full allocation breakdown" },
-          { to: "/app/signals/resilience", icon: Shield, label: "Resilience Detail", desc: "SPOF, bus factor, forecasts" },
-        ].map((link) => (
-          <Link
-            key={link.to}
-            to={link.to}
-            className="group rounded-lg border border-border/50 bg-card p-5 hover:border-primary/20 tessira-transition flex items-center justify-between"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary">
-                <link.icon size={18} strokeWidth={1.8} />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold">{link.label}</h3>
-                <p className="text-xs text-muted-foreground">{link.desc}</p>
-              </div>
-            </div>
-            <ArrowRight size={14} className="text-muted-foreground/30 group-hover:text-primary tessira-transition" />
-          </Link>
-        ))}
-      </div>
+
+
     </div>
   );
 }
