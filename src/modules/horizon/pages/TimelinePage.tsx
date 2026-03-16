@@ -880,8 +880,9 @@ function EventBlock({
             width: widthPx,
             top: topPx,
             height: ROW_EVENT_HEIGHT,
-            zIndex: 2,
+            zIndex: 4,
           }}
+          onMouseDown={(e) => e.stopPropagation()}
           onClick={onClick}
         >
           <span className="truncate">{event.title}</span>
