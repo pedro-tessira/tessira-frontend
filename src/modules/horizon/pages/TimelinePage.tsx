@@ -744,6 +744,21 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
           </div>
         )}
 
+        {/* Drag selection overlay */}
+        {dragSelection && (
+          <div
+            className="absolute top-0 bottom-0 bg-primary/15 border border-primary/40 rounded-sm pointer-events-none z-[5]"
+            style={{
+              left: dragSelection.startIndex * DAY_WIDTH,
+              width: (dragSelection.endIndex - dragSelection.startIndex + 1) * DAY_WIDTH,
+            }}
+          >
+            <span className="absolute top-1 left-1.5 text-[10px] font-medium text-primary">
+              {dragSelection.endIndex - dragSelection.startIndex + 1}d
+            </span>
+          </div>
+        )}
+
         {/* Today line */}
         <TodayLine rangeStart={rangeStart} rangeDays={rangeDays} todayISO={todayISO} />
       </div>
