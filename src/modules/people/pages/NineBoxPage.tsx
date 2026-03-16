@@ -117,6 +117,7 @@ export default function NineBoxPage() {
   const [movements, setMovements] = useState<MovementRecord[]>([]);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
 
   const currentPlacements = placementsMap[selectedRound] ?? [];
   const currentRound = REVIEW_ROUNDS.find((r) => r.id === selectedRound);
