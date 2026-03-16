@@ -69,7 +69,8 @@ import PlatformSupportPage from "@/modules/platform/pages/PlatformSupportPage";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+function App() {
+  return (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <TenantProvider>
@@ -154,6 +155,7 @@ const App = () => (
       </TenantProvider>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  );
+}
 
 export default App;
