@@ -69,7 +69,7 @@ export default function SignalsOverviewPage() {
 
       {/* Stats row */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Org Health" value={stats.avgHealthScore} icon={Activity} detail="Avg across teams" />
+        <StatCard label="Org Health" value={dynamicAvgHealth} icon={Activity} detail="Avg across teams" />
         <StatCard label="Teams At Risk" value={stats.teamsAtRisk} icon={Users2} detail={`of ${teamSignals.length} teams`} className={stats.teamsAtRisk > 0 ? "border-warning/30" : ""} />
         <StatCard label="Critical Alerts" value={stats.criticalAlerts} icon={AlertTriangle} detail="Requiring attention" className={stats.criticalAlerts > 0 ? "border-warning/30" : ""} />
         <StatCard label="Critical Resilience" value={stats.criticalResilience} icon={Shield} detail="Areas needing backup" className={stats.criticalResilience > 0 ? "border-destructive/30" : ""} />
