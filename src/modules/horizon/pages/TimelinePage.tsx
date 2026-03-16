@@ -282,6 +282,30 @@ export default function TimelinePage() {
     return w?.status ?? null;
   };
 
+  // ── Allocation Conflict Detection ──
+  const conflicts = useMemo(() => {
+    const result: { empId: string; empName: string; peakPct: number; peakDate: string }[] = [];
+    for (const emp of filteredEmployees) {
+      const empAllocs = allocations.filter((a) => a.employeeId === emp.id);
+      if (empAllocs.length < 2) continue;
+      let peak = 0;
+      let peakDate = "";
+      for (const d of dates) {
+        if (d.getDay() === 0 || d.getDay() === 6) continue;
+        const iso = toISO(d);
+        let dayTotal = 0;
+        for (const a of empAllocs) {
+          if (a.startDate <= iso && a.endDate >= iso) dayTotal += a.percentage;
+        }
+        if (dayTotal > peak) { peak = dayTotal; peakDate = iso; }
+      }
+      if (peak > 100) result.push({ empId: emp.id, empName: emp.name, peakPct: peak, peakDate });
+    }
+    return result;
+  }, [filteredEmployees, dates]);
+
+  const conflictSet = useMemo(() => new Set(conflicts.map((c) => c.empId)), [conflicts]);
+
   return (
     <TooltipProvider delayDuration={200}>
       <div className="space-y-4">
