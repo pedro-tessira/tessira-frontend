@@ -1,32 +1,28 @@
 /**
- * Risk-based color system.
+ * Risk-based color system for Signals decision engine.
  *
- * Core principle: Color = Risk Level, NOT usage/allocation.
- * Risk is derived from FREE CAPACITY (100% − Allocation).
+ * Three separate color scales for different signal dimensions:
  *
- * Free Capacity thresholds:
- *   > 40%  → Healthy  → Green  (success)
- *   20-40% → Acceptable → Yellow (warning)
- *   10-20% → Warning  → Orange (orange)
- *   < 10%  → High Risk → Red   (destructive)
+ * ALLOCATION (utilization band):
+ *   < 60%   → Red    (underutilized)
+ *   60–85%  → Green  (healthy)
+ *   85–95%  → Yellow (high)
+ *   > 95%   → Red    (overloaded)
+ *
+ * COVERAGE (knowledge depth):
+ *   < 60%   → Red
+ *   60–75%  → Yellow
+ *   ≥ 75%   → Green
+ *
+ * SPOF (single-point-of-failure):
+ *   ≥ 3     → Red
+ *   1–2     → Yellow
+ *   0       → Green
  */
 
-// ── Free Capacity Risk ──────────────────────────────────
+// ── Generic Risk Level ──────────────────────────────────
 
 export type RiskLevel = "healthy" | "acceptable" | "warning" | "critical";
-
-/** Derive risk level from free capacity percentage */
-export function freeCapacityRisk(freeCapacityPct: number): RiskLevel {
-  if (freeCapacityPct > 40) return "healthy";
-  if (freeCapacityPct >= 20) return "acceptable";
-  if (freeCapacityPct >= 10) return "warning";
-  return "critical";
-}
-
-/** Derive risk level from allocation percentage */
-export function allocationRisk(allocationPct: number): RiskLevel {
-  return freeCapacityRisk(100 - allocationPct);
-}
 
 // ── Risk → Color mapping (Tailwind classes) ─────────────
 
@@ -79,7 +75,40 @@ export function riskBorder(level: RiskLevel) { return RISK_BORDER[level]; }
 export function riskHsl(level: RiskLevel) { return RISK_HSL[level]; }
 export function riskLabel(level: RiskLevel) { return RISK_LABEL[level]; }
 
-// ── Health Score Risk ───────────────────────────────────
+// ── Allocation Risk (band-based) ───────────────────────
+// <60% → critical (underutilized), 60-85% → healthy, 85-95% → warning, >95% → critical (overloaded)
+
+export function allocationRisk(allocationPct: number): RiskLevel {
+  if (allocationPct < 60) return "critical";
+  if (allocationPct <= 85) return "healthy";
+  if (allocationPct <= 95) return "warning";
+  return "critical";
+}
+
+/** Free capacity risk (legacy compat) — derived from allocation */
+export function freeCapacityRisk(freeCapacityPct: number): RiskLevel {
+  return allocationRisk(100 - freeCapacityPct);
+}
+
+// ── Coverage Risk ──────────────────────────────────────
+// <60% → critical, 60-75% → warning, ≥75% → healthy
+
+export function coverageRisk(coveragePct: number): RiskLevel {
+  if (coveragePct >= 75) return "healthy";
+  if (coveragePct >= 60) return "warning";
+  return "critical";
+}
+
+// ── SPOF Risk ──────────────────────────────────────────
+// 0 → healthy, 1-2 → warning, ≥3 → critical
+
+export function spofRisk(spofCount: number): RiskLevel {
+  if (spofCount === 0) return "healthy";
+  if (spofCount <= 2) return "warning";
+  return "critical";
+}
+
+// ── Health Score Risk ──────────────────────────────────
 
 export function healthScoreRisk(score: number, max = 10): RiskLevel {
   const pct = (score / max) * 100;
@@ -89,20 +118,7 @@ export function healthScoreRisk(score: number, max = 10): RiskLevel {
   return "critical";
 }
 
-// ── Coverage / Knowledge Risk ───────────────────────────
-
-export function coverageRisk(coveragePct: number): RiskLevel {
-  if (coveragePct >= 75) return "healthy";
-  if (coveragePct >= 55) return "acceptable";
-  if (coveragePct >= 35) return "warning";
-  return "critical";
-}
-
-export function spofRisk(spofCount: number): RiskLevel {
-  if (spofCount === 0) return "healthy";
-  if (spofCount === 1) return "warning";
-  return "critical";
-}
+// ── Bus Factor Risk ────────────────────────────────────
 
 export function busFactorRisk(busFactor: number): RiskLevel {
   if (busFactor >= 3) return "healthy";
@@ -110,7 +126,7 @@ export function busFactorRisk(busFactor: number): RiskLevel {
   return "critical";
 }
 
-// ── Delivery Risk ───────────────────────────────────────
+// ── Delivery Risk ──────────────────────────────────────
 
 export function deliveryRisk(riskScore: number): RiskLevel {
   if (riskScore >= 70) return "critical";
@@ -119,7 +135,7 @@ export function deliveryRisk(riskScore: number): RiskLevel {
   return "healthy";
 }
 
-// ── Capacity Trend ──────────────────────────────────────
+// ── Capacity Trend ─────────────────────────────────────
 
 export function capacityTrendColor(direction: "up" | "down" | "stable"): string {
   if (direction === "up") return "text-orange"; // increasing load = subtle warning

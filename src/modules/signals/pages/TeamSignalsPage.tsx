@@ -7,8 +7,8 @@ import { cn } from "@/shared/lib/utils";
 import { AlertTriangle, Shield, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
-  allocationRisk, freeCapacityRisk, coverageRisk, spofRisk, busFactorRisk,
-  riskText, riskBg,
+  allocationRisk, coverageRisk, spofRisk,
+  riskText, riskBg, riskBgSubtle, riskBorder,
 } from "@/shared/lib/risk-colors";
 import { useHealthWeights } from "../contexts/HealthWeightsContext";
 import { HealthWeightsDialog } from "../components/HealthWeightsDialog";
@@ -33,7 +33,7 @@ export default function TeamSignalsPage() {
       <div className="space-y-4">
         {sorted.map((team) => {
           const freeCapacity = 100 - team.allocation;
-          const freeRisk = freeCapacityRisk(freeCapacity);
+          const aRisk = allocationRisk(team.allocation);
           const covRisk = coverageRisk(team.coverageScore);
           const spRisk = spofRisk(team.spofCount);
 
@@ -87,23 +87,19 @@ export default function TeamSignalsPage() {
                     </Tooltip>
                   </TooltipProvider>
 
-                  {/* Allocation + Free Capacity */}
+                  {/* Allocation */}
                   <div className="space-y-2">
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider">Free Capacity</div>
-                    <div className={cn("text-xl font-bold tabular-nums", riskText(freeRisk))}>
-                      {freeCapacity}%
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider">Allocation</div>
+                    <div className={cn("text-xl font-bold tabular-nums", riskText(aRisk))}>
+                      {team.allocation}%
                     </div>
                     <div className="text-xs text-muted-foreground tabular-nums">
-                      Allocation: {team.allocation}%
+                      {freeCapacity}% free capacity
                     </div>
                     <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden flex">
                       <div
-                        className="h-full bg-primary/40"
+                        className={cn("h-full", riskBg(aRisk))}
                         style={{ width: `${team.allocation}%` }}
-                      />
-                      <div
-                        className={cn("h-full", riskBg(freeRisk))}
-                        style={{ width: `${freeCapacity}%` }}
                       />
                     </div>
                   </div>
