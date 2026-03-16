@@ -9,7 +9,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/shared/lib/utils";
-import { MOCK_TEAMS, MOCK_MEMBERSHIPS } from "../data";
+import { usePeopleStore } from "../contexts/PeopleStoreContext";
 import { Users2, AlertTriangle, Star, TrendingUp } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
