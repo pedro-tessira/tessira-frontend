@@ -168,25 +168,36 @@ export default function InitiativeDetailPage() {
               </div>
             </div>
 
-            {/* Role-level breakdown with Required FTE per role */}
+            {/* Role-level breakdown with Required & Allocated FTE per role */}
             <div className="space-y-2">
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Required FTE by Role</p>
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">FTE by Role</p>
               <div className="rounded-md border border-border/30 overflow-hidden">
-                <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 px-3 py-1.5 bg-muted/40 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-x-4 px-3 py-1.5 bg-muted/40 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
                   <span>Role</span>
                   <span className="text-right">Effort</span>
-                  <span className="text-right">Req. FTE</span>
+                  <span className="text-right">Req.</span>
+                  <span className="text-right">Alloc.</span>
+                  <span className="text-right">Gap</span>
                   <span className="text-right">Share</span>
                 </div>
                 {getRequiredFTEByRole(init).map((rb) => {
                   const sharePct = init.estimate.totalEffortDays > 0
                     ? Math.round((rb.days / init.estimate.totalEffortDays) * 100)
                     : 0;
+                  const roleAlloc = allocByRole[rb.role] || 0;
+                  const gap = Math.round((roleAlloc - rb.fte) * 10) / 10;
+                  const roleStatus = roleAlloc < rb.fte * 0.85 ? "understaffed" : roleAlloc > rb.fte * 1.15 ? "overstaffed" : "balanced";
                   return (
-                    <div key={rb.role} className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 items-center px-3 py-2 border-t border-border/20">
+                    <div key={rb.role} className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-x-4 items-center px-3 py-2 border-t border-border/20">
                       <span className="text-xs font-medium">{rb.role}</span>
                       <span className="text-xs tabular-nums text-right">{rb.days}d</span>
                       <span className="text-xs font-bold tabular-nums text-right">{rb.fte}</span>
+                      <span className={cn("text-xs font-bold tabular-nums text-right", roleStatus === "understaffed" ? "text-destructive" : roleStatus === "balanced" ? "text-success" : "text-warning")}>
+                        {roleAlloc}
+                      </span>
+                      <span className={cn("text-xs font-bold tabular-nums text-right", gap < 0 ? "text-destructive" : gap > 0 ? "text-warning" : "text-success")}>
+                        {gap > 0 ? `+${gap}` : gap}
+                      </span>
                       <div className="flex items-center gap-1.5 justify-end min-w-[60px]">
                         <div className="h-1.5 w-10 rounded-full bg-muted overflow-hidden">
                           <div className="h-full rounded-full bg-primary/60" style={{ width: `${sharePct}%` }} />
@@ -197,10 +208,14 @@ export default function InitiativeDetailPage() {
                   );
                 })}
                 {/* Total row */}
-                <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 items-center px-3 py-2 border-t border-border/50 bg-muted/20">
+                <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-x-4 items-center px-3 py-2 border-t border-border/50 bg-muted/20">
                   <span className="text-xs font-semibold">Total</span>
                   <span className="text-xs font-semibold tabular-nums text-right">{init.estimate.totalEffortDays}d</span>
                   <span className="text-xs font-bold tabular-nums text-right">{required}</span>
+                  <span className={cn("text-xs font-bold tabular-nums text-right", sc.color)}>{allocated}</span>
+                  <span className={cn("text-xs font-bold tabular-nums text-right", allocated - required < 0 ? "text-destructive" : allocated - required > 0 ? "text-warning" : "text-success")}>
+                    {Math.round((allocated - required) * 10) / 10 > 0 ? `+${Math.round((allocated - required) * 10) / 10}` : Math.round((allocated - required) * 10) / 10}
+                  </span>
                   <span className="text-[10px] tabular-nums text-muted-foreground text-right">100%</span>
                 </div>
               </div>
