@@ -244,8 +244,8 @@ export default function TeamDetailPage() {
         onConfirm={() => {
           if (removeMemberTarget) {
             removeMembership(removeMemberTarget.id);
-            toast({ title: "Member removed" });
             setRemoveMemberTarget(null);
+            setTimeout(() => toast({ title: "Member removed" }), 150);
           }
         }}
       />
