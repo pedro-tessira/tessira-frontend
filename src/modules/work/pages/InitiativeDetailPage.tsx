@@ -61,6 +61,7 @@ export default function InitiativeDetailPage() {
   const initVS = getValueStreamsForInitiative(init.id);
   const required = getRequiredFTE(init);
   const allocated = getAllocatedFTE(init.id);
+  const allocByRole = getAllocatedFTEByRole(init.id);
   const staffing = getStaffingStatus(init);
   const sc = staffingConfig[staffing];
   const StaffIcon = sc.icon;
