@@ -15,7 +15,7 @@ export default function HorizonLayout() {
       <div>
         <h1 className="text-xl font-semibold tracking-tight">Horizon</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Delivery timelines, availability windows, and scheduling visibility.
+          Delivery intelligence — capacity, risk, and recommended actions.
         </p>
       </div>
 
