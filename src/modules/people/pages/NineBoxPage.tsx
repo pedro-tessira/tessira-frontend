@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { StatCard } from "@/shared/components/StatCard";
 import { NineBoxCard, type MovementRecord } from "../components/NineBoxCard";
+import { UnassignedEmployeesPanel } from "../components/UnassignedEmployeesPanel";
 import EmployeeDetailPanel from "../components/EmployeeDetailPanel";
 import { ManageReviewRoundsDialog, type ReviewRoundEntry } from "../components/ManageReviewRoundsDialog";
 import { Button } from "@/components/ui/button";
@@ -108,7 +109,7 @@ function getBoxLabel(perf: PerformanceLevel, pot: PotentialLevel) {
 }
 
 export default function NineBoxPage() {
-  const { teams, memberships } = usePeopleStore();
+  const { employees, teams, memberships } = usePeopleStore();
   const [teamFilter, setTeamFilter] = useState<string>("all");
   const [rounds, setRounds] = useState<ReviewRound[]>([...REVIEW_ROUNDS]);
   const [selectedRound, setSelectedRound] = useState<string>("q1-2026");
@@ -125,6 +126,7 @@ export default function NineBoxPage() {
 
   const currentPlacements = placementsMap[selectedRound] ?? [];
   const currentRound = rounds.find((r) => r.id === selectedRound);
+  const placedIds = useMemo(() => new Set(currentPlacements.map((p) => p.employeeId)), [currentPlacements]);
 
   // Round management handlers
   const handleAddRound = useCallback((id: string, label: string) => {
@@ -173,10 +175,20 @@ export default function NineBoxPage() {
     const empId = e.dataTransfer.getData("text/plain");
     if (!empId) return;
 
+    const isUnassigned = e.dataTransfer.getData("application/x-unassigned") === "true";
+
     setPlacementsMap((prev) => {
       const roundPlacements = [...(prev[selectedRound] ?? [])];
       const idx = roundPlacements.findIndex((p) => p.employeeId === empId);
-      if (idx === -1) return prev;
+
+      if (isUnassigned || idx === -1) {
+        // New placement from unassigned panel
+        if (idx !== -1) return prev; // already placed
+        roundPlacements.push({ employeeId: empId, performance: targetPerf, potential: targetPot });
+        const newLabel = getBoxLabel(targetPerf, targetPot);
+        toast({ title: "Employee placed", description: `Added to ${newLabel}` });
+        return { ...prev, [selectedRound]: roundPlacements };
+      }
 
       const existing = roundPlacements[idx];
       if (existing.performance === targetPerf && existing.potential === targetPot) return prev;
@@ -186,7 +198,6 @@ export default function NineBoxPage() {
 
       roundPlacements[idx] = { ...existing, performance: targetPerf, potential: targetPot };
 
-      // Track movement
       const movement: MovementRecord = {
         employeeId: empId,
         previousLabel: prevLabel,
@@ -196,11 +207,7 @@ export default function NineBoxPage() {
       };
       setMovements((prev) => [movement, ...prev.filter((m) => m.employeeId !== empId)]);
 
-      toast({
-        title: "Placement updated",
-        description: `Moved to ${newLabel}`,
-      });
-
+      toast({ title: "Placement updated", description: `Moved to ${newLabel}` });
       return { ...prev, [selectedRound]: roundPlacements };
     });
   }, [selectedRound, currentRound]);
@@ -349,7 +356,14 @@ export default function NineBoxPage() {
               </div>
             ))}
           </div>
-        </div>
+      </div>
+
+      {/* Unassigned employees */}
+      <UnassignedEmployeesPanel
+        employees={employees}
+        placedIds={placedIds}
+        onDragStart={setDraggingId}
+      />
         <div className="flex justify-center">
           <span className="text-[11px] font-semibold text-muted-foreground tracking-wider uppercase ml-20">
             Performance
