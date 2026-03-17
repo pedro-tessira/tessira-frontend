@@ -21,6 +21,8 @@ const staffingConfig: Record<StaffingStatus, { label: string; color: string; bgC
 
 export default function DomainDetailPage() {
   const { domainId } = useParams<{ domainId: string }>();
+  const [searchParams] = useSearchParams();
+  const backTo = searchParams.get("from") || "/app/work/domains";
   const domain = getDomain(domainId ?? "");
 
   if (!domain) {
