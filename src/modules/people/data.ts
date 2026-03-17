@@ -55,7 +55,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     title: "VP of Engineering", department: "Engineering", status: "active",
     country: "United States", countryCode: "US", timezone: "America/New_York",
     startDate: "2019-11-04", managerId: null, managerName: null,
-    avatarUrl: null, teamIds: ["team-005"],
+    avatarUrl: null, teamIds: ["team-005"], excludeFromCapacity: true,
   },
   {
     id: "emp-009", firstName: "Lin", lastName: "Zhou", email: "lin.zhou@tessira.dev",
