@@ -281,24 +281,8 @@ export function getEmployeeSkillLevel(employeeId: string, skillId: string) {
   return a ? { level: a.level, role: a.role } : null;
 }
 
-// ── Initiative linkage (skills → initiatives via domain mapping) ──
-export function getInitiativesForSkill(skillId: string): { id: string; name: string; status: string }[] {
-  const skill = MOCK_SKILLS.find((s) => s.id === skillId);
-  if (!skill) return [];
-  const { initiatives } = require("@/modules/work/data") as typeof import("@/modules/work/data");
-  return initiatives
-    .filter((init) => init.domainIds.some((did) => {
-      // Map skills domain to work domain via name matching
-      const skillDomain = MOCK_DOMAINS.find((d) => d.id === skill.domainId);
-      const { domains: workDomains } = require("@/modules/work/data") as typeof import("@/modules/work/data");
-      return workDomains.some((wd) => wd.id === did && skillDomain && wd.name.toLowerCase().includes(skillDomain.name.split(" ")[0].toLowerCase()));
-    }))
-    .map((init) => ({ id: init.id, name: init.name, status: init.status }));
-}
-
 // ── Employee allocation total (from work module) ──
 export function getEmployeeAllocationTotal(employeeId: string): number {
-  const { workAllocations } = require("@/modules/work/data") as typeof import("@/modules/work/data");
   return workAllocations
     .filter((a) => a.employeeId === employeeId)
     .reduce((sum, a) => sum + a.percentage, 0);
