@@ -16,6 +16,8 @@ export interface Employee {
   managerName: string | null;
   avatarUrl: string | null;
   teamIds: string[];
+  /** If true, this person is excluded from capacity planning, initiative allocation, and FTE metrics (e.g. management). */
+  excludeFromCapacity?: boolean;
 }
 
 export interface Team {
