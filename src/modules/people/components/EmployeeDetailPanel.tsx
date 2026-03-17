@@ -60,9 +60,14 @@ export default function EmployeeDetailPanel({ open, onOpenChange, employeeId, bo
           <SheetTitle className="flex items-center gap-3">
             <AvatarInitials firstName={employee.firstName} lastName={employee.lastName} size="md" />
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span>{employee.firstName} {employee.lastName}</span>
                 <StatusBadge status={employee.status} />
+                {employee.excludeFromCapacity && (
+                  <span className="inline-flex items-center gap-0.5 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                    <ShieldOff size={10} /> Non-capacity
+                  </span>
+                )}
               </div>
               <p className="text-xs text-muted-foreground font-normal mt-0.5">{employee.title}</p>
             </div>
