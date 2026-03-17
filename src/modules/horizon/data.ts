@@ -19,7 +19,6 @@ function daysFromNow(offset: number): string {
 
 // ── Employees (re-exported from shared) ──────────────────
 export const horizonEmployees: HorizonEmployee[] = sharedEmployees;
-];
 
 export const horizonTeams = [
   { id: "all", name: "All Teams" },
