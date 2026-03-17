@@ -54,7 +54,7 @@ export default function RiskPage() {
               <div key={e.employeeId} className="rounded-lg border border-border/50 bg-card p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Link
-                    to={`/app/people/employees/${e.employeeId}`}
+                    to={`/app/people/employees/${e.employeeId}?from=${encodeURIComponent("/app/skills/risk")}`}
                     className="text-sm font-semibold text-primary hover:underline"
                   >
                     {e.employeeName}
@@ -161,7 +161,7 @@ export default function RiskPage() {
                 <td className="px-4 py-3 text-muted-foreground">{r.domainName}</td>
                 <td className="px-4 py-3">
                   <Link
-                    to={`/app/people/employees/${r.ownerEmployeeId}`}
+                    to={`/app/people/employees/${r.ownerEmployeeId}?from=${encodeURIComponent("/app/skills/risk")}`}
                     className="text-primary hover:underline"
                   >
                     {r.ownerName}

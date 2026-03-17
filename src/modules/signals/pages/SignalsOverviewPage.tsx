@@ -142,9 +142,9 @@ export default function SignalsOverviewPage() {
                       {risk.riskType}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      <Link to={`/app/work/value-streams/${risk.streamId}`} className="text-primary hover:underline">{risk.streamName}</Link>
+                      <Link to={`/app/work/value-streams/${risk.streamId}?from=${encodeURIComponent("/app/signals")}`} className="text-primary hover:underline">{risk.streamName}</Link>
                       {" → "}
-                      <Link to={`/app/work/initiatives/${risk.initiativeId}`} className="text-primary hover:underline">{risk.initiativeName}</Link>
+                      <Link to={`/app/work/initiatives/${risk.initiativeId}?from=${encodeURIComponent("/app/signals")}`} className="text-primary hover:underline">{risk.initiativeName}</Link>
                     </span>
                   </div>
                   <p className="text-xs text-foreground">{risk.description}</p>
@@ -193,7 +193,7 @@ export default function SignalsOverviewPage() {
                           <>
                             <span>·</span>
                             <Link
-                              to={`/app/work/initiatives/${alert.initiativeId}`}
+                              to={`/app/work/initiatives/${alert.initiativeId}?from=${encodeURIComponent("/app/signals")}`}
                               className="text-primary hover:underline"
                               onClick={(e) => e.stopPropagation()}
                             >
@@ -304,7 +304,7 @@ export default function SignalsOverviewPage() {
                   return (
                     <div key={t.teamId} className="px-5 py-3 flex items-center justify-between">
                       <div>
-                        <Link to={`/app/people/teams/${t.teamId}`} className="text-sm font-medium hover:text-primary tessira-transition">
+                        <Link to={`/app/people/teams/${t.teamId}?from=${encodeURIComponent("/app/signals")}`} className="text-sm font-medium hover:text-primary tessira-transition">
                           {t.teamName}
                         </Link>
                         <div className="text-xs text-muted-foreground">{t.memberCount} members</div>

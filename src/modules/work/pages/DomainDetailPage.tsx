@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Boxes, Rocket, Users, BarChart3, AlertTriangle, CheckCircle, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,13 +21,15 @@ const staffingConfig: Record<StaffingStatus, { label: string; color: string; bgC
 
 export default function DomainDetailPage() {
   const { domainId } = useParams<{ domainId: string }>();
+  const [searchParams] = useSearchParams();
+  const backTo = searchParams.get("from") || "/app/work/domains";
   const domain = getDomain(domainId ?? "");
 
   if (!domain) {
     return (
       <div className="py-12 text-center space-y-3">
         <p className="text-muted-foreground">Domain not found.</p>
-        <Link to="/app/work/domains"><Button variant="outline" size="sm">Back to Domains</Button></Link>
+        <Link to={backTo}><Button variant="outline" size="sm">Back</Button></Link>
       </div>
     );
   }
@@ -41,8 +43,8 @@ export default function DomainDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Link to="/app/work/domains" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-        <ArrowLeft size={13} /> Back to Domains
+      <Link to={backTo} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft size={13} /> Back
       </Link>
 
       <div className="flex items-start gap-4">
@@ -74,7 +76,7 @@ export default function DomainDetailPage() {
                   return (
                     <Link
                       key={f.initiativeId}
-                      to={`/app/work/initiatives/${f.initiativeId}`}
+                      to={`/app/work/initiatives/${f.initiativeId}?from=${encodeURIComponent(`/app/work/domains/${domain.id}`)}`}
                       className="block rounded-md border border-border/30 p-3 hover:border-primary/30 transition-colors space-y-2"
                     >
                       <div className="flex items-center justify-between">

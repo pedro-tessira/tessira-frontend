@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Mail, MapPin, Clock, Calendar, Users2, Shield, Zap, Activity, Pencil, Trash2,
 } from "lucide-react";
@@ -16,6 +16,8 @@ import { toast } from "@/hooks/use-toast";
 export default function EmployeeDetailPage() {
   const { employeeId } = useParams<{ employeeId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const fromParam = searchParams.get("from");
   const { getEmployee, getEmployeeMemberships, deleteEmployee } = usePeopleStore();
   const employee = getEmployee(employeeId ?? "");
   const memberships = employeeId ? getEmployeeMemberships(employeeId) : [];
@@ -57,7 +59,10 @@ export default function EmployeeDetailPage() {
     <div className="space-y-6">
       <ModulePageHeader
         title={`${employee.firstName} ${employee.lastName}`}
-        breadcrumbs={[
+        breadcrumbs={fromParam ? [
+          { label: "Back", href: fromParam },
+          { label: `${employee.firstName} ${employee.lastName}` },
+        ] : [
           { label: "People", href: "/app/people" },
           { label: "Employees", href: "/app/people/employees" },
           { label: `${employee.firstName} ${employee.lastName}` },

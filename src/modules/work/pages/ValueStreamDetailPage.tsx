@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Globe, Rocket, Users, Boxes, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,13 +20,15 @@ const staffingConfig: Record<StaffingStatus, { label: string; bgColor: string }>
 
 export default function ValueStreamDetailPage() {
   const { valueStreamId } = useParams<{ valueStreamId: string }>();
+  const [searchParams] = useSearchParams();
+  const backTo = searchParams.get("from") || "/app/work/value-streams";
   const vs = getValueStream(valueStreamId ?? "");
 
   if (!vs) {
     return (
       <div className="py-12 text-center space-y-3">
         <p className="text-muted-foreground">Value Stream not found.</p>
-        <Link to="/app/work"><Button variant="outline" size="sm">Back to Value Streams</Button></Link>
+        <Link to={backTo}><Button variant="outline" size="sm">Back</Button></Link>
       </div>
     );
   }
@@ -40,8 +42,8 @@ export default function ValueStreamDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Link to="/app/work" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-        <ArrowLeft size={13} /> Back to Value Streams
+      <Link to={backTo} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft size={13} /> Back
       </Link>
 
       <div className="flex items-start gap-4">
@@ -77,7 +79,7 @@ export default function ValueStreamDetailPage() {
                   return (
                     <Link
                       key={f.initiativeId}
-                      to={`/app/work/initiatives/${f.initiativeId}`}
+                      to={`/app/work/initiatives/${f.initiativeId}?from=${encodeURIComponent(`/app/work/value-streams/${vs.id}`)}`}
                       className="block rounded-md border border-border/30 p-3 hover:border-primary/30 transition-colors space-y-2"
                     >
                       <div className="flex items-center justify-between">
@@ -128,7 +130,7 @@ export default function ValueStreamDetailPage() {
             </div>
             <div className="space-y-2">
               {vsdomains.map((d) => (
-                <Link key={d.id} to={`/app/work/domains/${d.id}`} className="block rounded-md border border-border/30 bg-muted/30 p-3 hover:border-primary/30 transition-colors">
+                <Link key={d.id} to={`/app/work/domains/${d.id}?from=${encodeURIComponent(`/app/work/value-streams/${vs.id}`)}`} className="block rounded-md border border-border/30 bg-muted/30 p-3 hover:border-primary/30 transition-colors">
                   <p className="text-sm font-medium">{d.name}</p>
                   <p className="text-[11px] text-muted-foreground">{d.owningTeamName}</p>
                 </Link>

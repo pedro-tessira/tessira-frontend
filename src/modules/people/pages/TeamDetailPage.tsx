@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { Users2, Calendar, Zap, Activity, CalendarRange, Pencil, UserPlus, Trash2 } from "lucide-react";
 import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { StatusBadge } from "../components/StatusBadge";
@@ -15,6 +15,8 @@ import { useNavigate } from "react-router-dom";
 export default function TeamDetailPage() {
   const { teamId } = useParams<{ teamId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const fromParam = searchParams.get("from");
   const { getTeam, getTeamMembers, deleteTeam, removeMembership } = usePeopleStore();
   const team = getTeam(teamId ?? "");
   const members = teamId ? getTeamMembers(teamId) : [];
@@ -52,7 +54,10 @@ export default function TeamDetailPage() {
       <ModulePageHeader
         title={team.name}
         description={team.description}
-        breadcrumbs={[
+        breadcrumbs={fromParam ? [
+          { label: "Back", href: fromParam },
+          { label: team.name },
+        ] : [
           { label: "People", href: "/app/people" },
           { label: "Teams", href: "/app/people/teams" },
           { label: team.name },
