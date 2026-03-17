@@ -4,6 +4,7 @@ import { StatCard } from "@/shared/components/StatCard";
 import { NineBoxCard, type MovementRecord } from "../components/NineBoxCard";
 import { UnassignedEmployeesPanel } from "../components/UnassignedEmployeesPanel";
 import EmployeeDetailPanel from "../components/EmployeeDetailPanel";
+import { RoundComparisonPanel } from "../components/RoundComparisonPanel";
 import { ManageReviewRoundsDialog, type ReviewRoundEntry } from "../components/ManageReviewRoundsDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/shared/lib/utils";
 import { usePeopleStore } from "../contexts/PeopleStoreContext";
-import { Users2, AlertTriangle, Star, TrendingUp, Settings2 } from "lucide-react";
+import { Users2, AlertTriangle, Star, TrendingUp, Settings2, GitCompareArrows } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 // ── 9-box domain types ──────────────────────────────────────
@@ -123,6 +124,9 @@ export default function NineBoxPage() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [roundsDialogOpen, setRoundsDialogOpen] = useState(false);
+  const [showComparison, setShowComparison] = useState(false);
+  const [compareBaseId, setCompareBaseId] = useState<string>(() => rounds.length > 1 ? rounds[1].id : rounds[0].id);
+  const [compareTargetId, setCompareTargetId] = useState<string>(() => rounds[0].id);
 
   const currentPlacements = placementsMap[selectedRound] ?? [];
   const currentRound = rounds.find((r) => r.id === selectedRound);
@@ -299,6 +303,15 @@ export default function NineBoxPage() {
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setRoundsDialogOpen(true)}>
             <Settings2 className="h-3.5 w-3.5" />
           </Button>
+          <Button
+            variant={showComparison ? "secondary" : "ghost"}
+            size="sm"
+            className="h-7 text-xs gap-1.5"
+            onClick={() => setShowComparison((v) => !v)}
+          >
+            <GitCompareArrows className="h-3.5 w-3.5" />
+            Compare
+          </Button>
         </div>
       </div>
 
@@ -387,6 +400,18 @@ export default function NineBoxPage() {
           </span>
         </div>
       </div>
+
+      {/* Comparison panel */}
+      {showComparison && (
+        <RoundComparisonPanel
+          rounds={rounds.map((r) => ({ id: r.id, label: r.label }))}
+          placementsMap={placementsMap}
+          baseRoundId={compareBaseId}
+          onBaseChange={setCompareBaseId}
+          compareRoundId={compareTargetId}
+          onCompareChange={setCompareTargetId}
+        />
+      )}
 
       <EmployeeDetailPanel
         open={!!selectedEmployeeId}
