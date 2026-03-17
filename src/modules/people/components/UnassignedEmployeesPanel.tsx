@@ -33,7 +33,7 @@ export function UnassignedEmployeesPanel({
     );
   }, [employees, placedIds, search]);
 
-  if (employees.filter((e) => !placedIds.has(e.id) && e.status === "active").length === 0) {
+  if (employees.filter((e) => !placedIds.has(e.id) && e.status !== "inactive").length === 0) {
     return null;
   }
 
