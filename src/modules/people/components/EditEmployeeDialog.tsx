@@ -46,6 +46,7 @@ export default function EditEmployeeDialog({ open, onOpenChange, employee }: Pro
         country: employee.country, countryCode: employee.countryCode,
         timezone: employee.timezone, startDate: employee.startDate,
         managerId: employee.managerId ?? "",
+        excludeFromCapacity: employee.excludeFromCapacity ?? false,
       });
     }
   }, [employee]);
