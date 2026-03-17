@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Users2, UserCheck, Globe, Clock, ArrowRight, UserX } from "lucide-react";
+import { Users2, UserCheck, Globe, Clock, ArrowRight, UserX, ShieldOff } from "lucide-react";
 import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { StatCard } from "@/shared/components/StatCard";
 import { StatusBadge } from "../components/StatusBadge";
@@ -10,10 +10,11 @@ export default function PeopleOverviewPage() {
   const { employees, teams } = usePeopleStore();
 
   const active = employees.filter((e) => e.status === "active").length;
+  const capacityEligible = employees.filter((e) => !e.excludeFromCapacity && e.status !== "inactive").length;
+  const nonCapacity = employees.filter((e) => e.excludeFromCapacity).length;
   const onLeave = employees.filter((e) => e.status === "on_leave");
   const offboarding = employees.filter((e) => e.status === "offboarding");
   const countries = new Set(employees.map((e) => e.countryCode)).size;
-  const avgTeamSize = teams.length > 0 ? Math.round((employees.length / teams.length) * 10) / 10 : 0;
   const recentEmployees = employees.slice(0, 5);
 
   return (
