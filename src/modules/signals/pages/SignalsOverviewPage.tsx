@@ -142,9 +142,9 @@ export default function SignalsOverviewPage() {
                       {risk.riskType}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      <Link to={`/app/work/value-streams/${risk.streamId}`} className="text-primary hover:underline">{risk.streamName}</Link>
+                      <Link to={`/app/work/value-streams/${risk.streamId}?from=${encodeURIComponent("/app/signals")}`} className="text-primary hover:underline">{risk.streamName}</Link>
                       {" → "}
-                      <Link to={`/app/work/initiatives/${risk.initiativeId}`} className="text-primary hover:underline">{risk.initiativeName}</Link>
+                      <Link to={`/app/work/initiatives/${risk.initiativeId}?from=${encodeURIComponent("/app/signals")}`} className="text-primary hover:underline">{risk.initiativeName}</Link>
                     </span>
                   </div>
                   <p className="text-xs text-foreground">{risk.description}</p>
