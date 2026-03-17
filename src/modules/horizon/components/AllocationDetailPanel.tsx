@@ -193,7 +193,7 @@ export default function AllocationDetailPanel({
 
               {matchedInit && (
                 <Link
-                  to={`/app/work/initiatives/${matchedInit.id}`}
+                  to={`/app/work/initiatives/${matchedInit.id}?from=${encodeURIComponent("/app/horizon/timeline")}`}
                   className="block rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
                 >
                   View Initiative: {matchedInit.name} →

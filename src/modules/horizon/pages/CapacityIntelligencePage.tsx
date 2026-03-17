@@ -293,7 +293,7 @@ export default function CapacityIntelligencePage() {
               return (
                 <Link
                   key={init.id}
-                  to={`/app/work/initiatives/${init.id}`}
+                  to={`/app/work/initiatives/${init.id}?from=${encodeURIComponent("/app/horizon/capacity")}`}
                   className="rounded-lg border border-border/50 bg-card p-4 space-y-2.5 hover:border-primary/30 transition-colors"
                 >
                   <div className="flex items-start justify-between gap-2">
