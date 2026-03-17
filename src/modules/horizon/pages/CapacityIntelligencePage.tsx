@@ -734,7 +734,7 @@ function CapacityRow({
       </div>
 
       {/* Timeline cells — show allocation intensity */}
-      <div className="flex relative" style={{ width: gridWidth }}>
+      <div className="flex relative self-stretch" style={{ width: gridWidth }}>
         {dates.map((d, i) => {
           const iso = toISO(d);
           const isToday = iso === todayISO;
@@ -772,7 +772,7 @@ function CapacityRow({
                     } : {}),
                   }}
                   className={cn(
-                    "h-8",
+                    "h-full min-h-[2rem]",
                     isMonday && !isToday && "border-l-2 border-border/40",
                     !isMonday && !isToday && "border-r border-border/10",
                     isWeekend ? "bg-muted/15" : cellColor,
