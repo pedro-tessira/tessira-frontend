@@ -175,10 +175,20 @@ export default function NineBoxPage() {
     const empId = e.dataTransfer.getData("text/plain");
     if (!empId) return;
 
+    const isUnassigned = e.dataTransfer.getData("application/x-unassigned") === "true";
+
     setPlacementsMap((prev) => {
       const roundPlacements = [...(prev[selectedRound] ?? [])];
       const idx = roundPlacements.findIndex((p) => p.employeeId === empId);
-      if (idx === -1) return prev;
+
+      if (isUnassigned || idx === -1) {
+        // New placement from unassigned panel
+        if (idx !== -1) return prev; // already placed
+        roundPlacements.push({ employeeId: empId, performance: targetPerf, potential: targetPot });
+        const newLabel = getBoxLabel(targetPerf, targetPot);
+        toast({ title: "Employee placed", description: `Added to ${newLabel}` });
+        return { ...prev, [selectedRound]: roundPlacements };
+      }
 
       const existing = roundPlacements[idx];
       if (existing.performance === targetPerf && existing.potential === targetPot) return prev;
@@ -188,7 +198,6 @@ export default function NineBoxPage() {
 
       roundPlacements[idx] = { ...existing, performance: targetPerf, potential: targetPot };
 
-      // Track movement
       const movement: MovementRecord = {
         employeeId: empId,
         previousLabel: prevLabel,
@@ -198,11 +207,7 @@ export default function NineBoxPage() {
       };
       setMovements((prev) => [movement, ...prev.filter((m) => m.employeeId !== empId)]);
 
-      toast({
-        title: "Placement updated",
-        description: `Moved to ${newLabel}`,
-      });
-
+      toast({ title: "Placement updated", description: `Moved to ${newLabel}` });
       return { ...prev, [selectedRound]: roundPlacements };
     });
   }, [selectedRound, currentRound]);
