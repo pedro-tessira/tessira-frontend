@@ -1,10 +1,20 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { adminUsers } from "../data";
+import { adminUsers, customRoles as initialRoles } from "../data";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Mail, KeyRound, Ban, Trash2, ArrowRightLeft, Shield, Link2, Clock, Monitor } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ArrowLeft, Mail, KeyRound, Ban, Trash2, ArrowRightLeft, Shield, Link2, Clock, Monitor, Plus, X } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { toast } from "sonner";
 import type { AdminUserStatus, AdminUserRole } from "../types";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const statusStyle: Record<AdminUserStatus, string> = {
   active: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
@@ -24,6 +34,35 @@ export default function AdminUserDetailPage() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const user = adminUsers.find((u) => u.id === userId);
+
+  const [assignedRoles, setAssignedRoles] = useState<string[]>(user?.customRoles ?? []);
+  const [showAssignDialog, setShowAssignDialog] = useState(false);
+  const [pendingSelections, setPendingSelections] = useState<string[]>([]);
+
+  const availableRoles = initialRoles;
+  const unassignedRoles = availableRoles.filter((r) => !assignedRoles.includes(r.name));
+
+  const openAssignDialog = () => {
+    setPendingSelections([]);
+    setShowAssignDialog(true);
+  };
+
+  const handleAssign = () => {
+    setAssignedRoles((prev) => [...prev, ...pendingSelections]);
+    toast.success(`${pendingSelections.length} role(s) assigned`);
+    setShowAssignDialog(false);
+  };
+
+  const handleUnassign = (roleName: string) => {
+    setAssignedRoles((prev) => prev.filter((r) => r !== roleName));
+    toast.success(`Role "${roleName}" unassigned`);
+  };
+
+  const togglePending = (roleName: string) => {
+    setPendingSelections((prev) =>
+      prev.includes(roleName) ? prev.filter((r) => r !== roleName) : [...prev, roleName]
+    );
+  };
 
   if (!user) {
     return (
@@ -117,21 +156,103 @@ export default function AdminUserDetailPage() {
           )}
         </div>
 
-        {/* Custom Roles */}
-        <div className="rounded-lg border border-border/50 bg-card p-5 space-y-4">
-          <h3 className="text-sm font-semibold">Assigned Roles</h3>
-          {user.customRoles && user.customRoles.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {user.customRoles.map((r) => (
-                <Badge key={r} variant="secondary" className="text-xs font-mono">{r}</Badge>
-              ))}
+        {/* Assigned Roles */}
+        <div className="rounded-lg border border-border/50 bg-card p-5 space-y-4 lg:col-span-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold flex items-center gap-2">
+              <Shield size={14} className="text-primary" />
+              Assigned Roles ({assignedRoles.length})
+            </h3>
+            <Button
+              size="sm"
+              className="h-7 text-xs gap-1.5"
+              onClick={openAssignDialog}
+              disabled={unassignedRoles.length === 0}
+            >
+              <Plus size={12} /> Assign Role
+            </Button>
+          </div>
+
+          {assignedRoles.length > 0 ? (
+            <div className="space-y-2">
+              {assignedRoles.map((roleName) => {
+                const role = availableRoles.find((r) => r.name === roleName);
+                return (
+                  <div key={roleName} className="flex items-center justify-between py-2.5 px-3 rounded-md bg-muted/30 border border-border/30">
+                    <div className="flex items-center gap-3">
+                      <Shield size={14} className="text-primary/70" />
+                      <div>
+                        <p className="text-sm font-medium font-mono">{roleName}</p>
+                        {role && <p className="text-[11px] text-muted-foreground">{role.description}</p>}
+                      </div>
+                      {role?.isSystem && (
+                        <Badge variant="secondary" className="text-[10px] bg-muted text-muted-foreground">System</Badge>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => handleUnassign(roleName)}
+                    >
+                      <X size={14} />
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No custom roles assigned.</p>
+            <div className="text-center py-6">
+              <Shield size={28} className="mx-auto text-muted-foreground/30 mb-2" />
+              <p className="text-sm text-muted-foreground">No roles assigned to this user.</p>
+            </div>
           )}
-          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => navigate("/app/admin/roles")}>Manage Roles</Button>
         </div>
       </div>
+
+      {/* Assign Role Dialog */}
+      <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-sm">Assign Roles to {user.displayName}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 max-h-64 overflow-y-auto py-2">
+            {unassignedRoles.length > 0 ? (
+              unassignedRoles.map((role) => (
+                <label
+                  key={role.id}
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-colors",
+                    pendingSelections.includes(role.name)
+                      ? "border-primary bg-primary/5"
+                      : "border-border/50 hover:bg-accent/30"
+                  )}
+                >
+                  <Checkbox
+                    checked={pendingSelections.includes(role.name)}
+                    onCheckedChange={() => togglePending(role.name)}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium font-mono">{role.name}</p>
+                    <p className="text-[11px] text-muted-foreground">{role.description}</p>
+                  </div>
+                  {role.isSystem && (
+                    <Badge variant="secondary" className="text-[10px] bg-muted text-muted-foreground shrink-0">System</Badge>
+                  )}
+                </label>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">All roles are already assigned.</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setShowAssignDialog(false)}>Cancel</Button>
+            <Button size="sm" className="h-8 text-xs" disabled={pendingSelections.length === 0} onClick={handleAssign}>
+              Assign {pendingSelections.length > 0 ? `(${pendingSelections.length})` : ""}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
