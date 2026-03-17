@@ -303,6 +303,15 @@ export default function NineBoxPage() {
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setRoundsDialogOpen(true)}>
             <Settings2 className="h-3.5 w-3.5" />
           </Button>
+          <Button
+            variant={showComparison ? "secondary" : "ghost"}
+            size="sm"
+            className="h-7 text-xs gap-1.5"
+            onClick={() => setShowComparison((v) => !v)}
+          >
+            <GitCompareArrows className="h-3.5 w-3.5" />
+            Compare
+          </Button>
         </div>
       </div>
 
