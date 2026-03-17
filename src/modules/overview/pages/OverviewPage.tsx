@@ -44,7 +44,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   computeDecisionSummary,
   type DeliveryRiskLevel,
-  type DeliveryRiskLevel,
 } from "@/modules/horizon/lib/decision-engine";
 import { MOCK_RESILIENCE } from "@/modules/signals/data";
 import CapacityForecast from "../components/CapacityForecast";
