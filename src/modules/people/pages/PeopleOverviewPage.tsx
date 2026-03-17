@@ -25,9 +25,10 @@ export default function PeopleOverviewPage() {
       />
 
       {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard label="Total Employees" value={employees.length} icon={Users2} detail={`${active} active`} />
-        <StatCard label="Teams" value={teams.length} icon={UserCheck} detail={`${avgTeamSize} avg size`} />
+        <StatCard label="Capacity Eligible" value={capacityEligible} icon={UserCheck} detail="Available for initiatives" />
+        <StatCard label="Non-Capacity" value={nonCapacity} icon={ShieldOff} detail="Management / excluded" />
         <StatCard label="Countries" value={countries} icon={Globe} detail="Distributed workforce" />
         <StatCard label="On Leave" value={onLeave.length} icon={Clock} detail="Currently unavailable" />
       </div>
