@@ -6,7 +6,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { AlertTriangle, Clock, Shield, Users } from "lucide-react";
+import { AlertTriangle, Clock, Layers } from "lucide-react";
 import type { InitiativeRisk } from "../lib/decision-engine";
 
 interface Props {
