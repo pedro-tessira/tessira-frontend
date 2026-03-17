@@ -208,7 +208,7 @@ export function getEngineersForValueStream(vsId: string) {
   const initIds = new Set(inits.map((i) => i.id));
   const allocs = workAllocations.filter((a) => initIds.has(a.initiativeId));
   const empIds = [...new Set(allocs.map((a) => a.employeeId))];
-  return empIds.map((id) => horizonEmployees.find((e) => e.id === id)!).filter(Boolean);
+  return empIds.map((id) => sharedEmployees.find((e) => e.id === id)!).filter(Boolean);
 }
 
 // ── Initiative Planning Helpers ──────────────────────────
