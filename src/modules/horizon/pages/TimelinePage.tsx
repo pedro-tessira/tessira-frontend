@@ -764,7 +764,15 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
       className
     )} onClick={!onDragStart ? onToggle : undefined}>
       {/* Sticky label */}
-      <div className="w-48 shrink-0 border-r border-border/50 px-3 py-2 flex items-center gap-2 sticky left-0 z-10 bg-card cursor-pointer" style={{ minHeight: Math.max(36, rowHeight) }} onClick={onToggle}>
+      <div
+        className="w-48 shrink-0 border-r border-border/50 px-3 py-2 flex items-center gap-2 sticky left-0 z-10 bg-card cursor-pointer hover:bg-accent/10 tessira-transition"
+        style={{ minHeight: Math.max(36, rowHeight) }}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (onLabelClick) onLabelClick();
+          else onToggle();
+        }}
+      >
         {label}
       </div>
 
