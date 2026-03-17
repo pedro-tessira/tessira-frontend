@@ -35,9 +35,9 @@ export default function ManageTeamMembersDialog({ open, onOpenChange, team }: Pr
     if (!addEmployeeId) return;
     addMembership(addEmployeeId, team.id, addRole);
     const emp = employees.find((e) => e.id === addEmployeeId);
-    toast({ title: "Member added", description: `${emp?.firstName} ${emp?.lastName} added to ${team.name}.` });
     setAddEmployeeId("");
     setAddRole("member");
+    setTimeout(() => toast({ title: "Member added", description: `${emp?.firstName} ${emp?.lastName} added to ${team.name}.` }), 150);
   };
 
   return (
@@ -105,8 +105,9 @@ export default function ManageTeamMembersDialog({ open, onOpenChange, team }: Pr
                   size="icon"
                   className="h-7 w-7 text-muted-foreground hover:text-destructive"
                   onClick={() => {
+                    const name = `${m.employee.firstName} ${m.employee.lastName}`;
                     removeMembership(m.id);
-                    toast({ title: "Member removed", description: `${m.employee.firstName} ${m.employee.lastName} removed from ${team.name}.` });
+                    setTimeout(() => toast({ title: "Member removed", description: `${name} removed from ${team.name}.` }), 150);
                   }}
                 >
                   <X size={13} />

@@ -221,9 +221,10 @@ export default function EmployeeDetailPage() {
         title="Delete Employee"
         description={`Are you sure you want to remove ${employee.firstName} ${employee.lastName}? This will also remove all their team memberships.`}
         onConfirm={() => {
+          const name = `${employee.firstName} ${employee.lastName}`;
           deleteEmployee(employee.id);
-          toast({ title: "Employee deleted", description: `${employee.firstName} ${employee.lastName} has been removed.` });
           navigate("/app/people/employees");
+          setTimeout(() => toast({ title: "Employee deleted", description: `${name} has been removed.` }), 150);
         }}
       />
     </div>

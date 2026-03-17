@@ -56,8 +56,9 @@ export default function EditEmployeeDialog({ open, onOpenChange, employee }: Pro
       ...form,
       managerId: form.managerId || null,
     });
-    toast({ title: "Employee updated", description: `${form.firstName} ${form.lastName} has been updated.` });
+    const name = `${form.firstName} ${form.lastName}`;
     onOpenChange(false);
+    setTimeout(() => toast({ title: "Employee updated", description: `${name} has been updated.` }), 150);
   };
 
   return (

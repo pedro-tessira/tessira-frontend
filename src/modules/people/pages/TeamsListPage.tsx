@@ -115,9 +115,10 @@ export default function TeamsListPage() {
         description={`Are you sure you want to delete ${deleteTarget?.name}? This will remove all memberships.`}
         onConfirm={() => {
           if (deleteTarget) {
+            const name = deleteTarget.name;
             deleteTeam(deleteTarget.id);
-            toast({ title: "Team deleted", description: `${deleteTarget.name} has been removed.` });
             setDeleteTarget(null);
+            setTimeout(() => toast({ title: "Team deleted", description: `${name} has been removed.` }), 150);
           }
         }}
       />

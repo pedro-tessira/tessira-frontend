@@ -44,8 +44,9 @@ export default function EditTeamDialog({ open, onOpenChange, team }: Props) {
       leadId: form.leadId,
       tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
     });
-    toast({ title: "Team updated", description: `${form.name} has been updated.` });
+    const name = form.name;
     onOpenChange(false);
+    setTimeout(() => toast({ title: "Team updated", description: `${name} has been updated.` }), 150);
   };
 
   return (

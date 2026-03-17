@@ -32,9 +32,10 @@ export default function AddTeamDialog({ open, onOpenChange }: Props) {
       leadId: form.leadId,
       tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
     });
-    toast({ title: "Team created", description: `${form.name} has been created.` });
+    const name = form.name;
     setForm({ name: "", description: "", leadId: "", tags: "" });
     onOpenChange(false);
+    setTimeout(() => toast({ title: "Team created", description: `${name} has been created.` }), 150);
   };
 
   return (
