@@ -37,6 +37,9 @@ function getDurationDays(start: string, end: string) {
 
 export default function InitiativeDetailPage() {
   const { initiativeId } = useParams<{ initiativeId: string }>();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const backTo = searchParams.get("from") || "/app/work/initiatives";
   const baseInit = getInitiative(initiativeId ?? "");
   const [localInit, setLocalInit] = useState<Initiative | null>(baseInit);
   const [editOpen, setEditOpen] = useState(false);
