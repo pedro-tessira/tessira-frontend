@@ -25,6 +25,7 @@ interface Props {
   onAdd: (id: string, label: string) => void;
   onRename: (id: string, label: string) => void;
   onDelete: (id: string) => void;
+  onClone: (sourceId: string, newId: string, newLabel: string) => void;
 }
 
 export function ManageReviewRoundsDialog({
