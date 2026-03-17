@@ -331,6 +331,70 @@ export default function AdminUserDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Activity Log */}
+        <div className="rounded-lg border border-border/50 bg-card p-5 space-y-4 lg:col-span-2">
+          <h3 className="text-sm font-semibold flex items-center gap-2">
+            <Clock size={14} className="text-primary" />
+            Activity Log
+          </h3>
+          {(() => {
+            const userActivities = auditLog
+              .filter((e) => e.actor === userData.displayName || e.resource === userData.displayName)
+              .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+            if (userActivities.length === 0) {
+              return (
+                <div className="text-center py-6">
+                  <Clock size={28} className="mx-auto text-muted-foreground/30 mb-2" />
+                  <p className="text-sm text-muted-foreground">No recorded activity for this user.</p>
+                </div>
+              );
+            }
+
+            const severityStyle: Record<string, string> = {
+              info: "bg-muted text-muted-foreground",
+              warning: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+              critical: "bg-destructive/15 text-destructive",
+            };
+
+            return (
+              <div className="space-y-1">
+                {userActivities.map((entry) => {
+                  const isActor = entry.actor === userData.displayName;
+                  return (
+                    <div key={entry.id} className="flex items-start gap-3 py-2.5 px-3 rounded-md hover:bg-accent/30 transition-colors">
+                      <div className="mt-0.5 shrink-0">
+                        <div className={cn(
+                          "h-2 w-2 rounded-full mt-1",
+                          entry.severity === "critical" ? "bg-destructive" :
+                          entry.severity === "warning" ? "bg-amber-500" : "bg-muted-foreground/40"
+                        )} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <code className="text-[11px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{entry.action}</code>
+                          <Badge variant="secondary" className={cn("text-[10px]", severityStyle[entry.severity])}>{entry.severity}</Badge>
+                          {!isActor && (
+                            <span className="text-[10px] text-muted-foreground italic">by {entry.actor}</span>
+                          )}
+                        </div>
+                        <p className="text-xs mt-1">
+                          <span className="text-muted-foreground">{entry.resource}</span>
+                          <span className="mx-1.5 text-muted-foreground/50">—</span>
+                          <span>{entry.detail}</span>
+                        </p>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0">
+                        {formatDistanceToNow(new Date(entry.timestamp), { addSuffix: true })}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+        </div>
       </div>
 
       {/* Assign Role Dialog */}
