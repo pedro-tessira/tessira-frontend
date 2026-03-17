@@ -662,6 +662,7 @@ export default function TimelinePage() {
                     selectedInitiativeId={selectedInitiativeId}
                     getInitiativeIdForAlloc={getInitiativeIdForAlloc}
                     initiativeRiskMap={initiativeRiskMap}
+                    onLabelClick={() => setSelectedEngineer({ id: emp.id, name: emp.name, teamName: emp.teamName, capacity: 80 })}
                   />
                 );
               })}
