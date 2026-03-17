@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Rocket, Users, Calendar, Boxes, Globe, AlertTriangle, CheckCircle, Scale, BarChart3, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +37,9 @@ function getDurationDays(start: string, end: string) {
 
 export default function InitiativeDetailPage() {
   const { initiativeId } = useParams<{ initiativeId: string }>();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const backTo = searchParams.get("from") || "/app/work/initiatives";
   const baseInit = getInitiative(initiativeId ?? "");
   const [localInit, setLocalInit] = useState<Initiative | null>(baseInit);
   const [editOpen, setEditOpen] = useState(false);
@@ -46,8 +49,8 @@ export default function InitiativeDetailPage() {
     return (
       <div className="py-12 text-center space-y-3">
         <p className="text-muted-foreground">Initiative not found.</p>
-        <Link to="/app/work/initiatives">
-          <Button variant="outline" size="sm">Back to Initiatives</Button>
+        <Link to={backTo}>
+          <Button variant="outline" size="sm">Back</Button>
         </Link>
       </div>
     );
@@ -73,8 +76,8 @@ export default function InitiativeDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Link to="/app/work/initiatives" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-        <ArrowLeft size={13} /> Back to Initiatives
+      <Link to={backTo} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft size={13} /> Back
       </Link>
 
       {/* Header */}
