@@ -42,8 +42,8 @@ export default function ValueStreamDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Link to="/app/work" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-        <ArrowLeft size={13} /> Back to Value Streams
+      <Link to={backTo} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft size={13} /> Back
       </Link>
 
       <div className="flex items-start gap-4">
