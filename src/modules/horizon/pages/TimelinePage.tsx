@@ -44,6 +44,7 @@ import type { EventType, TimelineEvent, AvailabilityWindow, Allocation } from ".
 import AllocationDetailPanel from "../components/AllocationDetailPanel";
 import AddAllocationDialog from "../components/AddAllocationDialog";
 import EventDetailPanel from "../components/EventDetailPanel";
+import EngineerDetailPanel from "../components/EngineerDetailPanel";
 import TimelineDecisionBanner from "../components/TimelineDecisionBanner";
 import TimelineInitiativeLanes from "../components/TimelineInitiativeLanes";
 import { computeDecisionSummary } from "../lib/decision-engine";
