@@ -401,6 +401,18 @@ export default function NineBoxPage() {
         </div>
       </div>
 
+      {/* Comparison panel */}
+      {showComparison && (
+        <RoundComparisonPanel
+          rounds={rounds.map((r) => ({ id: r.id, label: r.label }))}
+          placementsMap={placementsMap}
+          baseRoundId={compareBaseId}
+          onBaseChange={setCompareBaseId}
+          compareRoundId={compareTargetId}
+          onCompareChange={setCompareTargetId}
+        />
+      )}
+
       <EmployeeDetailPanel
         open={!!selectedEmployeeId}
         onOpenChange={(open) => { if (!open) setSelectedEmployeeId(null); }}
