@@ -126,6 +126,7 @@ export default function NineBoxPage() {
 
   const currentPlacements = placementsMap[selectedRound] ?? [];
   const currentRound = rounds.find((r) => r.id === selectedRound);
+  const placedIds = useMemo(() => new Set(currentPlacements.map((p) => p.employeeId)), [currentPlacements]);
 
   // Round management handlers
   const handleAddRound = useCallback((id: string, label: string) => {
