@@ -200,8 +200,13 @@ export default function CapacityIntelligencePage() {
   }, [teamFilter, roleFilter, skillFilter, locationFilter, searchQuery]);
 
   const capacityData = useMemo(() => {
+    const rangeStartISO = toISO(rangeStart);
+    const rangeEndISO = toISO(rangeEnd);
     return filteredEmployees.map((emp) => {
-      const empAllocs = allocations.filter((a) => a.employeeId === emp.id);
+      // Only include allocations that overlap with the visible date range
+      const empAllocs = allocations.filter(
+        (a) => a.employeeId === emp.id && a.startDate <= rangeEndISO && a.endDate >= rangeStartISO
+      );
       return {
         ...emp,
         capacity: getEmployeeCapacity(emp.id, dates),
@@ -209,7 +214,7 @@ export default function CapacityIntelligencePage() {
         allocations: empAllocs,
       };
     });
-  }, [filteredEmployees, dates]);
+  }, [filteredEmployees, dates, rangeStart, rangeEnd]);
 
   // Initiative staffing summary
   const initiativeStaffing = useMemo(() => {
