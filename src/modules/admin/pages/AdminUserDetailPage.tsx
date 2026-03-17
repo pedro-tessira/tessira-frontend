@@ -338,20 +338,41 @@ export default function AdminUserDetailPage() {
 
         {/* Activity Log */}
         <div className="rounded-lg border border-border/50 bg-card p-5 space-y-4 lg:col-span-2">
-          <h3 className="text-sm font-semibold flex items-center gap-2">
-            <Clock size={14} className="text-primary" />
-            Activity Log
-          </h3>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <h3 className="text-sm font-semibold flex items-center gap-2">
+              <Clock size={14} className="text-primary" />
+              Activity Log
+            </h3>
+            <div className="relative w-56">
+              <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={activitySearch}
+                onChange={(e) => { setActivitySearch(e.target.value); setActivityLimit(5); }}
+                placeholder="Search actions, details…"
+                className="h-7 text-xs pl-8"
+              />
+            </div>
+          </div>
           {(() => {
+            const query = activitySearch.toLowerCase();
             const userActivities = auditLog
               .filter((e) => e.actor === userData.displayName || e.resource === userData.displayName)
+              .filter((e) =>
+                !query ||
+                e.action.toLowerCase().includes(query) ||
+                e.detail.toLowerCase().includes(query) ||
+                e.resource.toLowerCase().includes(query) ||
+                e.severity.toLowerCase().includes(query)
+              )
               .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
             if (userActivities.length === 0) {
               return (
                 <div className="text-center py-6">
                   <Clock size={28} className="mx-auto text-muted-foreground/30 mb-2" />
-                  <p className="text-sm text-muted-foreground">No recorded activity for this user.</p>
+                  <p className="text-sm text-muted-foreground">
+                    {activitySearch ? "No matching activity found." : "No recorded activity for this user."}
+                  </p>
                 </div>
               );
             }
@@ -362,40 +383,55 @@ export default function AdminUserDetailPage() {
               critical: "bg-destructive/15 text-destructive",
             };
 
+            const visible = userActivities.slice(0, activityLimit);
+            const hasMore = userActivities.length > activityLimit;
+
             return (
-              <div className="space-y-1">
-                {userActivities.map((entry) => {
-                  const isActor = entry.actor === userData.displayName;
-                  return (
-                    <div key={entry.id} className="flex items-start gap-3 py-2.5 px-3 rounded-md hover:bg-accent/30 transition-colors">
-                      <div className="mt-0.5 shrink-0">
-                        <div className={cn(
-                          "h-2 w-2 rounded-full mt-1",
-                          entry.severity === "critical" ? "bg-destructive" :
-                          entry.severity === "warning" ? "bg-amber-500" : "bg-muted-foreground/40"
-                        )} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <code className="text-[11px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{entry.action}</code>
-                          <Badge variant="secondary" className={cn("text-[10px]", severityStyle[entry.severity])}>{entry.severity}</Badge>
-                          {!isActor && (
-                            <span className="text-[10px] text-muted-foreground italic">by {entry.actor}</span>
-                          )}
+              <>
+                <div className="space-y-1">
+                  {visible.map((entry) => {
+                    const isActor = entry.actor === userData.displayName;
+                    return (
+                      <div key={entry.id} className="flex items-start gap-3 py-2.5 px-3 rounded-md hover:bg-accent/30 transition-colors">
+                        <div className="mt-0.5 shrink-0">
+                          <div className={cn(
+                            "h-2 w-2 rounded-full mt-1",
+                            entry.severity === "critical" ? "bg-destructive" :
+                            entry.severity === "warning" ? "bg-primary/60" : "bg-muted-foreground/40"
+                          )} />
                         </div>
-                        <p className="text-xs mt-1">
-                          <span className="text-muted-foreground">{entry.resource}</span>
-                          <span className="mx-1.5 text-muted-foreground/50">—</span>
-                          <span>{entry.detail}</span>
-                        </p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <code className="text-[11px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{entry.action}</code>
+                            <Badge variant="secondary" className={cn("text-[10px]", severityStyle[entry.severity])}>{entry.severity}</Badge>
+                            {!isActor && (
+                              <span className="text-[10px] text-muted-foreground italic">by {entry.actor}</span>
+                            )}
+                          </div>
+                          <p className="text-xs mt-1">
+                            <span className="text-muted-foreground">{entry.resource}</span>
+                            <span className="mx-1.5 text-muted-foreground/50">—</span>
+                            <span>{entry.detail}</span>
+                          </p>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0">
+                          {formatDistanceToNow(new Date(entry.timestamp), { addSuffix: true })}
+                        </span>
                       </div>
-                      <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0">
-                        {formatDistanceToNow(new Date(entry.timestamp), { addSuffix: true })}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+                <div className="flex items-center justify-between pt-2">
+                  <p className="text-[11px] text-muted-foreground">
+                    Showing {visible.length} of {userActivities.length} entries
+                  </p>
+                  {hasMore && (
+                    <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => setActivityLimit((l) => l + 10)}>
+                      <ChevronDown size={12} /> Show More
+                    </Button>
+                  )}
+                </div>
+              </>
             );
           })()}
         </div>
