@@ -285,21 +285,21 @@ export default function CapacityIntelligencePage() {
   }, []);
 
   const totalCapacity = capacityData.length > 0
-    ? Math.round(capacityData.reduce((s, e) => s + e.capacity.free, 0) / capacityData.length)
+    ? Math.round(capacityData.reduce((s, e) => s + e.currentWeek.free, 0) / capacityData.length)
     : 0;
   const totalAvailability = capacityData.length > 0
-    ? Math.round(capacityData.reduce((s, e) => s + e.capacity.availability, 0) / capacityData.length)
+    ? Math.round(capacityData.reduce((s, e) => s + e.currentWeek.availability, 0) / capacityData.length)
     : 0;
   const totalAllocation = capacityData.length > 0
-    ? Math.round(capacityData.reduce((s, e) => s + e.capacity.allocation, 0) / capacityData.length)
+    ? Math.round(capacityData.reduce((s, e) => s + e.currentWeek.allocation, 0) / capacityData.length)
     : 0;
   const understaffedCount = initiativeStaffing.filter((i) => i.staffing === "understaffed").length;
-  const availableCount = capacityData.filter((e) => e.capacity.free >= 90).length;
-  const unavailableCount = capacityData.filter((e) => e.capacity.free < 50).length;
+  const availableCount = capacityData.filter((e) => e.currentWeek.free >= 90).length;
+  const unavailableCount = capacityData.filter((e) => e.currentWeek.free < 50).length;
 
   const alerts = capacityData
-    .filter((e) => e.capacity.free < CAPACITY_THRESHOLD)
-    .sort((a, b) => a.capacity.free - b.capacity.free);
+    .filter((e) => e.currentWeek.free < CAPACITY_THRESHOLD)
+    .sort((a, b) => a.currentWeek.free - b.currentWeek.free);
 
   useEffect(() => {
     const el = scrollRef.current;
