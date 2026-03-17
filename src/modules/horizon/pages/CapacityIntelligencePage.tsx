@@ -51,6 +51,12 @@ const CAPACITY_THRESHOLD = 70;
 
 type AvailSource = "available" | "partial" | "vacation" | "sick_leave" | "company_event" | "unavailable";
 
+type DayStatus = {
+  availability: AvailSource;
+  allocationPct: number;
+  allocDetails: { initiative: string; percentage: number }[];
+};
+
 const sourceConfig: Record<AvailSource, { label: string; color: string; dotColor: string }> = {
   available:      { label: "Available",          color: "bg-emerald-500/20", dotColor: "bg-emerald-500" },
   partial:        { label: "Partial Allocation", color: "bg-amber-500/25",   dotColor: "bg-amber-500" },
