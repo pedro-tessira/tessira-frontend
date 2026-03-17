@@ -124,6 +124,9 @@ export default function NineBoxPage() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [roundsDialogOpen, setRoundsDialogOpen] = useState(false);
+  const [showComparison, setShowComparison] = useState(false);
+  const [compareBaseId, setCompareBaseId] = useState<string>(() => rounds.length > 1 ? rounds[1].id : rounds[0].id);
+  const [compareTargetId, setCompareTargetId] = useState<string>(() => rounds[0].id);
 
   const currentPlacements = placementsMap[selectedRound] ?? [];
   const currentRound = rounds.find((r) => r.id === selectedRound);
