@@ -49,8 +49,8 @@ export default function InitiativeDetailPage() {
     return (
       <div className="py-12 text-center space-y-3">
         <p className="text-muted-foreground">Initiative not found.</p>
-        <Link to="/app/work/initiatives">
-          <Button variant="outline" size="sm">Back to Initiatives</Button>
+        <Link to={backTo}>
+          <Button variant="outline" size="sm">Back</Button>
         </Link>
       </div>
     );
