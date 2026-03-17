@@ -734,7 +734,7 @@ function CapacityRow({
       </div>
 
       {/* Timeline cells — show allocation intensity */}
-      <div className="flex relative" style={{ width: gridWidth }}>
+      <div className="flex relative self-stretch" style={{ width: gridWidth }}>
         {dates.map((d, i) => {
           const iso = toISO(d);
           const isToday = iso === todayISO;
