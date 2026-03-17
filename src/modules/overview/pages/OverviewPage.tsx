@@ -17,8 +17,8 @@ import {
   UserMinus,
   Users,
   Activity,
-  PieChart,
-} from "lucide-react";
+  PieChart } from
+"lucide-react";
 import {
   PieChart as RePieChart,
   Pie,
@@ -29,8 +29,8 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip as ReTooltip,
-  ResponsiveContainer,
-} from "recharts";
+  ResponsiveContainer } from
+"recharts";
 import { cn } from "@/shared/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,13 +38,13 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  TooltipTrigger } from
+"@/components/ui/tooltip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   computeDecisionSummary,
-  type DeliveryRiskLevel,
-} from "@/modules/horizon/lib/decision-engine";
+  type DeliveryRiskLevel } from
+"@/modules/horizon/lib/decision-engine";
 import { MOCK_RESILIENCE } from "@/modules/signals/data";
 import CapacityForecast from "../components/CapacityForecast";
 import SkillCoverageHeatmap from "../components/SkillCoverageHeatmap";
@@ -98,8 +98,8 @@ export default function OverviewPage() {
         </div>
 
         {/* ═══════════════════════════════════════════════════════
-             PRIORITY 1: DECISION SUMMARY
-            ═══════════════════════════════════════════════════════ */}
+              PRIORITY 1: DECISION SUMMARY
+             ═══════════════════════════════════════════════════════ */}
         <div className={cn(
           "rounded-xl border-2 overflow-hidden transition-all",
           data.criticalRisks.length > 0 ?
@@ -214,8 +214,8 @@ export default function OverviewPage() {
         </div>
 
         {/* ═══════════════════════════════════════════════════════
-             PRIORITY 1b: KPI STRIP
-            ═══════════════════════════════════════════════════════ */}
+              PRIORITY 1b: KPI STRIP
+             ═══════════════════════════════════════════════════════ */}
         <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
           <KPICard
             icon={AlertTriangle}
@@ -256,8 +256,8 @@ export default function OverviewPage() {
         </div>
 
         {/* ═══════════════════════════════════════════════════════
-             PRIORITY 1c: VALUE STREAM IMPACT
-            ═══════════════════════════════════════════════════════ */}
+              PRIORITY 1c: VALUE STREAM IMPACT
+             ═══════════════════════════════════════════════════════ */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Layers size={14} className="text-primary" />
@@ -309,8 +309,8 @@ export default function OverviewPage() {
         </div>
 
         {/* ═══════════════════════════════════════════════════════
-             PRIORITY 2: VISUAL CHARTS
-            ═══════════════════════════════════════════════════════ */}
+              PRIORITY 2: VISUAL CHARTS
+             ═══════════════════════════════════════════════════════ */}
         <div className="grid gap-4 lg:grid-cols-3">
           {/* Risk Distribution Donut */}
           <Card className="border-border/50">
@@ -326,11 +326,11 @@ export default function OverviewPage() {
                 const riskCounts = { critical: 0, high: 0, medium: 0, low: 0 };
                 data.allInitiativeRisks.forEach((r) => riskCounts[r.deliveryRisk]++);
                 const pieData = [
-                  { name: "Critical", value: riskCounts.critical, color: "hsl(var(--destructive))" },
-                  { name: "High", value: riskCounts.high, color: "hsl(var(--orange))" },
-                  { name: "Medium", value: riskCounts.medium, color: "hsl(var(--warning))" },
-                  { name: "Low", value: riskCounts.low, color: "hsl(var(--success))" },
-                ].filter((d) => d.value > 0);
+                { name: "Critical", value: riskCounts.critical, color: "hsl(var(--destructive))" },
+                { name: "High", value: riskCounts.high, color: "hsl(var(--orange))" },
+                { name: "Medium", value: riskCounts.medium, color: "hsl(var(--warning))" },
+                { name: "Low", value: riskCounts.low, color: "hsl(var(--success))" }].
+                filter((d) => d.value > 0);
                 return (
                   <div className="flex items-center gap-4">
                     <div className="h-[140px] w-[140px] shrink-0">
@@ -344,34 +344,34 @@ export default function OverviewPage() {
                             outerRadius={60}
                             paddingAngle={3}
                             dataKey="value"
-                            strokeWidth={0}
-                          >
-                            {pieData.map((entry, i) => (
-                              <Cell key={i} fill={entry.color} />
-                            ))}
+                            strokeWidth={0}>
+                            
+                            {pieData.map((entry, i) =>
+                            <Cell key={i} fill={entry.color} />
+                            )}
                           </Pie>
                           <ReTooltip
                             contentStyle={{
                               background: "hsl(var(--card))",
                               border: "1px solid hsl(var(--border))",
                               borderRadius: 6,
-                              fontSize: 12,
-                            }}
-                          />
+                              fontSize: 12
+                            }} />
+                          
                         </RePieChart>
                       </ResponsiveContainer>
                     </div>
                     <div className="space-y-2 text-xs">
-                      {pieData.map((d) => (
-                        <div key={d.name} className="flex items-center gap-2">
+                      {pieData.map((d) =>
+                      <div key={d.name} className="flex items-center gap-2">
                           <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: d.color }} />
                           <span className="text-muted-foreground">{d.name}</span>
                           <span className="font-bold tabular-nums ml-auto">{d.value}</span>
                         </div>
-                      ))}
+                      )}
                     </div>
-                  </div>
-                );
+                  </div>);
+
               })()}
             </CardContent>
           </Card>
@@ -387,14 +387,14 @@ export default function OverviewPage() {
             </CardHeader>
             <CardContent className="pt-0">
               {(() => {
-                const teams = new Map<string, { name: string; allocs: number[] }>();
+                const teams = new Map<string, {name: string;allocs: number[];}>();
                 for (const eng of data.engineerCapacities) {
                   if (!teams.has(eng.teamId)) teams.set(eng.teamId, { name: eng.teamName, allocs: [] });
                   teams.get(eng.teamId)!.allocs.push(eng.currentAllocation);
                 }
                 const barData = [...teams.entries()].map(([, t]) => ({
                   team: t.name,
-                  allocation: Math.round(t.allocs.reduce((s, v) => s + v, 0) / t.allocs.length),
+                  allocation: Math.round(t.allocs.reduce((s, v) => s + v, 0) / t.allocs.length)
                 }));
                 return (
                   <div className="h-[140px] w-full">
@@ -407,43 +407,43 @@ export default function OverviewPage() {
                           tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
                           axisLine={false}
                           tickLine={false}
-                          tickFormatter={(v) => `${v}%`}
-                        />
+                          tickFormatter={(v) => `${v}%`} />
+                        
                         <YAxis
                           dataKey="team"
                           type="category"
                           tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
                           axisLine={false}
                           tickLine={false}
-                          width={60}
-                        />
+                          width={60} />
+                        
                         <ReTooltip
                           contentStyle={{
                             background: "hsl(var(--card))",
                             border: "1px solid hsl(var(--border))",
                             borderRadius: 6,
-                            fontSize: 12,
+                            fontSize: 12
                           }}
-                          formatter={(v: number) => [`${v}%`, "Allocation"]}
-                        />
+                          formatter={(v: number) => [`${v}%`, "Allocation"]} />
+                        
                         <Bar dataKey="allocation" radius={[0, 4, 4, 0]} maxBarSize={16}>
-                          {barData.map((entry, i) => (
-                            <Cell
-                              key={i}
-                              fill={
-                                entry.allocation > 80
-                                  ? "hsl(var(--destructive))"
-                                  : entry.allocation >= 60
-                                  ? "hsl(var(--warning))"
-                                  : "hsl(var(--success))"
-                              }
-                            />
-                          ))}
+                          {barData.map((entry, i) =>
+                          <Cell
+                            key={i}
+                            fill={
+                            entry.allocation > 80 ?
+                            "hsl(var(--destructive))" :
+                            entry.allocation >= 60 ?
+                            "hsl(var(--warning))" :
+                            "hsl(var(--success))"
+                            } />
+
+                          )}
                         </Bar>
                       </BarChart>
                     </ResponsiveContainer>
-                  </div>
-                );
+                  </div>);
+
               })()}
             </CardContent>
           </Card>
@@ -462,13 +462,13 @@ export default function OverviewPage() {
                 const barData = data.allInitiativeRisks.slice(0, 6).map((r) => ({
                   name: r.name.length > 18 ? r.name.slice(0, 16) + "…" : r.name,
                   score: r.riskScore,
-                  risk: r.deliveryRisk,
+                  risk: r.deliveryRisk
                 }));
                 const riskFill: Record<string, string> = {
                   critical: "hsl(var(--destructive))",
                   high: "hsl(var(--orange))",
                   medium: "hsl(var(--warning))",
-                  low: "hsl(var(--success))",
+                  low: "hsl(var(--success))"
                 };
                 return (
                   <div className="h-[140px] w-full">
@@ -480,42 +480,42 @@ export default function OverviewPage() {
                           domain={[0, 100]}
                           tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
                           axisLine={false}
-                          tickLine={false}
-                        />
+                          tickLine={false} />
+                        
                         <YAxis
                           dataKey="name"
                           type="category"
                           tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
                           axisLine={false}
                           tickLine={false}
-                          width={80}
-                        />
+                          width={80} />
+                        
                         <ReTooltip
                           contentStyle={{
                             background: "hsl(var(--card))",
                             border: "1px solid hsl(var(--border))",
                             borderRadius: 6,
-                            fontSize: 12,
+                            fontSize: 12
                           }}
-                          formatter={(v: number) => [`${v}/100`, "Risk Score"]}
-                        />
+                          formatter={(v: number) => [`${v}/100`, "Risk Score"]} />
+                        
                         <Bar dataKey="score" radius={[0, 4, 4, 0]} maxBarSize={14}>
-                          {barData.map((entry, i) => (
-                            <Cell key={i} fill={riskFill[entry.risk] || riskFill.low} />
-                          ))}
+                          {barData.map((entry, i) =>
+                          <Cell key={i} fill={riskFill[entry.risk] || riskFill.low} />
+                          )}
                         </Bar>
                       </BarChart>
                     </ResponsiveContainer>
-                  </div>
-                );
+                  </div>);
+
               })()}
             </CardContent>
           </Card>
         </div>
 
         {/* ═══════════════════════════════════════════════════════
-             PRIORITY 3: INITIATIVE RISK TABLE + TEAM CAPACITY
-            ═══════════════════════════════════════════════════════ */}
+              PRIORITY 3: INITIATIVE RISK TABLE + TEAM CAPACITY
+             ═══════════════════════════════════════════════════════ */}
         <div className="grid gap-4 lg:grid-cols-5">
           {/* Initiative risk table — wider */}
           <div className="lg:col-span-3 space-y-3">
@@ -678,16 +678,16 @@ export default function OverviewPage() {
         </div>
 
         {/* ═══════════════════════════════════════════════════════
-             PRIORITY 4: OPERATIONAL — Capacity Forecast + Skill Coverage
-            ═══════════════════════════════════════════════════════ */}
-        <div className="grid gap-4 lg:grid-cols-2">
-          <CapacityForecast />
-          <SkillCoverageHeatmap teamFilter="all" />
-        </div>
+              PRIORITY 4: OPERATIONAL — Capacity Forecast + Skill Coverage
+             ═══════════════════════════════════════════════════════ */}
+        
+
+
+        
 
         {/* ═══════════════════════════════════════════════════════
-             PRIORITY 5: RECENT ACTIVITY + QUICK NAVIGATION
-            ═══════════════════════════════════════════════════════ */}
+              PRIORITY 5: RECENT ACTIVITY + QUICK NAVIGATION
+             ═══════════════════════════════════════════════════════ */}
         
 
 
@@ -767,5 +767,3 @@ function KPICard({
     </Tooltip>);
 
 }
-
-
