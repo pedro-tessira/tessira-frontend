@@ -404,17 +404,25 @@ export default function NineBoxPage() {
         </div>
       </div>
 
-      {/* Comparison panel */}
-      {showComparison && (
-        <RoundComparisonPanel
-          rounds={rounds.map((r) => ({ id: r.id, label: r.label }))}
-          placementsMap={placementsMap}
-          baseRoundId={compareBaseId}
-          onBaseChange={setCompareBaseId}
-          compareRoundId={compareTargetId}
-          onCompareChange={setCompareTargetId}
-        />
-      )}
+      {/* Comparison slide-over */}
+      <Sheet open={showComparison} onOpenChange={setShowComparison}>
+        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Round Comparison</SheetTitle>
+            <SheetDescription>Track placement movements between review rounds.</SheetDescription>
+          </SheetHeader>
+          <div className="mt-4">
+            <RoundComparisonPanel
+              rounds={rounds.map((r) => ({ id: r.id, label: r.label }))}
+              placementsMap={placementsMap}
+              baseRoundId={compareBaseId}
+              onBaseChange={setCompareBaseId}
+              compareRoundId={compareTargetId}
+              onCompareChange={setCompareTargetId}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <EmployeeDetailPanel
         open={!!selectedEmployeeId}
