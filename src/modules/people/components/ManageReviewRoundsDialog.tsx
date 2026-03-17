@@ -130,6 +130,19 @@ export function ManageReviewRoundsDialog({
                     <Button
                       size="icon" variant="ghost"
                       className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Clone round"
+                      onClick={() => {
+                        const newLabel = `${r.label} (copy)`;
+                        const newId = `${r.id}-copy-${Date.now()}`;
+                        onClone(r.id, newId, newLabel);
+                        toast({ title: "Round cloned", description: `Placements copied into "${newLabel}".` });
+                      }}
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      size="icon" variant="ghost"
+                      className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={() => { setEditingId(r.id); setEditLabel(r.label); }}
                     >
                       <Pencil className="h-3.5 w-3.5" />
