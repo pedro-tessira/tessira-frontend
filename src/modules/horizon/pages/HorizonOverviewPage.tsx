@@ -1,463 +1,702 @@
-import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
-  Zap,
-  BarChart3,
-  UserX,
-  CalendarClock,
-  ArrowRight,
   AlertTriangle,
-  Briefcase,
+  ArrowRight,
+  ArrowUpRight,
+  BarChart3,
+  ChevronRight,
+  Clock,
+  Filter,
+  Layers,
+  Lightbulb,
+  Rocket,
+  Shield,
+  TrendingDown,
+  TrendingUp,
+  UserCheck,
+  UserMinus,
+  Users,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
-import { Sparkline } from "@/modules/signals/components/Sparkline";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
-  horizonEmployees,
-  horizonTeams,
-  allocations,
-  availabilityWindows,
-  timelineEvents,
-} from "../data";
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  computeDecisionSummary,
+  type DeliveryRiskLevel,
+  type InitiativeRisk,
+  type RecommendedAction,
+  type ValueStreamSummary,
+} from "../lib/decision-engine";
 
-/* ── helpers ──────────────────────────────────────────── */
-const today = new Date().toISOString().slice(0, 10);
-const inDays = (n: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0, 10);
+/* ── Risk color helpers ──────────────────────────────── */
+const riskColor: Record<DeliveryRiskLevel, string> = {
+  critical: "text-destructive",
+  high: "text-orange",
+  medium: "text-warning",
+  low: "text-success",
+};
+const riskBg: Record<DeliveryRiskLevel, string> = {
+  critical: "bg-destructive/10 border-destructive/25",
+  high: "bg-orange/10 border-orange/25",
+  medium: "bg-warning/10 border-warning/25",
+  low: "bg-success/10 border-success/25",
+};
+const riskBadge: Record<DeliveryRiskLevel, string> = {
+  critical: "bg-destructive/15 text-destructive border-destructive/20",
+  high: "bg-orange/15 text-orange border-orange/20",
+  medium: "bg-warning/15 text-warning border-warning/20",
+  low: "bg-success/15 text-success border-success/20",
+};
+const riskLabel: Record<DeliveryRiskLevel, string> = {
+  critical: "Critical",
+  high: "High",
+  medium: "Medium",
+  low: "Low",
 };
 
-function loadColor(pct: number) {
-  if (pct > 80) return "bg-destructive";
-  if (pct >= 60) return "bg-warning";
-  return "bg-success";
-}
+const actionIcon: Record<string, string> = {
+  add_role: "➕",
+  reassign: "🔄",
+  delay: "⏳",
+  reduce_scope: "✂️",
+  split_allocation: "📊",
+};
 
-function loadTextColor(pct: number) {
-  if (pct > 80) return "text-destructive";
-  if (pct >= 60) return "text-warning";
-  return "text-success";
-}
-
-/* ── component ────────────────────────────────────────── */
+/* ── Component ───────────────────────────────────────── */
 export default function HorizonOverviewPage() {
-  /* ── Section 1: Capacity Snapshot ─────────────────── */
-  const snapshot = useMemo(() => {
-    const activeAllocations = allocations.filter(
-      (a) => a.startDate <= today && a.endDate >= today
-    );
+  const navigate = useNavigate();
+  const [vsFilter, setVsFilter] = useState<string | null>(null);
+  const [showAllRecs, setShowAllRecs] = useState(false);
 
-    // per-engineer current total allocation
-    const perEngineer: Record<string, number> = {};
-    activeAllocations.forEach((a) => {
-      perEngineer[a.employeeId] = (perEngineer[a.employeeId] || 0) + a.percentage;
-    });
+  const data = useMemo(() => computeDecisionSummary(), []);
 
-    const totalEngineers = horizonEmployees.length;
-    const avgAllocation =
-      Object.values(perEngineer).length > 0
-        ? Math.round(
-            Object.values(perEngineer).reduce((s, v) => s + v, 0) / totalEngineers
-          )
-        : 0;
-    const freeCapacity = 100 - avgAllocation;
+  const filteredInitiatives = vsFilter
+    ? data.allInitiativeRisks.filter((r) => r.valueStreamIds.includes(vsFilter))
+    : data.allInitiativeRisks;
 
-    const unavailableNow = availabilityWindows.filter(
-      (a) =>
-        a.status === "unavailable" &&
-        a.startDate <= today &&
-        a.endDate >= today
-    );
-    const unavailableIds = new Set(unavailableNow.map((a) => a.employeeId));
-
-    const weekEnd = inDays(7);
-    const upcomingAbsences = availabilityWindows.filter(
-      (a) =>
-        a.status === "unavailable" &&
-        a.startDate > today &&
-        a.startDate <= weekEnd
-    );
-    const upcomingAbsenceIds = new Set(upcomingAbsences.map((a) => a.employeeId));
-
-    return {
-      freeCapacity,
-      avgAllocation,
-      unavailableCount: unavailableIds.size,
-      upcomingAbsences: upcomingAbsenceIds.size,
-      totalEngineers,
-    };
-  }, []);
-
-  /* ── Section 2: Team Load ─────────────────────────── */
-  const teamLoad = useMemo(() => {
-    const teams = horizonTeams.filter((t) => t.id !== "all");
-    return teams.map((team) => {
-      const members = horizonEmployees.filter((e) => e.teamId === team.id);
-      if (members.length === 0) return { id: team.id, name: team.name, load: 0, members: 0 };
-
-      const activeAllocations = allocations.filter(
-        (a) =>
-          a.teamId === team.id &&
-          a.startDate <= today &&
-          a.endDate >= today
-      );
-      const total = activeAllocations.reduce((s, a) => s + a.percentage, 0);
-      const avgLoad = Math.round(total / members.length);
-      return { id: team.id, name: team.name, load: avgLoad, members: members.length };
-    }).sort((a, b) => b.load - a.load);
-  }, []);
-
-  /* ── Section 3: Allocation Distribution ───────────── */
-  const projectDistribution = useMemo(() => {
-    const activeAllocs = allocations.filter(
-      (a) => a.startDate <= today && a.endDate >= today
-    );
-    const totalPct = activeAllocs.reduce((s, a) => s + a.percentage, 0);
-    const byInitiative: Record<string, number> = {};
-    activeAllocs.forEach((a) => {
-      byInitiative[a.initiative] = (byInitiative[a.initiative] || 0) + a.percentage;
-    });
-    return Object.entries(byInitiative)
-      .map(([initiative, pct]) => ({
-        initiative,
-        pct,
-        share: totalPct > 0 ? Math.round((pct / totalPct) * 100) : 0,
-      }))
-      .sort((a, b) => b.pct - a.pct);
-  }, []);
-
-  /* ── Section 4: Capacity Risks ────────────────────── */
-  const capacityRisks = useMemo(() => {
-    return horizonEmployees
-      .map((emp) => {
-        const empAllocs = allocations.filter(
-          (a) =>
-            a.employeeId === emp.id &&
-            a.startDate <= today &&
-            a.endDate >= today
-        );
-        const totalAlloc = empAllocs.reduce((s, a) => s + a.percentage, 0);
-        const free = Math.max(0, 100 - totalAlloc);
-        return { ...emp, totalAlloc, free };
-      })
-      .filter((e) => e.free < 30 && e.totalAlloc > 0)
-      .sort((a, b) => a.free - b.free);
-  }, []);
-
-  /* ── Section 5: Timeline Preview ──────────────────── */
-  const previewEvents = useMemo(() => {
-    const end = inDays(21);
-    const upcoming = timelineEvents
-      .filter(
-        (e) =>
-          e.startDate <= end &&
-          e.endDate >= today &&
-          (e.type === "pto" ||
-            e.type === "vacation" ||
-            e.type === "milestone" ||
-            e.type === "release" ||
-            e.type === "all_hands")
-      )
-      .sort((a, b) => a.startDate.localeCompare(b.startDate))
-      .slice(0, 6);
-    return upcoming;
-  }, []);
-
-  const previewAllocations = useMemo(() => {
-    const end = inDays(21);
-    return allocations
-      .filter((a) => a.startDate <= end && a.endDate >= today)
-      .slice(0, 5);
-  }, []);
-
-  /* ── KPI card helper ──────────────────────────────── */
-  const kpiCards = [
-    {
-      label: "Free Capacity",
-      value: `${snapshot.freeCapacity}%`,
-      detail: `Across ${snapshot.totalEngineers} engineers`,
-      icon: Zap,
-      accent: snapshot.freeCapacity < 30 ? "text-destructive" : "text-success",
-      sparkline: [38, 42, 35, 40, snapshot.freeCapacity] as number[],
-      sparkColor: (snapshot.freeCapacity < 30 ? "destructive" : "success") as "destructive" | "success" | "warning" | "default",
-    },
-    {
-      label: "Avg Allocation",
-      value: `${snapshot.avgAllocation}%`,
-      detail: "Based on active allocations",
-      icon: BarChart3,
-      accent: snapshot.avgAllocation > 80 ? "text-destructive" : snapshot.avgAllocation > 60 ? "text-warning" : "text-primary",
-      sparkline: [52, 55, 60, 57, snapshot.avgAllocation] as number[],
-      sparkColor: (snapshot.avgAllocation > 80 ? "destructive" : snapshot.avgAllocation > 60 ? "warning" : "default") as "destructive" | "success" | "warning" | "default",
-    },
-    {
-      label: "Unavailable",
-      value: snapshot.unavailableCount,
-      detail: "Engineers currently out",
-      icon: UserX,
-      accent: snapshot.unavailableCount > 3 ? "text-destructive" : "text-muted-foreground",
-      sparkline: [2, 4, 3, 5, snapshot.unavailableCount] as number[],
-      sparkColor: (snapshot.unavailableCount > 3 ? "destructive" : "default") as "destructive" | "success" | "warning" | "default",
-    },
-    {
-      label: "Upcoming Absences",
-      value: snapshot.upcomingAbsences,
-      detail: "This week",
-      icon: CalendarClock,
-      accent: "text-muted-foreground",
-      sparkline: [1, 3, 2, 4, snapshot.upcomingAbsences] as number[],
-      sparkColor: "default" as "destructive" | "success" | "warning" | "default",
-    },
-  ];
+  const visibleRecs = showAllRecs ? data.recommendations : data.recommendations.slice(0, 5);
 
   return (
-    <div className="space-y-6">
-      {/* ── Section 1: Capacity Snapshot ─────────────── */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {kpiCards.map((card) => (
-          <div
-            key={card.label}
-            className="rounded-lg border border-border/50 bg-card p-4 space-y-2"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                {card.label}
-              </span>
-              <card.icon
-                size={15}
-                strokeWidth={1.8}
-                className="text-muted-foreground/50"
-              />
-            </div>
-            <div className="flex items-end justify-between gap-2">
-              <div className={cn("text-2xl font-bold tabular-nums", card.accent)}>
-                {card.value}
+    <TooltipProvider delayDuration={150}>
+      <div className="space-y-6">
+        {/* ═══════════════════════════════════════════════
+            SECTION 1: DECISION LAYER — Critical alerts
+           ═══════════════════════════════════════════════ */}
+        {data.criticalRisks.length > 0 && (
+          <div className="rounded-xl border border-destructive/20 bg-gradient-to-br from-destructive/5 via-card to-card p-5 space-y-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+                  <AlertTriangle size={18} className="text-destructive" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold">
+                    {data.criticalRisks.length} critical delivery risk{data.criticalRisks.length !== 1 ? "s" : ""} detected
+                  </h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Initiatives requiring immediate attention based on staffing, confidence, and availability analysis
+                  </p>
+                </div>
               </div>
-              <Sparkline data={card.sparkline} color={card.sparkColor} />
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0 text-xs gap-1.5 border-destructive/20 text-destructive hover:bg-destructive/5"
+                onClick={() => {
+                  const el = document.getElementById("recommendations-section");
+                  el?.scrollIntoView({ behavior: "smooth" });
+                }}
+              >
+                <Lightbulb size={12} /> View recommendations
+              </Button>
             </div>
-            <div className="text-xs text-muted-foreground">{card.detail}</div>
-          </div>
-        ))}
-      </div>
 
-      {/* ── Section 2: Team Load ─────────────────────── */}
-      <div className="rounded-lg border border-border/50 bg-card p-5">
-        <h2 className="text-sm font-semibold mb-4">Team Load</h2>
-        <div className="space-y-3">
-          {teamLoad.map((team) => (
-            <Link
-              key={team.id}
-              to={`/app/horizon/timeline?team=${team.id}`}
-              className="block space-y-1 group hover:bg-accent/30 -mx-2 px-2 py-1.5 rounded transition-colors"
-            >
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium group-hover:text-primary transition-colors">
-                  {team.name}
-                </span>
-                <span
+            <div className="space-y-2">
+              {data.criticalRisks.map((risk) => (
+                <Link
+                  key={risk.id}
+                  to={`/app/work/initiatives/${risk.id}?from=${encodeURIComponent("/app/horizon")}`}
                   className={cn(
-                    "text-xs font-semibold tabular-nums",
-                    loadTextColor(team.load)
+                    "flex items-center gap-3 rounded-lg border px-4 py-3 transition-all hover:shadow-sm",
+                    riskBg[risk.deliveryRisk]
                   )}
                 >
-                  {team.load}%
-                </span>
-              </div>
-              <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
-                <div
-                  className={cn(
-                    "h-full rounded-full transition-all",
-                    loadColor(team.load)
-                  )}
-                  style={{ width: `${Math.min(team.load, 100)}%` }}
-                />
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                {team.members} engineer{team.members !== 1 ? "s" : ""}
-              </p>
-            </Link>
-          ))}
-        </div>
-      </div>
+                  <div className={cn("shrink-0 font-bold text-sm tabular-nums", riskColor[risk.deliveryRisk])}>
+                    {risk.riskScore}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold truncate">{risk.name}</span>
+                      <Badge variant="outline" className={cn("text-[9px] h-4 border", riskBadge[risk.deliveryRisk])}>
+                        {riskLabel[risk.deliveryRisk]}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                      {risk.riskReasons.slice(0, 2).join(" · ")}
+                    </p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    {risk.estimatedDelayDays > 0 && (
+                      <p className="text-xs font-medium text-muted-foreground">
+                        <Clock size={10} className="inline mr-1" />+{risk.estimatedDelayDays}d delay
+                      </p>
+                    )}
+                    <div className="flex gap-1 mt-1">
+                      {risk.roleGaps.slice(0, 2).map((g) => (
+                        <Badge key={g.role} variant="secondary" className="text-[9px] h-4 bg-destructive/10 text-destructive">
+                          -{g.gapFTE} {g.role}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <ChevronRight size={14} className="text-muted-foreground/40 shrink-0" />
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
-      {/* ── Section 3 & 4: two-column ────────────────── */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        {/* Section 3: Allocation Distribution */}
-        <div className="rounded-lg border border-border/50 bg-card p-5">
-          <h2 className="text-sm font-semibold mb-4">Initiative Distribution</h2>
-          <div className="space-y-3">
-            {projectDistribution.map((p) => (
-              <div key={p.initiative} className="space-y-1">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-2 font-medium">
-                    <Briefcase size={13} className="text-primary/60" />
-                    {p.initiative}
-                  </span>
-                  <span className="text-xs text-muted-foreground tabular-nums">
-                    {p.share}%
-                  </span>
+        {/* ═══════════════════════════════════════════════
+            SECTION 2: ACTIONABLE KPI CARDS
+           ═══════════════════════════════════════════════ */}
+        <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+          <KPICard
+            icon={AlertTriangle}
+            label="At Risk"
+            value={data.stats.atRiskCount}
+            detail={`of ${data.stats.totalInitiatives} initiatives`}
+            accent={data.stats.atRiskCount > 2 ? "red" : data.stats.atRiskCount > 0 ? "amber" : "green"}
+            onClick={() => navigate("/app/horizon/capacity")}
+            tooltip="Initiatives with medium+ delivery risk"
+          />
+          <KPICard
+            icon={TrendingDown}
+            label="FTE Gap"
+            value={data.stats.totalFTEGap}
+            detail="Total missing capacity"
+            accent={data.stats.totalFTEGap > 2 ? "red" : data.stats.totalFTEGap > 0 ? "amber" : "green"}
+            onClick={() => navigate("/app/horizon/capacity")}
+            tooltip="Sum of understaffed FTE across all initiatives"
+          />
+          <KPICard
+            icon={UserMinus}
+            label="Constrained"
+            value={data.stats.constrainedEngineers}
+            detail="Engineers < 20% free"
+            accent={data.stats.constrainedEngineers > 3 ? "red" : data.stats.constrainedEngineers > 0 ? "amber" : "green"}
+            onClick={() => navigate("/app/horizon/capacity")}
+            tooltip="Engineers with less than 20% free capacity"
+          />
+          <KPICard
+            icon={Lightbulb}
+            label="Actions"
+            value={data.stats.totalRecommendations}
+            detail="Recommended actions"
+            accent="blue"
+            onClick={() => {
+              const el = document.getElementById("recommendations-section");
+              el?.scrollIntoView({ behavior: "smooth" });
+            }}
+            tooltip="AI-generated recommendations to resolve delivery risks"
+          />
+        </div>
+
+        {/* ═══════════════════════════════════════════════
+            SECTION 3: VALUE STREAM IMPACT
+           ═══════════════════════════════════════════════ */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Layers size={14} className="text-primary" />
+              <h3 className="text-sm font-semibold">Value Stream Impact</h3>
+            </div>
+            <div className="flex gap-1">
+              <Button
+                variant={vsFilter === null ? "secondary" : "ghost"}
+                size="sm"
+                className="h-6 text-[11px] px-2"
+                onClick={() => setVsFilter(null)}
+              >
+                All
+              </Button>
+              {data.valueStreamSummaries.map((vs) => (
+                <Button
+                  key={vs.id}
+                  variant={vsFilter === vs.id ? "secondary" : "ghost"}
+                  size="sm"
+                  className={cn(
+                    "h-6 text-[11px] px-2 gap-1",
+                    vsFilter === vs.id && vs.atRiskCount > 0 && "bg-destructive/10 text-destructive hover:bg-destructive/15"
+                  )}
+                  onClick={() => setVsFilter(vsFilter === vs.id ? null : vs.id)}
+                >
+                  {vs.name}
+                  {vs.atRiskCount > 0 && (
+                    <span className="h-4 w-4 rounded-full bg-destructive/20 text-destructive text-[9px] flex items-center justify-center font-bold">
+                      {vs.atRiskCount}
+                    </span>
+                  )}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {data.valueStreamSummaries.map((vs) => (
+              <button
+                key={vs.id}
+                onClick={() => setVsFilter(vsFilter === vs.id ? null : vs.id)}
+                className={cn(
+                  "rounded-lg border p-3.5 text-left transition-all hover:shadow-sm",
+                  vsFilter === vs.id
+                    ? "border-primary/40 bg-primary/5 ring-1 ring-primary/20"
+                    : "border-border/50 bg-card hover:border-primary/20"
+                )}
+              >
+                <p className="text-xs font-semibold truncate">{vs.name}</p>
+                <div className="flex items-baseline gap-2 mt-1.5">
+                  <span className="text-lg font-bold tabular-nums">{vs.initiativeCount}</span>
+                  <span className="text-[10px] text-muted-foreground">initiatives</span>
                 </div>
-                <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all"
-                    style={{ width: `${p.share}%` }}
-                  />
+                <div className="flex gap-2 mt-2 text-[10px]">
+                  {vs.atRiskCount > 0 && (
+                    <span className="text-destructive font-medium">{vs.atRiskCount} at risk</span>
+                  )}
+                  {vs.understaffedCount > 0 && (
+                    <span className="text-warning font-medium">{vs.understaffedCount} understaffed</span>
+                  )}
+                  {vs.atRiskCount === 0 && vs.understaffedCount === 0 && (
+                    <span className="text-success font-medium">On track</span>
+                  )}
                 </div>
-              </div>
+                {vs.totalFTEGap > 0 && (
+                  <p className="text-[10px] text-muted-foreground mt-1 tabular-nums">
+                    {vs.totalFTEGap} FTE gap
+                  </p>
+                )}
+              </button>
             ))}
           </div>
         </div>
 
-        {/* Section 4: Capacity Risks */}
-        <div className="rounded-lg border border-border/50 bg-card p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <AlertTriangle size={14} className="text-warning" />
-            <h2 className="text-sm font-semibold">Capacity Risks</h2>
+        {/* ═══════════════════════════════════════════════
+            SECTION 4: INITIATIVE RISK TABLE
+           ═══════════════════════════════════════════════ */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Rocket size={14} className="text-primary" />
+            <h3 className="text-sm font-semibold">
+              Initiative Risk Assessment
+              {vsFilter && (
+                <span className="font-normal text-muted-foreground ml-1">
+                  — {data.valueStreamSummaries.find((v) => v.id === vsFilter)?.name}
+                </span>
+              )}
+            </h3>
+            <span className="text-[11px] text-muted-foreground ml-auto">
+              {filteredInitiatives.length} initiative{filteredInitiatives.length !== 1 ? "s" : ""}
+            </span>
           </div>
-          {capacityRisks.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">
-              No engineers below 30% free capacity.
-            </p>
-          ) : (
-            <div className="divide-y divide-border/50">
-              {capacityRisks.map((eng) => (
+
+          <div className="rounded-lg border border-border/50 bg-card overflow-hidden">
+            {/* Table header */}
+            <div className="grid grid-cols-[1fr_80px_100px_80px_80px_80px_32px] gap-2 px-4 py-2.5 border-b border-border/50 bg-muted/30 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+              <span>Initiative</span>
+              <span className="text-center">Risk</span>
+              <span className="text-center">Staffing</span>
+              <span className="text-center">FTE Gap</span>
+              <span className="text-center">Delay</span>
+              <span className="text-center">Conf.</span>
+              <span />
+            </div>
+
+            {/* Rows */}
+            {filteredInitiatives.map((init) => {
+              const fteGap = init.roleGaps.reduce((s, g) => s + Math.max(0, g.gapFTE), 0);
+              return (
                 <Link
-                  key={eng.id}
-                  to="/app/horizon/timeline"
-                  className="flex items-center justify-between py-3 group hover:bg-accent/30 -mx-2 px-2 rounded transition-colors"
+                  key={init.id}
+                  to={`/app/work/initiatives/${init.id}?from=${encodeURIComponent("/app/horizon")}`}
+                  className="grid grid-cols-[1fr_80px_100px_80px_80px_80px_32px] gap-2 px-4 py-3 border-b border-border/20 last:border-0 hover:bg-accent/30 transition-colors items-center"
                 >
-                  <div>
-                    <p className="text-sm font-medium group-hover:text-primary transition-colors">
-                      {eng.name}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground">
-                      {eng.teamName}
+                  {/* Name + status */}
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium truncate">{init.name}</p>
+                    <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+                      {init.riskReasons[0] || "On track"}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p
+
+                  {/* Risk */}
+                  <div className="text-center">
+                    <Badge variant="outline" className={cn("text-[10px] h-5 border", riskBadge[init.deliveryRisk])}>
+                      {riskLabel[init.deliveryRisk]}
+                    </Badge>
+                  </div>
+
+                  {/* Staffing bar */}
+                  <div className="flex items-center gap-1.5 justify-center">
+                    <div className="w-14 h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className={cn(
+                          "h-full rounded-full",
+                          init.staffingStatus === "understaffed"
+                            ? "bg-destructive"
+                            : init.staffingStatus === "balanced"
+                            ? "bg-success"
+                            : "bg-warning"
+                        )}
+                        style={{ width: `${Math.min(100, init.requiredFTE > 0 ? (init.allocatedFTE / init.requiredFTE) * 100 : 0)}%` }}
+                      />
+                    </div>
+                    <span className="text-[10px] tabular-nums text-muted-foreground">
+                      {init.allocatedFTE}/{init.requiredFTE}
+                    </span>
+                  </div>
+
+                  {/* FTE Gap */}
+                  <div className="text-center">
+                    {fteGap > 0 ? (
+                      <span className="text-xs font-semibold tabular-nums text-destructive">-{Math.round(fteGap * 10) / 10}</span>
+                    ) : (
+                      <span className="text-xs text-success">—</span>
+                    )}
+                  </div>
+
+                  {/* Delay */}
+                  <div className="text-center">
+                    {init.estimatedDelayDays > 0 ? (
+                      <span className="text-xs font-medium tabular-nums text-warning">+{init.estimatedDelayDays}d</span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </div>
+
+                  {/* Confidence */}
+                  <div className="text-center">
+                    <Badge
+                      variant="secondary"
                       className={cn(
-                        "text-sm font-semibold tabular-nums",
-                        eng.free < 15
-                          ? "text-destructive"
-                          : "text-warning"
+                        "text-[9px] h-4",
+                        init.confidence === "high"
+                          ? "bg-success/10 text-success"
+                          : init.confidence === "medium"
+                          ? "bg-warning/10 text-warning"
+                          : "bg-destructive/10 text-destructive"
                       )}
                     >
-                      {eng.free}% free
-                    </p>
-                    <p className="text-[11px] text-muted-foreground tabular-nums">
-                      {eng.totalAlloc}% allocated
-                    </p>
+                      {init.confidence}
+                    </Badge>
                   </div>
+
+                  <ChevronRight size={12} className="text-muted-foreground/30" />
                 </Link>
-              ))}
-            </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ═══════════════════════════════════════════════
+            SECTION 5: RECOMMENDED ACTIONS
+           ═══════════════════════════════════════════════ */}
+        <div id="recommendations-section" className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Lightbulb size={14} className="text-warning" />
+            <h3 className="text-sm font-semibold">Recommended Actions</h3>
+            <span className="text-[11px] text-muted-foreground">
+              — {data.recommendations.length} suggestion{data.recommendations.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            {visibleRecs.map((rec) => (
+              <RecommendationCard key={rec.id} rec={rec} />
+            ))}
+          </div>
+
+          {data.recommendations.length > 5 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-primary"
+              onClick={() => setShowAllRecs(!showAllRecs)}
+            >
+              {showAllRecs ? "Show less" : `Show all ${data.recommendations.length} recommendations`}
+              <ArrowRight size={12} className="ml-1" />
+            </Button>
           )}
         </div>
-      </div>
 
-      {/* ── Section 5: Timeline Preview ──────────────── */}
-      <div className="rounded-lg border border-border/50 bg-card p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold">Next 3 Weeks</h2>
-          <Link
-            to="/app/horizon/timeline"
-            className="text-xs text-primary hover:underline flex items-center gap-1"
-          >
-            Open Full Timeline <ArrowRight size={11} />
-          </Link>
-        </div>
+        {/* ═══════════════════════════════════════════════
+            SECTION 6: TEAM CAPACITY + ENGINEERS
+           ═══════════════════════════════════════════════ */}
+        <div className="grid gap-4 lg:grid-cols-2">
+          {/* Team load */}
+          <div className="rounded-lg border border-border/50 bg-card p-5 space-y-4">
+            <div className="flex items-center gap-2">
+              <Users size={14} className="text-primary" />
+              <h3 className="text-sm font-semibold">Team Capacity</h3>
+            </div>
+            {(() => {
+              // Group by team
+              const teams = new Map<string, { name: string; engineers: typeof data.engineerCapacities }>();
+              for (const eng of data.engineerCapacities) {
+                if (!teams.has(eng.teamId)) teams.set(eng.teamId, { name: eng.teamName, engineers: [] });
+                teams.get(eng.teamId)!.engineers.push(eng);
+              }
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          {/* Upcoming PTO / events */}
-          <div>
-            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-              Events & Absences
-            </p>
-            <div className="space-y-1.5">
-              {previewEvents.map((ev) => {
-                const isPTO =
-                  ev.type === "pto" || ev.type === "vacation";
+              return [...teams.entries()].map(([teamId, team]) => {
+                const avgAlloc = Math.round(team.engineers.reduce((s, e) => s + e.currentAllocation, 0) / team.engineers.length);
+                const constrained = team.engineers.filter((e) => e.freeCapacity < 20).length;
                 return (
-                  <div
-                    key={ev.id}
-                    className="flex items-center gap-2 rounded-md border border-border/30 bg-muted/30 px-3 py-2"
+                  <Link
+                    key={teamId}
+                    to={`/app/horizon/timeline?team=${teamId}`}
+                    className="block group hover:bg-accent/30 -mx-2 px-2 py-2 rounded-lg transition-colors"
                   >
-                    <div
-                      className={cn(
-                        "h-2 w-2 rounded-full shrink-0",
-                        isPTO
-                          ? "bg-destructive/70"
-                          : "bg-primary/70"
-                      )}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium truncate">
-                        {ev.title}
-                        {ev.employeeName && (
-                          <span className="text-muted-foreground font-normal">
-                            {" "}
-                            — {ev.employeeName}
-                          </span>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium group-hover:text-primary transition-colors">
+                        {team.name}
+                        <span className="text-[10px] text-muted-foreground font-normal ml-1.5">
+                          {team.engineers.length} engineers
+                        </span>
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {constrained > 0 && (
+                          <Badge variant="secondary" className="text-[9px] h-4 bg-destructive/10 text-destructive">
+                            {constrained} constrained
+                          </Badge>
                         )}
+                        <span
+                          className={cn(
+                            "text-xs font-semibold tabular-nums",
+                            avgAlloc > 80 ? "text-destructive" : avgAlloc >= 60 ? "text-warning" : "text-success"
+                          )}
+                        >
+                          {avgAlloc}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden mt-1.5">
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-all",
+                          avgAlloc > 80 ? "bg-destructive" : avgAlloc >= 60 ? "bg-warning" : "bg-success"
+                        )}
+                        style={{ width: `${Math.min(avgAlloc, 100)}%` }}
+                      />
+                    </div>
+                  </Link>
+                );
+              });
+            })()}
+          </div>
+
+          {/* Available engineers */}
+          <div className="rounded-lg border border-border/50 bg-card p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <UserCheck size={14} className="text-success" />
+                <h3 className="text-sm font-semibold">Available Capacity</h3>
+              </div>
+              <Link to="/app/horizon/capacity" className="text-[11px] text-primary hover:underline flex items-center gap-1">
+                View all <ArrowRight size={10} />
+              </Link>
+            </div>
+            <div className="divide-y divide-border/30">
+              {data.engineerCapacities
+                .filter((e) => e.isAvailable && e.freeCapacity >= 30)
+                .sort((a, b) => b.freeCapacity - a.freeCapacity)
+                .slice(0, 6)
+                .map((eng) => (
+                  <Link
+                    key={eng.id}
+                    to="/app/horizon/capacity"
+                    className="flex items-center justify-between py-2.5 group hover:bg-accent/20 -mx-2 px-2 rounded transition-colors"
+                  >
+                    <div>
+                      <p className="text-xs font-medium group-hover:text-primary transition-colors">
+                        {eng.name}
                       </p>
-                      <p className="text-[10px] text-muted-foreground tabular-nums">
-                        {new Date(ev.startDate).toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                        {ev.startDate !== ev.endDate &&
-                          ` → ${new Date(ev.endDate).toLocaleDateString(
-                            undefined,
-                            { month: "short", day: "numeric" }
-                          )}`}
+                      <p className="text-[10px] text-muted-foreground">
+                        {eng.role} · {eng.teamName}
                       </p>
                     </div>
-                  </div>
-                );
-              })}
+                    <div className="text-right">
+                      <p className={cn(
+                        "text-xs font-bold tabular-nums",
+                        eng.freeCapacity >= 60 ? "text-success" : "text-warning"
+                      )}>
+                        {eng.freeCapacity}% free
+                      </p>
+                      {eng.activeInitiatives.length > 0 && (
+                        <p className="text-[10px] text-muted-foreground tabular-nums">
+                          {eng.activeInitiatives.length} active
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              {data.engineerCapacities.filter((e) => e.isAvailable && e.freeCapacity >= 30).length === 0 && (
+                <p className="text-xs text-muted-foreground py-4 text-center">
+                  No engineers with ≥ 30% free capacity
+                </p>
+              )}
             </div>
           </div>
+        </div>
 
-          {/* Active allocations */}
-          <div>
-            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-              Active Allocations
-            </p>
-            <div className="space-y-1.5">
-              {previewAllocations.map((alloc) => (
-                <div
-                  key={alloc.id}
-                  className="flex items-center justify-between rounded-md border border-primary/20 bg-primary/5 px-3 py-2"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium truncate">
-                      {alloc.initiative}
-                      <span className="text-muted-foreground font-normal">
-                        {" "}
-                        — {alloc.employeeName}
-                      </span>
-                    </p>
-                    <p className="text-[10px] text-muted-foreground tabular-nums">
-                      {new Date(alloc.startDate).toLocaleDateString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                      })}{" "}
-                      →{" "}
-                      {new Date(alloc.endDate).toLocaleDateString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </p>
-                  </div>
-                  <span className="text-xs font-semibold text-primary tabular-nums shrink-0 ml-2">
-                    {alloc.percentage}%
-                  </span>
-                </div>
-              ))}
+        {/* ═══════════════════════════════════════════════
+            SECTION 7: QUICK LINKS
+           ═══════════════════════════════════════════════ */}
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
+          <Link
+            to="/app/horizon/timeline"
+            className="rounded-lg border border-border/50 bg-card p-4 flex items-center gap-3 hover:border-primary/30 transition-colors group"
+          >
+            <BarChart3 size={18} className="text-primary shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium group-hover:text-primary transition-colors">Full Timeline</p>
+              <p className="text-[10px] text-muted-foreground">View all allocations, events & availability</p>
             </div>
+            <ArrowUpRight size={14} className="text-muted-foreground/40 shrink-0" />
+          </Link>
+          <Link
+            to="/app/horizon/capacity"
+            className="rounded-lg border border-border/50 bg-card p-4 flex items-center gap-3 hover:border-primary/30 transition-colors group"
+          >
+            <Zap size={18} className="text-primary shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium group-hover:text-primary transition-colors">Capacity Intelligence</p>
+              <p className="text-[10px] text-muted-foreground">Detailed staffing & engineer timeline</p>
+            </div>
+            <ArrowUpRight size={14} className="text-muted-foreground/40 shrink-0" />
+          </Link>
+          <Link
+            to="/app/signals"
+            className="rounded-lg border border-border/50 bg-card p-4 flex items-center gap-3 hover:border-primary/30 transition-colors group"
+          >
+            <Shield size={18} className="text-primary shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium group-hover:text-primary transition-colors">Delivery Signals</p>
+              <p className="text-[10px] text-muted-foreground">Risk analysis, SPOF & resilience</p>
+            </div>
+            <ArrowUpRight size={14} className="text-muted-foreground/40 shrink-0" />
+          </Link>
+        </div>
+      </div>
+    </TooltipProvider>
+  );
+}
+
+/* ── KPI Card ────────────────────────────────────────── */
+function KPICard({
+  icon: Icon,
+  label,
+  value,
+  detail,
+  accent,
+  onClick,
+  tooltip,
+}: {
+  icon: typeof Users;
+  label: string;
+  value: string | number;
+  detail: string;
+  accent: "red" | "amber" | "green" | "blue";
+  onClick?: () => void;
+  tooltip?: string;
+}) {
+  const accents: Record<string, { border: string; bg: string; icon: string; value: string }> = {
+    red: { border: "border-destructive/20", bg: "bg-destructive/5", icon: "text-destructive", value: "text-destructive" },
+    amber: { border: "border-warning/20", bg: "bg-warning/5", icon: "text-warning", value: "text-warning" },
+    green: { border: "border-success/20", bg: "bg-success/5", icon: "text-success", value: "text-success" },
+    blue: { border: "border-primary/20", bg: "bg-primary/5", icon: "text-primary", value: "text-primary" },
+  };
+  const a = accents[accent];
+
+  const card = (
+    <button
+      onClick={onClick}
+      className={cn(
+        "rounded-lg border p-3.5 text-left transition-all hover:shadow-sm w-full",
+        a.border, a.bg,
+        onClick && "cursor-pointer hover:ring-1 hover:ring-primary/20"
+      )}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
+        <Icon size={14} strokeWidth={1.8} className={a.icon} />
+      </div>
+      <div className={cn("text-2xl font-bold tabular-nums mt-1", a.value)}>{value}</div>
+      <div className="text-[11px] text-muted-foreground mt-0.5">{detail}</div>
+    </button>
+  );
+
+  if (!tooltip) return card;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{card}</TooltipTrigger>
+      <TooltipContent className="text-xs">{tooltip}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+/* ── Recommendation Card ─────────────────────────────── */
+function RecommendationCard({ rec }: { rec: RecommendedAction }) {
+  const priorityStyles: Record<string, string> = {
+    high: "border-destructive/20 bg-destructive/5",
+    medium: "border-warning/20 bg-warning/5",
+    low: "border-border/50 bg-card",
+  };
+  const priorityBadge: Record<string, string> = {
+    high: "bg-destructive/15 text-destructive",
+    medium: "bg-warning/15 text-warning",
+    low: "bg-muted text-muted-foreground",
+  };
+
+  return (
+    <div className={cn("rounded-lg border p-4 transition-all hover:shadow-sm", priorityStyles[rec.priority])}>
+      <div className="flex items-start gap-3">
+        <span className="text-base shrink-0 mt-0.5">{actionIcon[rec.type] || "💡"}</span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-medium">{rec.label}</span>
+            <Badge variant="secondary" className={cn("text-[9px] h-4", priorityBadge[rec.priority])}>
+              {rec.priority}
+            </Badge>
           </div>
+          <p className="text-xs text-muted-foreground mt-1">{rec.detail}</p>
+          {(rec.initiativeId || rec.engineerId) && (
+            <div className="flex gap-2 mt-2">
+              {rec.initiativeId && (
+                <Link
+                  to={`/app/work/initiatives/${rec.initiativeId}?from=${encodeURIComponent("/app/horizon")}`}
+                  className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
+                >
+                  View initiative <ArrowUpRight size={9} />
+                </Link>
+              )}
+              {rec.engineerId && (
+                <Link
+                  to="/app/horizon/capacity"
+                  className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
+                >
+                  View engineer <ArrowUpRight size={9} />
+                </Link>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
