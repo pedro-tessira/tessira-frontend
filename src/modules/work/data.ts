@@ -178,7 +178,7 @@ export function getDomainFTE(domainId: string): number {
 export function getEngineersForDomain(domainId: string) {
   const allocs = getAllocationsForDomain(domainId);
   const empIds = [...new Set(allocs.map((a) => a.employeeId))];
-  return empIds.map((id) => horizonEmployees.find((e) => e.id === id)!).filter(Boolean);
+  return empIds.map((id) => sharedEmployees.find((e) => e.id === id)!).filter(Boolean);
 }
 
 export function getDomainsForInitiative(initiativeId: string) {
