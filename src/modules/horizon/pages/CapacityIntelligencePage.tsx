@@ -130,32 +130,60 @@ function hasCompanyEvent(dayISO: string): boolean {
   );
 }
 
-function getEmployeeCapacity(empId: string, dates: Date[]): { availability: number; allocation: number; free: number } {
-  let availDays = 0;
-  const workdays = dates.filter((d) => d.getDay() !== 0 && d.getDay() !== 6);
-  for (const d of workdays) {
-    const iso = toISO(d);
-    const src = resolveAvailSource(empId, iso);
-    if (src === "available") availDays++;
-    else if (src === "partial") availDays += 0.5;
-  }
-  const totalWorkdays = workdays.length;
-  const availPct = totalWorkdays > 0 ? Math.round((availDays / totalWorkdays) * 100) : 100;
+/** Resolve full day status: availability + allocation details for a specific day */
+function getDayStatus(empId: string, dayISO: string, empAllocs: typeof allocations): DayStatus {
+  const companyEvent = hasCompanyEvent(dayISO);
+  const availability = companyEvent ? "company_event" as AvailSource : resolveAvailSource(empId, dayISO);
 
-  const empAllocs = allocations.filter((a) => a.employeeId === empId);
+  // Find active allocations for this day
+  const allocDetails: { initiative: string; percentage: number }[] = [];
+  for (const a of empAllocs) {
+    if (a.startDate <= dayISO && a.endDate >= dayISO) {
+      allocDetails.push({ initiative: a.initiative, percentage: a.percentage });
+    }
+  }
+  const allocationPct = allocDetails.reduce((s, d) => s + d.percentage, 0);
+
+  return { availability, allocationPct, allocDetails };
+}
+
+function getEmployeeCapacity(empId: string, dates: Date[], empAllocs: typeof allocations): { availability: number; allocation: number; free: number } {
+  const workdays = dates.filter((d) => d.getDay() !== 0 && d.getDay() !== 6);
+  const totalWorkdays = workdays.length;
+  if (totalWorkdays === 0) return { availability: 100, allocation: 0, free: 100 };
+
+  let availDays = 0;
   let totalAllocPct = 0;
+
   for (const d of workdays) {
     const iso = toISO(d);
-    let dayAlloc = 0;
-    for (const a of empAllocs) {
-      if (a.startDate <= iso && a.endDate >= iso) dayAlloc += a.percentage;
+    const status = getDayStatus(empId, iso, empAllocs);
+
+    // Availability
+    if (status.availability === "available") availDays++;
+    else if (status.availability === "partial") availDays += 0.5;
+
+    // Allocation — only count on available/partial days
+    if (status.availability === "available" || status.availability === "partial") {
+      totalAllocPct += Math.min(100, status.allocationPct);
     }
-    totalAllocPct += Math.min(100, dayAlloc);
   }
-  const allocPct = totalWorkdays > 0 ? Math.round(totalAllocPct / totalWorkdays) : 0;
+
+  const availPct = Math.round((availDays / totalWorkdays) * 100);
+  const allocPct = Math.round(totalAllocPct / totalWorkdays);
   const freePct = Math.max(0, availPct - allocPct);
 
   return { availability: availPct, allocation: allocPct, free: freePct };
+}
+
+/** Get capacity for current work-week only (more actionable than range average) */
+function getCurrentWeekCapacity(empId: string, today: Date, empAllocs: typeof allocations): { availability: number; allocation: number; free: number } {
+  // Current Mon–Fri
+  const dow = today.getDay();
+  const monday = addDays(today, -(dow === 0 ? 6 : dow - 1));
+  const weekDays: Date[] = [];
+  for (let i = 0; i < 5; i++) weekDays.push(addDays(monday, i));
+  return getEmployeeCapacity(empId, weekDays, empAllocs);
 }
 
 // ── Component ────────────────────────────────────────────
