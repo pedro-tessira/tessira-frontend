@@ -237,6 +237,20 @@ export function getRequiredFTEByRole(init: Initiative): { role: string; days: nu
   }));
 }
 
+/** Allocated FTE by role for an initiative */
+export function getAllocatedFTEByRole(initiativeId: string): Record<string, number> {
+  const allocs = getAllocationsForInitiative(initiativeId);
+  const byRole: Record<string, number> = {};
+  for (const a of allocs) {
+    byRole[a.role] = (byRole[a.role] || 0) + a.percentage;
+  }
+  // Convert percentages to FTE
+  for (const role of Object.keys(byRole)) {
+    byRole[role] = Math.round(byRole[role] / 10) / 10;
+  }
+  return byRole;
+}
+
 /** Allocated FTE = sum of allocation percentages / 100 */
 export function getAllocatedFTE(initiativeId: string): number {
   const allocs = getAllocationsForInitiative(initiativeId);
