@@ -43,14 +43,13 @@ function formatDate(iso: string): string {
 
 export default function TimelineInitiativeLanes({ initiatives, rangeStart, rangeDays, dayWidth, todayISO, selectedInitiativeId, onInitiativeClick }: Props) {
   const gridWidth = rangeDays * dayWidth;
-  
-  // Only show initiatives overlapping the visible range
+
   const rangeEnd = new Date(rangeStart);
   rangeEnd.setDate(rangeEnd.getDate() + rangeDays);
   const rangeEndISO = toISO(rangeEnd);
   const rangeStartISO = toISO(rangeStart);
 
-  const visible = useMemo(() => 
+  const visible = useMemo(() =>
     initiatives.filter((init) => init.startDate <= rangeEndISO && init.endDate >= rangeStartISO)
       .sort((a, b) => b.riskScore - a.riskScore),
     [initiatives, rangeStartISO, rangeEndISO]
@@ -58,7 +57,7 @@ export default function TimelineInitiativeLanes({ initiatives, rangeStart, range
 
   if (visible.length === 0) return null;
 
-  // Compute today pixel position once
+  // Compute today column position once
   const todayDate = new Date(todayISO);
   todayDate.setHours(0, 0, 0, 0);
   const todayPx = ((todayDate.getTime() - rangeStart.getTime()) / 86400000) * dayWidth;
@@ -74,7 +73,6 @@ export default function TimelineInitiativeLanes({ initiatives, rangeStart, range
           <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 ml-auto">{visible.length}</Badge>
         </div>
         <div className="relative" style={{ width: gridWidth }}>
-          {/* Today column highlight in header */}
           {todayInRange && (
             <div
               className="absolute top-0 bottom-0 bg-primary/10 border-x border-primary/20 pointer-events-none"
@@ -120,6 +118,7 @@ export default function TimelineInitiativeLanes({ initiatives, rangeStart, range
               </div>
             </div>
 
+            {/* Bar area */}
             <div className="relative" style={{ width: gridWidth, height: 32 }}>
               {/* Today column overlay */}
               {todayInRange && (
@@ -128,8 +127,12 @@ export default function TimelineInitiativeLanes({ initiatives, rangeStart, range
                   style={{ left: todayPx, width: dayWidth, zIndex: 1 }}
                 />
               )}
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
                     className={cn(
-                      "absolute top-1 h-6 rounded-md flex items-center px-2 text-[10px] font-semibold truncate border transition-all",
+                      "absolute top-1 h-6 rounded-md flex items-center px-2 text-[10px] font-semibold truncate border transition-all z-[2]",
                       riskBg[init.deliveryRisk],
                       isSelected && "ring-2 ring-primary/40 shadow-sm"
                     )}
@@ -164,14 +167,6 @@ export default function TimelineInitiativeLanes({ initiatives, rangeStart, range
                   <p className="text-muted-foreground/70 text-[10px]">Click to highlight allocations</p>
                 </TooltipContent>
               </Tooltip>
-
-              {/* Today line */}
-              {(() => {
-                const todayDate = new Date(todayISO);
-                const todayPx = ((todayDate.getTime() - rangeStart.getTime()) / 86400000) * dayWidth;
-                if (todayPx < 0 || todayPx > gridWidth) return null;
-                return <div className="absolute top-0 bottom-0 w-px bg-primary/40 pointer-events-none" style={{ left: todayPx, zIndex: 1 }} />;
-              })()}
             </div>
           </div>
         );
