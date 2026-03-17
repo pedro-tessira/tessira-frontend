@@ -2,6 +2,7 @@ import type {
   SkillDomain, Skill, SkillAssignment, SkillCoverage, SPOFRisk, SkillsStats,
   SkillSystem, OwnerConcentration, SkillMomentum, TeamExposure,
 } from "./types";
+import { workAllocations } from "@/modules/work/data";
 
 // ── Skill Domains (mapped to engineering domains) ──
 export const MOCK_DOMAINS: SkillDomain[] = [
