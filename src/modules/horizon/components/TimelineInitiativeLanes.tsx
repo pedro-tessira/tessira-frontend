@@ -119,7 +119,7 @@ export default function TimelineInitiativeLanes({ initiatives, rangeStart, range
             </div>
 
             {/* Bar area */}
-            <div className="relative" style={{ width: gridWidth, height: 32 }}>
+            <div className="relative min-h-[32px]" style={{ width: gridWidth }}>
               {/* Today column overlay */}
               {todayInRange && (
                 <div
