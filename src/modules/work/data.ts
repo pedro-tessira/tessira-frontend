@@ -1,4 +1,4 @@
-import type { ValueStream, Domain, Initiative, WorkAllocation } from "./types";
+import type { ValueStream, Domain, Initiative, WorkAllocation, StaffingStatus } from "./types";
 import { horizonEmployees } from "@/modules/horizon/data";
 
 function daysFromNow(offset: number): string {
@@ -26,16 +26,96 @@ export const domains: Domain[] = [
   { id: "dom-06", name: "Data Platform", description: "Data infrastructure, pipelines, and analytical workloads.", owningTeamId: "team-004", owningTeamName: "Data & Observability" },
 ];
 
-// ── Initiatives ──────────────────────────────────────────
+// ── Initiatives (with HLE) ──────────────────────────────
 export const initiatives: Initiative[] = [
-  { id: "init-01", name: "Auth Refactor", description: "Modernize the authentication layer with OIDC compliance and multi-tenant support.", status: "active", startDate: daysFromNow(-5), endDate: daysFromNow(9), domainIds: ["dom-01"], valueStreamIds: ["vs-01", "vs-05"] },
-  { id: "init-02", name: "Stripe Migration", description: "Migrate from legacy billing to the new Stripe-based billing engine.", status: "active", startDate: daysFromNow(0), endDate: daysFromNow(14), domainIds: ["dom-02"], valueStreamIds: ["vs-01"] },
-  { id: "init-03", name: "API Gateway Hardening", description: "Rate limiting, circuit breakers, and observability for the API gateway.", status: "active", startDate: daysFromNow(4), endDate: daysFromNow(18), domainIds: ["dom-01", "dom-05"], valueStreamIds: ["vs-01", "vs-02", "vs-03"] },
-  { id: "init-04", name: "Checkout Performance", description: "Reduce P95 checkout latency from 1.8s to under 500ms.", status: "planned", startDate: daysFromNow(10), endDate: daysFromNow(28), domainIds: ["dom-03"], valueStreamIds: ["vs-05"] },
-  { id: "init-05", name: "Dashboard v2", description: "Redesign the main product dashboard with new analytics widgets and real-time data.", status: "active", startDate: daysFromNow(-5), endDate: daysFromNow(12), domainIds: ["dom-04"], valueStreamIds: ["vs-04"] },
-  { id: "init-06", name: "Design System Refresh", description: "Update component library with new tokens, accessibility fixes, and dark mode.", status: "planned", startDate: daysFromNow(10), endDate: daysFromNow(23), domainIds: ["dom-04"], valueStreamIds: ["vs-04", "vs-05"] },
-  { id: "init-07", name: "Pipeline Performance", description: "Optimize data ingestion pipeline throughput by 3x.", status: "active", startDate: daysFromNow(-3), endDate: daysFromNow(11), domainIds: ["dom-05", "dom-06"], valueStreamIds: ["vs-02"] },
-  { id: "init-08", name: "Data Lake Migration", description: "Migrate analytical workloads from Redshift to the new data lake architecture.", status: "active", startDate: daysFromNow(0), endDate: daysFromNow(18), domainIds: ["dom-06"], valueStreamIds: ["vs-02", "vs-04"] },
+  {
+    id: "init-01", name: "Auth Refactor", description: "Modernize the authentication layer with OIDC compliance and multi-tenant support.",
+    status: "active", startDate: daysFromNow(-5), endDate: daysFromNow(9),
+    domainIds: ["dom-01"], valueStreamIds: ["vs-01", "vs-05"],
+    estimate: {
+      totalEffortDays: 30,
+      roleBreakdown: [{ role: "Backend", days: 20 }, { role: "DevOps", days: 5 }, { role: "Frontend", days: 5 }],
+      confidence: "high",
+      drivers: "Strong domain knowledge in team. Well-scoped OIDC migration path.",
+    },
+  },
+  {
+    id: "init-02", name: "Stripe Migration", description: "Migrate from legacy billing to the new Stripe-based billing engine.",
+    status: "active", startDate: daysFromNow(0), endDate: daysFromNow(14),
+    domainIds: ["dom-02"], valueStreamIds: ["vs-01"],
+    estimate: {
+      totalEffortDays: 40,
+      roleBreakdown: [{ role: "Backend", days: 25 }, { role: "Frontend", days: 10 }, { role: "Data", days: 5 }],
+      confidence: "medium",
+      drivers: "Dependency on Stripe API timelines. Requires data migration testing.",
+    },
+  },
+  {
+    id: "init-03", name: "API Gateway Hardening", description: "Rate limiting, circuit breakers, and observability for the API gateway.",
+    status: "active", startDate: daysFromNow(4), endDate: daysFromNow(18),
+    domainIds: ["dom-01", "dom-05"], valueStreamIds: ["vs-01", "vs-02", "vs-03"],
+    estimate: {
+      totalEffortDays: 35,
+      roleBreakdown: [{ role: "Backend", days: 15 }, { role: "DevOps", days: 15 }, { role: "Data", days: 5 }],
+      confidence: "medium",
+      drivers: "Cross-cutting concern. Needs coordination across multiple teams.",
+    },
+  },
+  {
+    id: "init-04", name: "Checkout Performance", description: "Reduce P95 checkout latency from 1.8s to under 500ms.",
+    status: "planned", startDate: daysFromNow(10), endDate: daysFromNow(28),
+    domainIds: ["dom-03"], valueStreamIds: ["vs-05"],
+    estimate: {
+      totalEffortDays: 50,
+      roleBreakdown: [{ role: "Backend", days: 20 }, { role: "Frontend", days: 20 }, { role: "Data", days: 10 }],
+      confidence: "low",
+      drivers: "Requires profiling and root cause analysis. Unknown bottlenecks in payment flow.",
+    },
+  },
+  {
+    id: "init-05", name: "Dashboard v2", description: "Redesign the main product dashboard with new analytics widgets and real-time data.",
+    status: "active", startDate: daysFromNow(-5), endDate: daysFromNow(12),
+    domainIds: ["dom-04"], valueStreamIds: ["vs-04"],
+    estimate: {
+      totalEffortDays: 25,
+      roleBreakdown: [{ role: "Frontend", days: 18 }, { role: "Backend", days: 5 }, { role: "Data", days: 2 }],
+      confidence: "high",
+      drivers: "Clear design specs. Reusing existing component library.",
+    },
+  },
+  {
+    id: "init-06", name: "Design System Refresh", description: "Update component library with new tokens, accessibility fixes, and dark mode.",
+    status: "planned", startDate: daysFromNow(10), endDate: daysFromNow(23),
+    domainIds: ["dom-04"], valueStreamIds: ["vs-04", "vs-05"],
+    estimate: {
+      totalEffortDays: 20,
+      roleBreakdown: [{ role: "Frontend", days: 18 }, { role: "DevOps", days: 2 }],
+      confidence: "high",
+      drivers: "Design tokens already defined. Incremental rollout planned.",
+    },
+  },
+  {
+    id: "init-07", name: "Pipeline Performance", description: "Optimize data ingestion pipeline throughput by 3x.",
+    status: "active", startDate: daysFromNow(-3), endDate: daysFromNow(11),
+    domainIds: ["dom-05", "dom-06"], valueStreamIds: ["vs-02"],
+    estimate: {
+      totalEffortDays: 28,
+      roleBreakdown: [{ role: "Data", days: 18 }, { role: "DevOps", days: 8 }, { role: "Backend", days: 2 }],
+      confidence: "medium",
+      drivers: "Pipeline bottlenecks partially identified. Spark tuning needed.",
+    },
+  },
+  {
+    id: "init-08", name: "Data Lake Migration", description: "Migrate analytical workloads from Redshift to the new data lake architecture.",
+    status: "active", startDate: daysFromNow(0), endDate: daysFromNow(18),
+    domainIds: ["dom-06"], valueStreamIds: ["vs-02", "vs-04"],
+    estimate: {
+      totalEffortDays: 45,
+      roleBreakdown: [{ role: "Data", days: 30 }, { role: "DevOps", days: 10 }, { role: "Backend", days: 5 }],
+      confidence: "low",
+      drivers: "Large data volume. Unknown schema compatibility issues. Needs parallel run.",
+    },
+  },
 ];
 
 // ── Work Allocations ─────────────────────────────────────
@@ -129,4 +209,64 @@ export function getEngineersForValueStream(vsId: string) {
   const allocs = workAllocations.filter((a) => initIds.has(a.initiativeId));
   const empIds = [...new Set(allocs.map((a) => a.employeeId))];
   return empIds.map((id) => horizonEmployees.find((e) => e.id === id)!).filter(Boolean);
+}
+
+// ── Initiative Planning Helpers ──────────────────────────
+
+/** Duration in working days (approximate: total calendar days * 5/7) */
+export function getInitiativeDurationWeekdays(init: Initiative): number {
+  const start = new Date(init.startDate);
+  const end = new Date(init.endDate);
+  const calendarDays = Math.max(1, Math.round((end.getTime() - start.getTime()) / 86400000) + 1);
+  return Math.max(1, Math.round(calendarDays * 5 / 7));
+}
+
+/** Required FTE = total effort days / working days in duration */
+export function getRequiredFTE(init: Initiative): number {
+  const workdays = getInitiativeDurationWeekdays(init);
+  return Math.round((init.estimate.totalEffortDays / workdays) * 10) / 10;
+}
+
+/** Allocated FTE = sum of allocation percentages / 100 */
+export function getAllocatedFTE(initiativeId: string): number {
+  const allocs = getAllocationsForInitiative(initiativeId);
+  const totalPct = allocs.reduce((s, a) => s + a.percentage, 0);
+  return Math.round(totalPct / 10) / 10;
+}
+
+/** Staffing status based on required vs allocated FTE */
+export function getStaffingStatus(init: Initiative): StaffingStatus {
+  const required = getRequiredFTE(init);
+  const allocated = getAllocatedFTE(init.id);
+  if (allocated < required * 0.85) return "understaffed";
+  if (allocated > required * 1.15) return "overstaffed";
+  return "balanced";
+}
+
+/** Get FTE allocated per initiative for a given set of initiative IDs */
+export function getFTEByInitiative(initiativeIds: string[]): { initiativeId: string; initiativeName: string; allocatedFTE: number; requiredFTE: number; status: StaffingStatus }[] {
+  return initiativeIds.map((id) => {
+    const init = getInitiative(id);
+    if (!init) return null;
+    return {
+      initiativeId: id,
+      initiativeName: init.name,
+      allocatedFTE: getAllocatedFTE(id),
+      requiredFTE: getRequiredFTE(init),
+      status: getStaffingStatus(init),
+    };
+  }).filter(Boolean) as any[];
+}
+
+/** Get allocation breakdown per initiative for a specific employee */
+export function getEmployeeInitiativeAllocations(employeeId: string) {
+  return workAllocations
+    .filter((a) => a.employeeId === employeeId)
+    .map((a) => ({
+      initiativeId: a.initiativeId,
+      initiativeName: a.initiativeName,
+      percentage: a.percentage,
+      startDate: a.startDate,
+      endDate: a.endDate,
+    }));
 }

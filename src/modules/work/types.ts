@@ -1,4 +1,18 @@
 export type InitiativeStatus = "planned" | "active" | "completed";
+export type ConfidenceLevel = "low" | "medium" | "high";
+export type StaffingStatus = "understaffed" | "balanced" | "overstaffed";
+
+export interface RoleEffort {
+  role: string; // e.g. "Backend", "Frontend", "Data", "DevOps"
+  days: number;
+}
+
+export interface HighLevelEstimate {
+  totalEffortDays: number;
+  roleBreakdown: RoleEffort[];
+  confidence: ConfidenceLevel;
+  drivers: string;
+}
 
 export interface ValueStream {
   id: string;
@@ -23,6 +37,7 @@ export interface Initiative {
   endDate: string;
   domainIds: string[];
   valueStreamIds: string[];
+  estimate: HighLevelEstimate;
 }
 
 export interface WorkAllocation {
