@@ -1,11 +1,14 @@
 import { AvatarInitials } from "./AvatarInitials";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import {
+  ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import { cn } from "@/shared/lib/utils";
 import { MOCK_EMPLOYEES } from "../data";
 import { getNotesForEmployee } from "../data";
 import type { Employee } from "../types";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, UserMinus } from "lucide-react";
 
 export interface MovementRecord {
   employeeId: string;
