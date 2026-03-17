@@ -125,6 +125,8 @@ export default function InitiativeDetailPage() {
                 {init.estimate.confidence} confidence
               </Badge>
             </div>
+
+            {/* Summary row */}
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-1">
                 <p className="text-[11px] text-muted-foreground">Total Effort</p>
@@ -139,6 +141,8 @@ export default function InitiativeDetailPage() {
                 <p className={cn("text-lg font-bold tabular-nums", sc.color)}>{allocated}</p>
               </div>
             </div>
+
+            {/* Overall capacity fill */}
             <div className="space-y-1.5">
               <div className="flex justify-between text-[11px] text-muted-foreground">
                 <span>Capacity fill</span>
@@ -151,18 +155,45 @@ export default function InitiativeDetailPage() {
                 />
               </div>
             </div>
-            {/* Role breakdown */}
+
+            {/* Role-level breakdown with Required FTE per role */}
             <div className="space-y-2">
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Effort by Role</p>
-              <div className="grid grid-cols-2 gap-2">
-                {init.estimate.roleBreakdown.map((rb) => (
-                  <div key={rb.role} className="flex items-center justify-between rounded-md border border-border/30 bg-muted/20 px-3 py-2">
-                    <span className="text-xs font-medium">{rb.role}</span>
-                    <span className="text-xs font-bold tabular-nums">{rb.days}d</span>
-                  </div>
-                ))}
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Required FTE by Role</p>
+              <div className="rounded-md border border-border/30 overflow-hidden">
+                <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 px-3 py-1.5 bg-muted/40 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                  <span>Role</span>
+                  <span className="text-right">Effort</span>
+                  <span className="text-right">Req. FTE</span>
+                  <span className="text-right">Share</span>
+                </div>
+                {getRequiredFTEByRole(init).map((rb) => {
+                  const sharePct = init.estimate.totalEffortDays > 0
+                    ? Math.round((rb.days / init.estimate.totalEffortDays) * 100)
+                    : 0;
+                  return (
+                    <div key={rb.role} className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 items-center px-3 py-2 border-t border-border/20">
+                      <span className="text-xs font-medium">{rb.role}</span>
+                      <span className="text-xs tabular-nums text-right">{rb.days}d</span>
+                      <span className="text-xs font-bold tabular-nums text-right">{rb.fte}</span>
+                      <div className="flex items-center gap-1.5 justify-end min-w-[60px]">
+                        <div className="h-1.5 w-10 rounded-full bg-muted overflow-hidden">
+                          <div className="h-full rounded-full bg-primary/60" style={{ width: `${sharePct}%` }} />
+                        </div>
+                        <span className="text-[10px] tabular-nums text-muted-foreground">{sharePct}%</span>
+                      </div>
+                    </div>
+                  );
+                })}
+                {/* Total row */}
+                <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 items-center px-3 py-2 border-t border-border/50 bg-muted/20">
+                  <span className="text-xs font-semibold">Total</span>
+                  <span className="text-xs font-semibold tabular-nums text-right">{init.estimate.totalEffortDays}d</span>
+                  <span className="text-xs font-bold tabular-nums text-right">{required}</span>
+                  <span className="text-[10px] tabular-nums text-muted-foreground text-right">100%</span>
+                </div>
               </div>
             </div>
+
             {/* Drivers */}
             <div className="space-y-1.5">
               <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Key Drivers</p>
