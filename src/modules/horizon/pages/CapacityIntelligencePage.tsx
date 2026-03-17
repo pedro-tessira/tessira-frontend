@@ -485,10 +485,10 @@ export default function CapacityIntelligencePage() {
             </div>
             <div className="flex flex-wrap gap-2">
               {alerts.map((a) => {
-                const risk = freeCapacityRisk(a.capacity.free);
+                const risk = freeCapacityRisk(a.currentWeek.free);
                 return (
                   <Badge key={a.id} variant="secondary" className={cn("text-[11px]", riskBgSubtle(risk), riskText(risk), riskBorder(risk))}>
-                    {a.name} — {a.capacity.free}% free
+                    {a.name} — {a.currentWeek.free}% free
                   </Badge>
                 );
               })}
