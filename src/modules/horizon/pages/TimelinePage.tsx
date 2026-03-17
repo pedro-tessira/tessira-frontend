@@ -706,6 +706,7 @@ export default function TimelinePage() {
       <AllocationDetailPanel open={!!selectedAllocation} onOpenChange={(open) => !open && setSelectedAllocation(null)} allocation={selectedAllocation} />
       <AddAllocationDialog open={addAllocOpen} onOpenChange={setAddAllocOpen} prefillEmployeeId={addAllocPrefill.employeeId} prefillStartDate={addAllocPrefill.startDate} prefillEndDate={addAllocPrefill.endDate} />
       <EventDetailPanel open={!!selectedEvent} onOpenChange={(open) => !open && setSelectedEvent(null)} event={selectedEvent} />
+      <EngineerDetailPanel open={!!selectedEngineer} onOpenChange={(open) => !open && setSelectedEngineer(null)} engineer={selectedEngineer} />
     </TooltipProvider>
   );
 }
