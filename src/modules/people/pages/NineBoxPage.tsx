@@ -356,7 +356,14 @@ export default function NineBoxPage() {
               </div>
             ))}
           </div>
-        </div>
+      </div>
+
+      {/* Unassigned employees */}
+      <UnassignedEmployeesPanel
+        employees={employees}
+        placedIds={placedIds}
+        onDragStart={setDraggingId}
+      />
         <div className="flex justify-center">
           <span className="text-[11px] font-semibold text-muted-foreground tracking-wider uppercase ml-20">
             Performance
