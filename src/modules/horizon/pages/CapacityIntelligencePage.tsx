@@ -2,6 +2,9 @@ import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { cn } from "@/shared/lib/utils";
 import { freeCapacityRisk, riskBgSubtle, riskText, riskBorder } from "@/shared/lib/risk-colors";
 import EngineerDetailPanel from "../components/EngineerDetailPanel";
+import TimelineDecisionBanner from "../components/TimelineDecisionBanner";
+import { computeDecisionSummary } from "../lib/decision-engine";
+import type { RecommendedAction, InitiativeRisk } from "../lib/decision-engine";
 import {
   Users,
   UserCheck,
@@ -15,10 +18,19 @@ import {
   CalendarDays,
   Rocket,
   Calendar,
+  Shield,
+  Zap,
+  ArrowRight,
+  ChevronDown,
+  ChevronUp,
+  Target,
+  UserPlus,
+  Shuffle,
+  Timer,
+  Scissors,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -130,12 +142,9 @@ function hasCompanyEvent(dayISO: string): boolean {
   );
 }
 
-/** Resolve full day status: availability + allocation details for a specific day */
 function getDayStatus(empId: string, dayISO: string, empAllocs: typeof allocations): DayStatus {
   const companyEvent = hasCompanyEvent(dayISO);
   const availability = companyEvent ? "company_event" as AvailSource : resolveAvailSource(empId, dayISO);
-
-  // Find active allocations for this day
   const allocDetails: { initiative: string; percentage: number }[] = [];
   for (const a of empAllocs) {
     if (a.startDate <= dayISO && a.endDate >= dayISO) {
@@ -143,7 +152,6 @@ function getDayStatus(empId: string, dayISO: string, empAllocs: typeof allocatio
     }
   }
   const allocationPct = allocDetails.reduce((s, d) => s + d.percentage, 0);
-
   return { availability, allocationPct, allocDetails };
 }
 
@@ -151,40 +159,33 @@ function getEmployeeCapacity(empId: string, dates: Date[], empAllocs: typeof all
   const workdays = dates.filter((d) => d.getDay() !== 0 && d.getDay() !== 6);
   const totalWorkdays = workdays.length;
   if (totalWorkdays === 0) return { availability: 100, allocation: 0, free: 100 };
-
   let availDays = 0;
   let totalAllocPct = 0;
-
   for (const d of workdays) {
     const iso = toISO(d);
     const status = getDayStatus(empId, iso, empAllocs);
-
-    // Availability
     if (status.availability === "available") availDays++;
     else if (status.availability === "partial") availDays += 0.5;
-
-    // Allocation — only count on available/partial days
     if (status.availability === "available" || status.availability === "partial") {
       totalAllocPct += Math.min(100, status.allocationPct);
     }
   }
-
   const availPct = Math.round((availDays / totalWorkdays) * 100);
   const allocPct = Math.round(totalAllocPct / totalWorkdays);
   const freePct = Math.max(0, availPct - allocPct);
-
   return { availability: availPct, allocation: allocPct, free: freePct };
 }
 
-/** Get capacity for current work-week only (more actionable than range average) */
 function getCurrentWeekCapacity(empId: string, today: Date, empAllocs: typeof allocations): { availability: number; allocation: number; free: number } {
-  // Current Mon–Fri
   const dow = today.getDay();
   const monday = addDays(today, -(dow === 0 ? 6 : dow - 1));
   const weekDays: Date[] = [];
   for (let i = 0; i < 5; i++) weekDays.push(addDays(monday, i));
   return getEmployeeCapacity(empId, weekDays, empAllocs);
 }
+
+// ── KPI Filter Types ─────────────────────────────────────
+type KPIFilter = "all" | "available" | "constrained" | "understaffed" | "alerts";
 
 // ── Component ────────────────────────────────────────────
 export default function CapacityIntelligencePage() {
@@ -197,6 +198,18 @@ export default function CapacityIntelligencePage() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [todayVisible, setTodayVisible] = useState(true);
   const [selectedEngineer, setSelectedEngineer] = useState<typeof capacityData[number] | null>(null);
+  const [kpiFilter, setKpiFilter] = useState<KPIFilter>("all");
+  const [showAllRecs, setShowAllRecs] = useState(false);
+
+  // Decision engine
+  const decisionSummary = useMemo(() => computeDecisionSummary(), []);
+
+  // Initiative risk lookup
+  const initiativeRiskMap = useMemo(() => {
+    const map: Record<string, InitiativeRisk> = {};
+    decisionSummary.allInitiativeRisks.forEach((r) => { map[r.id] = r; });
+    return map;
+  }, [decisionSummary]);
 
   const rangeDays = range === "2w" ? 14 : range === "4w" ? 28 : 56;
   const today = new Date();
@@ -212,7 +225,6 @@ export default function CapacityIntelligencePage() {
     return arr;
   }, [rangeDays]);
 
-  // Build initiative color map
   const initColorMap = useMemo(() => {
     const map = new Map<string, string>();
     const activeInits = initiatives.filter((i) => i.status !== "completed");
@@ -237,7 +249,6 @@ export default function CapacityIntelligencePage() {
     const rangeStartISO = toISO(rangeStart);
     const rangeEndISO = toISO(rangeEnd);
     return filteredEmployees.map((emp) => {
-      // Only include allocations that overlap with the visible date range
       const empAllocs = allocations.filter(
         (a) => a.employeeId === emp.id && a.startDate <= rangeEndISO && a.endDate >= rangeStartISO
       );
@@ -251,12 +262,22 @@ export default function CapacityIntelligencePage() {
     });
   }, [filteredEmployees, dates, rangeStart, rangeEnd]);
 
-  // Initiative staffing summary
+  // Apply KPI filter to capacity data for the grid
+  const filteredCapacityData = useMemo(() => {
+    switch (kpiFilter) {
+      case "available": return capacityData.filter((e) => e.currentWeek.free >= 90);
+      case "constrained": return capacityData.filter((e) => e.currentWeek.free < 50);
+      case "alerts": return capacityData.filter((e) => e.currentWeek.free < CAPACITY_THRESHOLD);
+      default: return capacityData;
+    }
+  }, [capacityData, kpiFilter]);
+
   const initiativeStaffing = useMemo(() => {
     const activeInits = initiatives.filter((i) => i.status !== "completed");
     return activeInits.map((init) => {
       const allocs = getAllocationsForInitiative(init.id);
       const allocByRole = getAllocatedFTEByRole(init.id);
+      const risk = initiativeRiskMap[init.id];
       return {
         id: init.id,
         name: init.name,
@@ -277,12 +298,22 @@ export default function CapacityIntelligencePage() {
           role: a.role,
           percentage: a.percentage,
         })),
+        // Decision engine data
+        deliveryRisk: risk?.deliveryRisk ?? "low",
+        riskScore: risk?.riskScore ?? 0,
+        riskReasons: risk?.riskReasons ?? [],
+        estimatedDelayDays: risk?.estimatedDelayDays ?? 0,
+        recommendations: risk?.recommendations ?? [],
+        roleGaps: risk?.roleGaps ?? [],
       };
-    }).sort((a, b) => {
-      const order: Record<StaffingStatus, number> = { understaffed: 0, overstaffed: 1, balanced: 2 };
-      return order[a.staffing] - order[b.staffing];
-    });
-  }, []);
+    }).sort((a, b) => b.riskScore - a.riskScore);
+  }, [initiativeRiskMap]);
+
+  // Filter initiatives by staffing status when KPI "understaffed" is active
+  const filteredInitiatives = useMemo(() => {
+    if (kpiFilter === "understaffed") return initiativeStaffing.filter((i) => i.staffing === "understaffed");
+    return initiativeStaffing;
+  }, [initiativeStaffing, kpiFilter]);
 
   const totalCapacity = capacityData.length > 0
     ? Math.round(capacityData.reduce((s, e) => s + e.currentWeek.free, 0) / capacityData.length)
@@ -323,28 +354,112 @@ export default function CapacityIntelligencePage() {
     el.scrollTo({ left: todayPx - el.clientWidth / 2, behavior: "smooth" });
   }, [rangeStart]);
 
+  const topRecs = showAllRecs ? decisionSummary.recommendations : decisionSummary.recommendations.slice(0, 4);
+
+  const recIcon = (type: RecommendedAction["type"]) => {
+    switch (type) {
+      case "reassign": return Shuffle;
+      case "add_role": return UserPlus;
+      case "delay": return Timer;
+      case "reduce_scope": return Scissors;
+      case "split_allocation": return Target;
+      default: return Zap;
+    }
+  };
+
+  const riskBadgeStyle: Record<string, string> = {
+    critical: "bg-destructive/15 text-destructive border-destructive/25",
+    high: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/25",
+    medium: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-300 border-yellow-500/25",
+    low: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/25",
+  };
+
   return (
     <TooltipProvider delayDuration={200}>
       <div className="space-y-5">
-        {/* ── KPI Header ── */}
+        {/* ── Decision Banner ── */}
+        <TimelineDecisionBanner
+          summary={decisionSummary}
+          onInitiativeClick={() => {}}
+        />
+
+        {/* ── KPI Header (clickable) ── */}
         <div className="grid gap-3 grid-cols-2 lg:grid-cols-6">
-          <KPICard icon={Activity} label="Free Capacity" value={`${totalCapacity}%`} detail={`${capacityData.length} engineers`} accent={totalCapacity >= 40 ? "emerald" : totalCapacity >= 20 ? "amber" : "red"} />
-          <KPICard icon={Rocket} label="Active Initiatives" value={initiativeStaffing.length} detail={`${understaffedCount} understaffed`} accent={understaffedCount > 0 ? "red" : "emerald"} />
-          <KPICard icon={UserCheck} label="Available" value={availableCount} detail="≥ 90% free" accent="emerald" />
-          <KPICard icon={UserMinus} label="Constrained" value={unavailableCount} detail="< 50% free" accent="red" />
+          <KPICard icon={Activity} label="Free Capacity" value={`${totalCapacity}%`} detail={`${capacityData.length} engineers`} accent={totalCapacity >= 40 ? "emerald" : totalCapacity >= 20 ? "amber" : "red"} active={kpiFilter === "all"} onClick={() => setKpiFilter(kpiFilter === "all" ? "all" : "all")} />
+          <KPICard icon={Rocket} label="Active Initiatives" value={initiativeStaffing.length} detail={`${understaffedCount} understaffed`} accent={understaffedCount > 0 ? "red" : "emerald"} active={kpiFilter === "understaffed"} onClick={() => setKpiFilter(kpiFilter === "understaffed" ? "all" : "understaffed")} />
+          <KPICard icon={UserCheck} label="Available" value={availableCount} detail="≥ 90% free" accent="emerald" active={kpiFilter === "available"} onClick={() => setKpiFilter(kpiFilter === "available" ? "all" : "available")} />
+          <KPICard icon={UserMinus} label="Constrained" value={unavailableCount} detail="< 50% free" accent="red" active={kpiFilter === "constrained"} onClick={() => setKpiFilter(kpiFilter === "constrained" ? "all" : "constrained")} />
           <KPICard icon={TrendingDown} label="Avg Allocation" value={`${totalAllocation}%`} detail={`Availability: ${totalAvailability}%`} accent="neutral" />
-          <KPICard icon={AlertTriangle} label="Alerts" value={alerts.length} detail={`Below ${CAPACITY_THRESHOLD}%`} accent={alerts.length > 0 ? "red" : "emerald"} />
+          <KPICard icon={AlertTriangle} label="Alerts" value={alerts.length} detail={`Below ${CAPACITY_THRESHOLD}%`} accent={alerts.length > 0 ? "red" : "emerald"} active={kpiFilter === "alerts"} onClick={() => setKpiFilter(kpiFilter === "alerts" ? "all" : "alerts")} />
         </div>
 
-        {/* ── Initiative Staffing ── */}
+        {/* Active filter indicator */}
+        {kpiFilter !== "all" && (
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="text-xs gap-1.5 bg-primary/10 text-primary border-primary/20">
+              <Filter size={10} />
+              Filtered: {kpiFilter === "available" ? "Available engineers (≥90% free)" : kpiFilter === "constrained" ? "Constrained engineers (<50% free)" : kpiFilter === "understaffed" ? "Understaffed initiatives" : "Capacity alerts"}
+            </Badge>
+            <Button variant="ghost" size="sm" className="h-6 text-[11px] text-muted-foreground" onClick={() => setKpiFilter("all")}>Clear filter</Button>
+          </div>
+        )}
+
+        {/* ── Recommended Actions ── */}
+        {decisionSummary.recommendations.length > 0 && (
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Zap size={14} className="text-primary" />
+                <h3 className="text-sm font-semibold">Recommended Actions</h3>
+                <Badge variant="secondary" className="text-[10px] h-4 bg-primary/10 text-primary">{decisionSummary.recommendations.length}</Badge>
+              </div>
+              {decisionSummary.recommendations.length > 4 && (
+                <Button variant="ghost" size="sm" className="h-7 text-[11px] gap-1" onClick={() => setShowAllRecs(!showAllRecs)}>
+                  {showAllRecs ? <><ChevronUp size={12} /> Show less</> : <><ChevronDown size={12} /> Show all</>}
+                </Button>
+              )}
+            </div>
+            <div className="grid gap-2 grid-cols-1 md:grid-cols-2">
+              {topRecs.map((rec) => {
+                const Icon = recIcon(rec.type);
+                const priorityStyle = rec.priority === "high"
+                  ? "border-destructive/20 bg-destructive/5"
+                  : rec.priority === "medium"
+                  ? "border-amber-500/20 bg-amber-500/5"
+                  : "border-border/50 bg-card";
+                return (
+                  <div key={rec.id} className={cn("rounded-md border p-3 space-y-1.5 tessira-transition hover:shadow-sm", priorityStyle)}>
+                    <div className="flex items-start gap-2">
+                      <div className={cn(
+                        "h-6 w-6 rounded-md flex items-center justify-center shrink-0",
+                        rec.priority === "high" ? "bg-destructive/10" : rec.priority === "medium" ? "bg-amber-500/10" : "bg-muted"
+                      )}>
+                        <Icon size={12} className={rec.priority === "high" ? "text-destructive" : rec.priority === "medium" ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium leading-tight">{rec.label}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{rec.detail}</p>
+                      </div>
+                      <Badge variant="outline" className={cn("text-[9px] h-4 shrink-0",
+                        rec.priority === "high" ? "border-destructive/30 text-destructive" : rec.priority === "medium" ? "border-amber-500/30 text-amber-600 dark:text-amber-400" : "text-muted-foreground"
+                      )}>{rec.priority}</Badge>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Initiative Staffing (enriched with risk) ── */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Rocket size={14} className="text-primary" />
-            <h3 className="text-sm font-semibold">Initiative Staffing</h3>
-            <span className="text-[11px] text-muted-foreground">— Required vs allocated FTE per initiative</span>
+            <h3 className="text-sm font-semibold">Initiative Staffing & Risk</h3>
+            <span className="text-[11px] text-muted-foreground">— Delivery risk, delay estimates, and staffing gaps</span>
           </div>
           <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {initiativeStaffing.map((init) => {
+            {filteredInitiatives.map((init) => {
               const fillPct = init.required > 0 ? Math.min(100, Math.round((init.allocated / init.required) * 100)) : 0;
               const barColor = init.staffing === "understaffed" ? "bg-destructive" : init.staffing === "balanced" ? "bg-success" : "bg-warning";
               const textColor = init.staffing === "understaffed" ? "text-destructive" : init.staffing === "balanced" ? "text-success" : "text-warning";
@@ -357,12 +472,12 @@ export default function CapacityIntelligencePage() {
                 <Link
                   key={init.id}
                   to={`/app/work/initiatives/${init.id}?from=${encodeURIComponent("/app/horizon/capacity")}`}
-                  className="rounded-lg border border-border/50 bg-card p-4 space-y-3 hover:border-primary/30 transition-colors"
+                  className="rounded-lg border border-border/50 bg-card p-4 space-y-3 hover:border-primary/30 transition-colors group"
                 >
-                  {/* Header */}
+                  {/* Header with risk badge */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold truncate">{init.name}</p>
+                      <p className="text-sm font-semibold truncate group-hover:text-primary tessira-transition">{init.name}</p>
                       <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                         <Badge variant="secondary" className={cn("text-[9px] h-4", statusColors[init.status] || "bg-muted text-muted-foreground")}>
                           {init.status}
@@ -372,19 +487,34 @@ export default function CapacityIntelligencePage() {
                         </Badge>
                       </div>
                     </div>
-                    <Badge variant="secondary" className={cn("text-[10px] shrink-0", init.staffing === "understaffed" ? "bg-destructive/10 text-destructive" : init.staffing === "balanced" ? "bg-success/10 text-success" : "bg-warning/10 text-warning")}>
-                      {init.staffing === "understaffed" ? "Understaffed" : init.staffing === "balanced" ? "Balanced" : "Overstaffed"}
+                    <Badge variant="outline" className={cn("text-[10px] shrink-0 capitalize", riskBadgeStyle[init.deliveryRisk])}>
+                      {init.deliveryRisk === "critical" || init.deliveryRisk === "high" ? <AlertTriangle size={9} className="mr-0.5" /> : null}
+                      {init.deliveryRisk}
                     </Badge>
                   </div>
 
-                  {/* Dates & Effort */}
+                  {/* Delay estimate + dates */}
                   <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
                     <span className="flex items-center gap-1 tabular-nums">
                       <Calendar size={10} />
                       {formatDate(init.startDate)} → {formatDate(init.endDate)}
                     </span>
                     <span className="tabular-nums">{init.totalEffortDays}d effort</span>
+                    {init.estimatedDelayDays > 0 && (
+                      <span className="flex items-center gap-0.5 text-amber-600 dark:text-amber-400 font-medium">
+                        <Clock size={9} />+{init.estimatedDelayDays}d delay
+                      </span>
+                    )}
                   </div>
+
+                  {/* Risk reasons */}
+                  {init.riskReasons.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {init.riskReasons.slice(0, 3).map((reason, i) => (
+                        <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-muted/80 text-muted-foreground">{reason}</span>
+                      ))}
+                    </div>
+                  )}
 
                   {/* FTE bar */}
                   <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
@@ -397,38 +527,28 @@ export default function CapacityIntelligencePage() {
                     <span className="tabular-nums">{fillPct}%</span>
                   </div>
 
-                  {/* Role breakdown */}
-                  <div className="space-y-1">
-                    {init.roleBreakdown.map((rb) => {
-                      const gap = Math.round((rb.allocated - rb.fte) * 10) / 10;
-                      return (
-                        <div key={rb.role} className="flex items-center justify-between text-[10px]">
-                          <span className="text-muted-foreground">{rb.role}</span>
-                          <div className="flex items-center gap-2">
-                            <span className={cn("tabular-nums font-medium", rb.allocated < rb.fte * 0.85 ? "text-destructive" : "text-foreground")}>
-                              {rb.allocated}/{rb.fte}
-                            </span>
-                            {gap !== 0 && (
-                              <span className={cn("tabular-nums", gap < 0 ? "text-destructive" : "text-warning")}>
-                                ({gap > 0 ? `+${gap}` : gap})
-                              </span>
-                            )}
-                          </div>
+                  {/* Role gaps (if any) */}
+                  {init.roleGaps.length > 0 && (
+                    <div className="space-y-1 border-t border-border/30 pt-2">
+                      <p className="text-[9px] font-medium text-destructive uppercase tracking-wider flex items-center gap-1">
+                        <Shield size={8} /> Role Gaps
+                      </p>
+                      {init.roleGaps.map((g) => (
+                        <div key={g.role} className="flex items-center justify-between text-[10px]">
+                          <span className="text-muted-foreground">{g.role}</span>
+                          <span className="text-destructive font-medium tabular-nums">-{g.gapFTE} FTE</span>
                         </div>
-                      );
-                    })}
-                  </div>
+                      ))}
+                    </div>
+                  )}
 
-                  {/* Allocations */}
-                  {init.allocations.length > 0 && (
-                    <div className="border-t border-border/30 pt-2 space-y-1">
-                      <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">Assigned</p>
-                      <div className="flex flex-wrap gap-1">
-                        {init.allocations.map((a, i) => (
-                          <span key={i} className="inline-flex items-center gap-1 text-[10px] bg-muted/50 rounded px-1.5 py-0.5">
-                            {a.name} <span className="text-muted-foreground">{a.role} {a.percentage}%</span>
-                          </span>
-                        ))}
+                  {/* Inline recommendation (top 1) */}
+                  {init.recommendations.length > 0 && (
+                    <div className="border-t border-border/30 pt-2">
+                      <div className="flex items-center gap-1.5 text-[10px] text-primary">
+                        <Zap size={9} />
+                        <span className="font-medium truncate">{init.recommendations[0].label}</span>
+                        <ArrowRight size={9} className="ml-auto shrink-0 opacity-0 group-hover:opacity-100 tessira-transition" />
                       </div>
                     </div>
                   )}
@@ -477,7 +597,7 @@ export default function CapacityIntelligencePage() {
         </div>
 
         {/* ── Capacity Alerts ── */}
-        {alerts.length > 0 && (
+        {alerts.length > 0 && kpiFilter !== "available" && (
           <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 space-y-2">
             <div className="flex items-center gap-2">
               <AlertTriangle size={14} className="text-destructive" />
@@ -487,7 +607,7 @@ export default function CapacityIntelligencePage() {
               {alerts.map((a) => {
                 const risk = freeCapacityRisk(a.currentWeek.free);
                 return (
-                  <Badge key={a.id} variant="secondary" className={cn("text-[11px]", riskBgSubtle(risk), riskText(risk), riskBorder(risk))}>
+                  <Badge key={a.id} variant="secondary" className={cn("text-[11px] cursor-pointer", riskBgSubtle(risk), riskText(risk), riskBorder(risk))} onClick={() => setSelectedEngineer(a)}>
                     {a.name} — {a.currentWeek.free}% free
                   </Badge>
                 );
@@ -510,6 +630,9 @@ export default function CapacityIntelligencePage() {
               <div className="flex border-b border-border/50 sticky top-0 z-20 bg-card">
                 <div className="w-[220px] shrink-0 border-r border-border/50 px-3 py-2 sticky left-0 z-30 bg-card">
                   <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Engineer</span>
+                  {filteredCapacityData.length !== capacityData.length && (
+                    <span className="text-[10px] text-primary ml-2">{filteredCapacityData.length}/{capacityData.length}</span>
+                  )}
                 </div>
                 <div className="flex">
                   {dates.map((d, i) => {
@@ -542,7 +665,7 @@ export default function CapacityIntelligencePage() {
               </div>
 
               {/* Employee rows */}
-              {capacityData.map((emp) => (
+              {filteredCapacityData.map((emp) => (
                 <CapacityRow
                   key={emp.id}
                   emp={emp}
@@ -555,7 +678,7 @@ export default function CapacityIntelligencePage() {
                 />
               ))}
 
-              {capacityData.length === 0 && (
+              {filteredCapacityData.length === 0 && (
                 <div className="py-12 text-center text-sm text-muted-foreground">No engineers match the current filters.</div>
               )}
             </div>
@@ -583,19 +706,23 @@ export default function CapacityIntelligencePage() {
   );
 }
 
-// ── KPI Card ─────────────────────────────────────────────
+// ── KPI Card (clickable) ─────────────────────────────────
 function KPICard({
   icon: Icon,
   label,
   value,
   detail,
   accent,
+  active,
+  onClick,
 }: {
   icon: typeof Users;
   label: string;
   value: string | number;
   detail: string;
   accent: "emerald" | "amber" | "orange" | "red" | "neutral";
+  active?: boolean;
+  onClick?: () => void;
 }) {
   const accentColors: Record<string, string> = {
     emerald: "border-success/20 bg-success/5",
@@ -613,7 +740,15 @@ function KPICard({
   };
 
   return (
-    <div className={cn("rounded-lg border p-3.5 space-y-1", accentColors[accent])}>
+    <div
+      className={cn(
+        "rounded-lg border p-3.5 space-y-1 tessira-transition",
+        accentColors[accent],
+        onClick && "cursor-pointer hover:shadow-sm",
+        active && "ring-2 ring-primary/40 shadow-sm"
+      )}
+      onClick={onClick}
+    >
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
         <Icon size={14} strokeWidth={1.8} className={iconColors[accent]} />
@@ -657,7 +792,7 @@ function CapacityRow({
   return (
     <div className="flex border-b border-border/20 last:border-0 hover:bg-accent/10 transition-colors cursor-pointer" onClick={onClick}>
       {/* Sticky label with initiative allocation bar */}
-      <div className="w-[220px] shrink-0 border-r border-border/50 px-3 py-2 sticky left-0 z-10 bg-card">
+      <div className="w-[220px] shrink-0 border-r border-border/50 px-3 py-2 sticky left-0 z-10 bg-card hover:bg-accent/10 tessira-transition">
         <div className="flex items-center gap-2.5">
           <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
             <Users size={12} className="text-primary" />
@@ -681,7 +816,7 @@ function CapacityRow({
             </TooltipContent>
           </Tooltip>
         </div>
-        {/* Initiative allocation split bar — only show currently active allocations */}
+        {/* Initiative allocation split bar */}
         {emp.allocations.length > 0 && (() => {
           const todayStr = todayISO;
           const activeAllocs = emp.allocations.filter((a) => a.startDate <= todayStr && a.endDate >= todayStr);
@@ -733,7 +868,7 @@ function CapacityRow({
         })()}
       </div>
 
-      {/* Timeline cells — show allocation intensity */}
+      {/* Timeline cells */}
       <div className="flex relative self-stretch" style={{ width: gridWidth }}>
         {dates.map((d, i) => {
           const iso = toISO(d);
@@ -744,17 +879,14 @@ function CapacityRow({
           const avail = dayStatus.availability;
           const cfg = sourceConfig[avail];
 
-          // Determine cell color based on availability + allocation
           let cellColor = cfg.color;
           if (!isWeekend && (avail === "available" || avail === "partial")) {
             const pct = dayStatus.allocationPct;
             if (pct >= 80) cellColor = "bg-destructive/25";
             else if (pct >= 50) cellColor = "bg-warning/25";
             else if (pct > 0) cellColor = "bg-primary/15";
-            // else stays green (available)
           }
 
-          // Build tooltip label
           let statusLabel = cfg.label;
           if ((avail === "available" || avail === "partial") && dayStatus.allocationPct > 0) {
             statusLabel = `${dayStatus.allocationPct}% allocated`;
