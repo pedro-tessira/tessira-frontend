@@ -25,6 +25,7 @@ interface NineBoxCardProps {
   boxLabels: Record<string, { label: string }>;
   onDragStart: (employeeId: string) => void;
   onSelect: (employeeId: string) => void;
+  onRemove: (employeeId: string) => void;
 }
 
 function getTenureMonths(startDate: string): number {
