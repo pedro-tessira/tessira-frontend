@@ -1,11 +1,13 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Rocket, Users, Calendar, Boxes, Globe, AlertTriangle, CheckCircle, Scale, BarChart3 } from "lucide-react";
+import { ArrowLeft, Rocket, Users, Calendar, Boxes, Globe, AlertTriangle, CheckCircle, Scale, BarChart3, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/shared/lib/utils";
-import { getInitiative, getAllocationsForInitiative, getDomainsForInitiative, getValueStreamsForInitiative, getRequiredFTE, getRequiredFTEByRole, getAllocatedFTE, getStaffingStatus } from "../data";
-import type { StaffingStatus, ConfidenceLevel } from "../types";
+import { getInitiative, getAllocationsForInitiative, getDomainsForInitiative, getValueStreamsForInitiative, getRequiredFTE, getRequiredFTEByRole, getAllocatedFTE, getStaffingStatus, domains, valueStreams } from "../data";
+import type { Initiative, StaffingStatus, ConfidenceLevel } from "../types";
+import EditInitiativeDialog from "../components/EditInitiativeDialog";
 
 const statusColors: Record<string, string> = {
   planned: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
@@ -35,7 +37,10 @@ function getDurationDays(start: string, end: string) {
 
 export default function InitiativeDetailPage() {
   const { initiativeId } = useParams<{ initiativeId: string }>();
-  const init = getInitiative(initiativeId ?? "");
+  const baseInit = getInitiative(initiativeId ?? "");
+  const [localInit, setLocalInit] = useState<Initiative | null>(baseInit);
+  const [editOpen, setEditOpen] = useState(false);
+  const init = localInit;
 
   if (!init) {
     return (
@@ -78,7 +83,7 @@ export default function InitiativeDetailPage() {
           <Rocket size={20} className="text-primary" />
         </div>
         <div className="flex-1">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-xl font-semibold">{init.name}</h1>
             <Badge variant="secondary" className={cn("text-[11px]", statusColors[init.status])}>
               {init.status}
@@ -87,6 +92,9 @@ export default function InitiativeDetailPage() {
               <StaffIcon size={10} />
               {sc.label}
             </Badge>
+            <Button variant="outline" size="sm" className="ml-auto h-7 text-xs gap-1.5" onClick={() => setEditOpen(true)}>
+              <Pencil size={12} /> Edit
+            </Button>
           </div>
           <p className="text-sm text-muted-foreground mt-1">{init.description}</p>
           <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
@@ -269,6 +277,15 @@ export default function InitiativeDetailPage() {
           </div>
         </div>
       </div>
+
+      <EditInitiativeDialog
+        initiative={init}
+        domains={domains}
+        valueStreams={valueStreams}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onSave={(updated) => setLocalInit(updated)}
+      />
     </div>
   );
 }
