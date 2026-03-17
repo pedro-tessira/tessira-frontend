@@ -83,7 +83,7 @@ export default function ResiliencePage() {
             return (
               <div key={sr.stream} className="flex items-center gap-4">
                 <div className="w-36 shrink-0">
-                  <Link to={`/app/work/value-streams/${sr.streamId}`} className="text-sm font-medium hover:text-primary tessira-transition">{sr.stream}</Link>
+                  <Link to={`/app/work/value-streams/${sr.streamId}?from=${encodeURIComponent("/app/signals/resilience")}`} className="text-sm font-medium hover:text-primary tessira-transition">{sr.stream}</Link>
                   <div className="text-[11px] text-muted-foreground">
                     {sr.spofCount > 0 && <span className={cn("font-medium", riskText(spofRisk(sr.spofCount)))}>{sr.spofCount} SPOF{sr.spofCount > 1 ? "s" : ""}</span>}
                     {sr.spofCount === 0 && "No SPOFs"}

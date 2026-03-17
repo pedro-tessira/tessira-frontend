@@ -161,7 +161,7 @@ export default function RiskPage() {
                 <td className="px-4 py-3 text-muted-foreground">{r.domainName}</td>
                 <td className="px-4 py-3">
                   <Link
-                    to={`/app/people/employees/${r.ownerEmployeeId}`}
+                    to={`/app/people/employees/${r.ownerEmployeeId}?from=${encodeURIComponent("/app/skills/risk")}`}
                     className="text-primary hover:underline"
                   >
                     {r.ownerName}

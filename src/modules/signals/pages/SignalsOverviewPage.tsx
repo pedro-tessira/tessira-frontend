@@ -304,7 +304,7 @@ export default function SignalsOverviewPage() {
                   return (
                     <div key={t.teamId} className="px-5 py-3 flex items-center justify-between">
                       <div>
-                        <Link to={`/app/people/teams/${t.teamId}`} className="text-sm font-medium hover:text-primary tessira-transition">
+                        <Link to={`/app/people/teams/${t.teamId}?from=${encodeURIComponent("/app/signals")}`} className="text-sm font-medium hover:text-primary tessira-transition">
                           {t.teamName}
                         </Link>
                         <div className="text-xs text-muted-foreground">{t.memberCount} members</div>

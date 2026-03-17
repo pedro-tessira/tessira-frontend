@@ -130,7 +130,7 @@ export default function ValueStreamDetailPage() {
             </div>
             <div className="space-y-2">
               {vsdomains.map((d) => (
-                <Link key={d.id} to={`/app/work/domains/${d.id}`} className="block rounded-md border border-border/30 bg-muted/30 p-3 hover:border-primary/30 transition-colors">
+                <Link key={d.id} to={`/app/work/domains/${d.id}?from=${encodeURIComponent(`/app/work/value-streams/${vs.id}`)}`} className="block rounded-md border border-border/30 bg-muted/30 p-3 hover:border-primary/30 transition-colors">
                   <p className="text-sm font-medium">{d.name}</p>
                   <p className="text-[11px] text-muted-foreground">{d.owningTeamName}</p>
                 </Link>

@@ -181,7 +181,7 @@ export default function AllocationDetailPanel({
                     {matchedVS.map((vs) => (
                       <Link
                         key={vs.id}
-                        to={`/app/work/value-streams/${vs.id}`}
+                        to={`/app/work/value-streams/${vs.id}?from=${encodeURIComponent("/app/horizon/timeline")}`}
                         className="block rounded-md border border-border/30 bg-muted/30 px-3 py-2 text-xs font-medium hover:border-primary/30 transition-colors"
                       >
                         {vs.name}

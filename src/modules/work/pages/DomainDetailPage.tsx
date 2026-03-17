@@ -76,7 +76,7 @@ export default function DomainDetailPage() {
                   return (
                     <Link
                       key={f.initiativeId}
-                      to={`/app/work/initiatives/${f.initiativeId}`}
+                      to={`/app/work/initiatives/${f.initiativeId}?from=${encodeURIComponent(`/app/work/domains/${domain.id}`)}`}
                       className="block rounded-md border border-border/30 p-3 hover:border-primary/30 transition-colors space-y-2"
                     >
                       <div className="flex items-center justify-between">

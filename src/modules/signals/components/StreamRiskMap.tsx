@@ -30,7 +30,7 @@ export function StreamRiskMap() {
           return (
             <Link
               key={sr.stream}
-              to={`/app/work/value-streams/${sr.streamId}`}
+              to={`/app/work/value-streams/${sr.streamId}?from=${encodeURIComponent("/app/signals/resilience")}`}
               className={cn(
                 "rounded-lg border p-4 space-y-3 tessira-transition hover:shadow-md hover:scale-[1.01]",
                 riskBorder(covRisk),

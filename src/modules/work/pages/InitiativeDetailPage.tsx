@@ -272,7 +272,7 @@ export default function InitiativeDetailPage() {
             </div>
             <div className="space-y-2">
               {initVS.map((vs) => (
-                <Link key={vs.id} to={`/app/work/value-streams/${vs.id}`} className="block rounded-md border border-border/30 bg-muted/30 p-3 hover:border-primary/30 transition-colors">
+                <Link key={vs.id} to={`/app/work/value-streams/${vs.id}?from=${encodeURIComponent(`/app/work/initiatives/${init.id}`)}`} className="block rounded-md border border-border/30 bg-muted/30 p-3 hover:border-primary/30 transition-colors">
                   <p className="text-sm font-medium">{vs.name}</p>
                 </Link>
               ))}
