@@ -3,12 +3,19 @@ import { ArrowLeft, Globe, Rocket, Users, Boxes, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/shared/lib/utils";
-import { getValueStream, getInitiativesForValueStream, getDomainsForValueStream, getEngineersForValueStream } from "../data";
+import { getValueStream, getInitiativesForValueStream, getDomainsForValueStream, getEngineersForValueStream, getFTEByInitiative } from "../data";
+import type { StaffingStatus } from "../types";
 
 const statusColors: Record<string, string> = {
   planned: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
   active: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
   completed: "bg-muted text-muted-foreground",
+};
+
+const staffingConfig: Record<StaffingStatus, { label: string; bgColor: string }> = {
+  understaffed: { label: "Understaffed", bgColor: "bg-destructive" },
+  balanced: { label: "Balanced", bgColor: "bg-success" },
+  overstaffed: { label: "Overstaffed", bgColor: "bg-warning" },
 };
 
 export default function ValueStreamDetailPage() {
@@ -19,9 +26,7 @@ export default function ValueStreamDetailPage() {
     return (
       <div className="py-12 text-center space-y-3">
         <p className="text-muted-foreground">Value Stream not found.</p>
-        <Link to="/app/work">
-          <Button variant="outline" size="sm">Back to Value Streams</Button>
-        </Link>
+        <Link to="/app/work"><Button variant="outline" size="sm">Back to Value Streams</Button></Link>
       </div>
     );
   }
@@ -29,6 +34,9 @@ export default function ValueStreamDetailPage() {
   const inits = getInitiativesForValueStream(vs.id);
   const vsdomains = getDomainsForValueStream(vs.id);
   const engineers = getEngineersForValueStream(vs.id);
+  const initFTE = getFTEByInitiative(inits.map((i) => i.id));
+  const totalAllocatedFTE = initFTE.reduce((s, f) => s + f.allocatedFTE, 0);
+  const totalRequiredFTE = initFTE.reduce((s, f) => s + f.requiredFTE, 0);
 
   return (
     <div className="space-y-6">
@@ -43,39 +51,51 @@ export default function ValueStreamDetailPage() {
         <div>
           <h1 className="text-xl font-semibold">{vs.name}</h1>
           <p className="text-sm text-muted-foreground mt-1">{vs.description}</p>
+          <div className="flex gap-3 mt-2 text-xs text-muted-foreground">
+            <span className="font-semibold">{Math.round(totalAllocatedFTE * 10) / 10} / {Math.round(totalRequiredFTE * 10) / 10} FTE</span>
+            <span>{inits.length} initiatives</span>
+            <span>{engineers.length} engineers</span>
+          </div>
         </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">
-          {/* Initiatives */}
+          {/* Initiative FTE Breakdown */}
           <div className="rounded-lg border border-border/50 bg-card p-5">
             <div className="flex items-center gap-2 mb-4">
               <Rocket size={14} className="text-primary" />
-              <h2 className="text-sm font-semibold">Initiatives ({inits.length})</h2>
+              <h2 className="text-sm font-semibold">Initiative Allocation ({inits.length})</h2>
             </div>
-            {inits.length === 0 ? (
+            {initFTE.length === 0 ? (
               <p className="text-sm text-muted-foreground py-4 text-center">No initiatives linked to this value stream.</p>
             ) : (
-              <div className="divide-y divide-border/50">
-                {inits.map((init) => (
-                  <Link
-                    key={init.id}
-                    to={`/app/work/initiatives/${init.id}`}
-                    className="flex items-center justify-between py-3 group hover:bg-accent/30 -mx-2 px-2 rounded transition-colors"
-                  >
-                    <div>
-                      <p className="text-sm font-medium group-hover:text-primary transition-colors">{init.name}</p>
-                      <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
-                        <Calendar size={10} />
-                        {new Date(init.startDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })} → {new Date(init.endDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                      </p>
-                    </div>
-                    <Badge variant="secondary" className={cn("text-[11px]", statusColors[init.status])}>
-                      {init.status}
-                    </Badge>
-                  </Link>
-                ))}
+              <div className="space-y-3">
+                {initFTE.map((f) => {
+                  const sc = staffingConfig[f.status];
+                  const fillPct = f.requiredFTE > 0 ? Math.min(100, Math.round((f.allocatedFTE / f.requiredFTE) * 100)) : 0;
+                  return (
+                    <Link
+                      key={f.initiativeId}
+                      to={`/app/work/initiatives/${f.initiativeId}`}
+                      className="block rounded-md border border-border/30 p-3 hover:border-primary/30 transition-colors space-y-2"
+                    >
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium">{f.initiativeName}</p>
+                        <Badge variant="secondary" className={cn("text-[10px]", f.status === "understaffed" ? "bg-destructive/10 text-destructive" : f.status === "balanced" ? "bg-success/10 text-success" : "bg-warning/10 text-warning")}>
+                          {sc.label}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                        <span className="font-semibold tabular-nums">{f.allocatedFTE} / {f.requiredFTE} FTE</span>
+                        <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                          <div className={cn("h-full rounded-full", sc.bgColor)} style={{ width: `${fillPct}%` }} />
+                        </div>
+                        <span className="tabular-nums">{fillPct}%</span>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -108,11 +128,7 @@ export default function ValueStreamDetailPage() {
             </div>
             <div className="space-y-2">
               {vsdomains.map((d) => (
-                <Link
-                  key={d.id}
-                  to={`/app/work/domains/${d.id}`}
-                  className="block rounded-md border border-border/30 bg-muted/30 p-3 hover:border-primary/30 transition-colors"
-                >
+                <Link key={d.id} to={`/app/work/domains/${d.id}`} className="block rounded-md border border-border/30 bg-muted/30 p-3 hover:border-primary/30 transition-colors">
                   <p className="text-sm font-medium">{d.name}</p>
                   <p className="text-[11px] text-muted-foreground">{d.owningTeamName}</p>
                 </Link>
