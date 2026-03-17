@@ -268,11 +268,14 @@ export default function NineBoxPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {REVIEW_ROUNDS.map((r) => (
+              {rounds.map((r) => (
                 <SelectItem key={r.id} value={r.id}>{r.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setRoundsDialogOpen(true)}>
+            <Settings2 className="h-3.5 w-3.5" />
+          </Button>
         </div>
       </div>
 
