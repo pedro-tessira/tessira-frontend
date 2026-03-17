@@ -1,5 +1,5 @@
 import type { ValueStream, Domain, Initiative, WorkAllocation, StaffingStatus } from "./types";
-import { horizonEmployees } from "@/modules/horizon/data";
+import { sharedEmployees } from "@/shared/data/employees";
 
 function daysFromNow(offset: number): string {
   const d = new Date();
