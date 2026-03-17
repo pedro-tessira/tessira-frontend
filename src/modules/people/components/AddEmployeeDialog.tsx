@@ -40,6 +40,7 @@ export default function AddEmployeeDialog({ open, onOpenChange }: Props) {
     addEmployee({
       ...form,
       managerId: form.managerId || null,
+      excludeFromCapacity: form.excludeFromCapacity,
     });
     const name = `${form.firstName} ${form.lastName}`;
     setForm({
