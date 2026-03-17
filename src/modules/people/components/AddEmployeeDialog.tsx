@@ -123,6 +123,13 @@ export default function AddEmployeeDialog({ open, onOpenChange }: Props) {
               </Select>
             </div>
           </div>
+          <div className="flex items-center justify-between rounded-md border border-border/50 px-3 py-2.5">
+            <div>
+              <Label className="text-xs font-medium">Exclude from Capacity</Label>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Management or non-IC roles excluded from planning metrics</p>
+            </div>
+            <Switch checked={form.excludeFromCapacity} onCheckedChange={(v) => setForm((p) => ({ ...p, excludeFromCapacity: v }))} />
+          </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" disabled={!form.firstName || !form.lastName || !form.email}>Add Employee</Button>
