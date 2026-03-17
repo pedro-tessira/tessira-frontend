@@ -252,7 +252,7 @@ export default function CapacityIntelligencePage() {
   const totalAllocation = capacityData.length > 0
     ? Math.round(capacityData.reduce((s, e) => s + e.capacity.allocation, 0) / capacityData.length)
     : 0;
-  const understaffedCount = initiativeStaffing.filter((i) => i.status === "understaffed").length;
+  const understaffedCount = initiativeStaffing.filter((i) => i.staffing === "understaffed").length;
   const availableCount = capacityData.filter((e) => e.capacity.free >= 90).length;
   const unavailableCount = capacityData.filter((e) => e.capacity.free < 50).length;
 
