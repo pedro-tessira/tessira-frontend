@@ -28,7 +28,7 @@ export default function ValueStreamDetailPage() {
     return (
       <div className="py-12 text-center space-y-3">
         <p className="text-muted-foreground">Value Stream not found.</p>
-        <Link to="/app/work"><Button variant="outline" size="sm">Back to Value Streams</Button></Link>
+        <Link to={backTo}><Button variant="outline" size="sm">Back</Button></Link>
       </div>
     );
   }
