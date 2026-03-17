@@ -342,6 +342,7 @@ export default function NineBoxPage() {
                           boxLabels={BOX_LABELS}
                           onDragStart={setDraggingId}
                           onSelect={setSelectedEmployeeId}
+                          onRemove={handleRemoveFromRound}
                         />
                       ))}
                       {people.length === 0 && (
