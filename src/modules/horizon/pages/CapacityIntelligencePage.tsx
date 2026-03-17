@@ -14,6 +14,7 @@ import {
   Filter,
   CalendarDays,
   Rocket,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,7 +41,7 @@ import {
   allocations,
 } from "../data";
 import type { AvailabilityWindow } from "../types";
-import { initiatives, workAllocations, getRequiredFTE, getAllocatedFTE, getStaffingStatus } from "@/modules/work/data";
+import { initiatives, workAllocations, getRequiredFTE, getRequiredFTEByRole, getAllocatedFTE, getAllocatedFTEByRole, getStaffingStatus, getAllocationsForInitiative } from "@/modules/work/data";
 import { Link } from "react-router-dom";
 import type { StaffingStatus } from "@/modules/work/types";
 
@@ -199,8 +200,13 @@ export default function CapacityIntelligencePage() {
   }, [teamFilter, roleFilter, skillFilter, locationFilter, searchQuery]);
 
   const capacityData = useMemo(() => {
+    const rangeStartISO = toISO(rangeStart);
+    const rangeEndISO = toISO(rangeEnd);
     return filteredEmployees.map((emp) => {
-      const empAllocs = allocations.filter((a) => a.employeeId === emp.id);
+      // Only include allocations that overlap with the visible date range
+      const empAllocs = allocations.filter(
+        (a) => a.employeeId === emp.id && a.startDate <= rangeEndISO && a.endDate >= rangeStartISO
+      );
       return {
         ...emp,
         capacity: getEmployeeCapacity(emp.id, dates),
@@ -208,21 +214,38 @@ export default function CapacityIntelligencePage() {
         allocations: empAllocs,
       };
     });
-  }, [filteredEmployees, dates]);
+  }, [filteredEmployees, dates, rangeStart, rangeEnd]);
 
   // Initiative staffing summary
   const initiativeStaffing = useMemo(() => {
     const activeInits = initiatives.filter((i) => i.status !== "completed");
-    return activeInits.map((init) => ({
-      id: init.id,
-      name: init.name,
-      required: getRequiredFTE(init),
-      allocated: getAllocatedFTE(init.id),
-      status: getStaffingStatus(init),
-      confidence: init.estimate.confidence,
-    })).sort((a, b) => {
+    return activeInits.map((init) => {
+      const allocs = getAllocationsForInitiative(init.id);
+      const allocByRole = getAllocatedFTEByRole(init.id);
+      return {
+        id: init.id,
+        name: init.name,
+        status: init.status,
+        startDate: init.startDate,
+        endDate: init.endDate,
+        required: getRequiredFTE(init),
+        allocated: getAllocatedFTE(init.id),
+        staffing: getStaffingStatus(init),
+        confidence: init.estimate.confidence,
+        totalEffortDays: init.estimate.totalEffortDays,
+        roleBreakdown: getRequiredFTEByRole(init).map((rb) => ({
+          ...rb,
+          allocated: allocByRole[rb.role] || 0,
+        })),
+        allocations: allocs.map((a) => ({
+          name: a.employeeName,
+          role: a.role,
+          percentage: a.percentage,
+        })),
+      };
+    }).sort((a, b) => {
       const order: Record<StaffingStatus, number> = { understaffed: 0, overstaffed: 1, balanced: 2 };
-      return order[a.status] - order[b.status];
+      return order[a.staffing] - order[b.staffing];
     });
   }, []);
 
@@ -235,7 +258,7 @@ export default function CapacityIntelligencePage() {
   const totalAllocation = capacityData.length > 0
     ? Math.round(capacityData.reduce((s, e) => s + e.capacity.allocation, 0) / capacityData.length)
     : 0;
-  const understaffedCount = initiativeStaffing.filter((i) => i.status === "understaffed").length;
+  const understaffedCount = initiativeStaffing.filter((i) => i.staffing === "understaffed").length;
   const availableCount = capacityData.filter((e) => e.capacity.free >= 90).length;
   const unavailableCount = capacityData.filter((e) => e.capacity.free < 50).length;
 
@@ -288,27 +311,47 @@ export default function CapacityIntelligencePage() {
           <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {initiativeStaffing.map((init) => {
               const fillPct = init.required > 0 ? Math.min(100, Math.round((init.allocated / init.required) * 100)) : 0;
-              const barColor = init.status === "understaffed" ? "bg-destructive" : init.status === "balanced" ? "bg-success" : "bg-warning";
-              const textColor = init.status === "understaffed" ? "text-destructive" : init.status === "balanced" ? "text-success" : "text-warning";
+              const barColor = init.staffing === "understaffed" ? "bg-destructive" : init.staffing === "balanced" ? "bg-success" : "bg-warning";
+              const textColor = init.staffing === "understaffed" ? "text-destructive" : init.staffing === "balanced" ? "text-success" : "text-warning";
+              const statusColors: Record<string, string> = {
+                planned: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
+                active: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+              };
+              const formatDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
               return (
                 <Link
                   key={init.id}
                   to={`/app/work/initiatives/${init.id}?from=${encodeURIComponent("/app/horizon/capacity")}`}
-                  className="rounded-lg border border-border/50 bg-card p-4 space-y-2.5 hover:border-primary/30 transition-colors"
+                  className="rounded-lg border border-border/50 bg-card p-4 space-y-3 hover:border-primary/30 transition-colors"
                 >
+                  {/* Header */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="text-sm font-semibold truncate">{init.name}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        <Badge variant="secondary" className={cn("text-[9px] h-4", statusColors[init.status] || "bg-muted text-muted-foreground")}>
+                          {init.status}
+                        </Badge>
                         <Badge variant="secondary" className={cn("text-[9px] h-4", init.confidence === "high" ? "bg-success/10 text-success" : init.confidence === "medium" ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive")}>
-                          {init.confidence}
+                          {init.confidence} conf.
                         </Badge>
                       </div>
                     </div>
-                    <Badge variant="secondary" className={cn("text-[10px] shrink-0", init.status === "understaffed" ? "bg-destructive/10 text-destructive" : init.status === "balanced" ? "bg-success/10 text-success" : "bg-warning/10 text-warning")}>
-                      {init.status === "understaffed" ? "Understaffed" : init.status === "balanced" ? "Balanced" : "Overstaffed"}
+                    <Badge variant="secondary" className={cn("text-[10px] shrink-0", init.staffing === "understaffed" ? "bg-destructive/10 text-destructive" : init.staffing === "balanced" ? "bg-success/10 text-success" : "bg-warning/10 text-warning")}>
+                      {init.staffing === "understaffed" ? "Understaffed" : init.staffing === "balanced" ? "Balanced" : "Overstaffed"}
                     </Badge>
                   </div>
+
+                  {/* Dates & Effort */}
+                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                    <span className="flex items-center gap-1 tabular-nums">
+                      <Calendar size={10} />
+                      {formatDate(init.startDate)} → {formatDate(init.endDate)}
+                    </span>
+                    <span className="tabular-nums">{init.totalEffortDays}d effort</span>
+                  </div>
+
+                  {/* FTE bar */}
                   <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
                     <span className={cn("font-bold tabular-nums", textColor)}>{init.allocated}</span>
                     <span>/</span>
@@ -318,6 +361,42 @@ export default function CapacityIntelligencePage() {
                     </div>
                     <span className="tabular-nums">{fillPct}%</span>
                   </div>
+
+                  {/* Role breakdown */}
+                  <div className="space-y-1">
+                    {init.roleBreakdown.map((rb) => {
+                      const gap = Math.round((rb.allocated - rb.fte) * 10) / 10;
+                      return (
+                        <div key={rb.role} className="flex items-center justify-between text-[10px]">
+                          <span className="text-muted-foreground">{rb.role}</span>
+                          <div className="flex items-center gap-2">
+                            <span className={cn("tabular-nums font-medium", rb.allocated < rb.fte * 0.85 ? "text-destructive" : "text-foreground")}>
+                              {rb.allocated}/{rb.fte}
+                            </span>
+                            {gap !== 0 && (
+                              <span className={cn("tabular-nums", gap < 0 ? "text-destructive" : "text-warning")}>
+                                ({gap > 0 ? `+${gap}` : gap})
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Allocations */}
+                  {init.allocations.length > 0 && (
+                    <div className="border-t border-border/30 pt-2 space-y-1">
+                      <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">Assigned</p>
+                      <div className="flex flex-wrap gap-1">
+                        {init.allocations.map((a, i) => (
+                          <span key={i} className="inline-flex items-center gap-1 text-[10px] bg-muted/50 rounded px-1.5 py-0.5">
+                            {a.name} <span className="text-muted-foreground">{a.role} {a.percentage}%</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </Link>
               );
             })}
@@ -554,7 +633,7 @@ function CapacityRow({
             <TooltipTrigger asChild>
               <span className={cn("text-[11px] font-bold tabular-nums cursor-help shrink-0", capacityColor)}>{free}%</span>
             </TooltipTrigger>
-            <TooltipContent side="left" className="text-xs space-y-0.5">
+            <TooltipContent side="left" className="text-xs space-y-0.5 z-[100]">
               <p>Availability: {emp.capacity.availability}%</p>
               <p className="text-muted-foreground">Allocation: {emp.capacity.allocation}%</p>
               <p className="font-semibold">Free capacity: {free}%</p>
@@ -565,7 +644,7 @@ function CapacityRow({
         {emp.allocations.length > 0 && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex h-2 mt-1.5 rounded-full overflow-hidden bg-muted cursor-help">
+              <div className="flex h-2 mt-1.5 rounded-full overflow-hidden bg-muted cursor-help" onClick={(e) => e.stopPropagation()}>
                 {emp.allocations.map((a, i) => (
                   <div
                     key={a.id}
@@ -578,10 +657,17 @@ function CapacityRow({
                 ))}
               </div>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs space-y-0.5">
+            <TooltipContent side="bottom" className="text-xs space-y-1 z-[100]" sideOffset={4}>
+              <p className="font-semibold text-foreground mb-0.5">Allocations</p>
               {emp.allocations.map((a) => (
-                <p key={a.id}>{a.initiative}: {a.percentage}%</p>
+                <div key={a.id} className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: initColorMap.get(a.initiative) || "hsl(var(--primary))" }} />
+                  <span>{a.initiative}: <span className="font-medium">{a.percentage}%</span></span>
+                </div>
               ))}
+              <div className="border-t border-border/30 pt-1 mt-1 font-medium">
+                Total: {emp.allocations.reduce((s, a) => s + a.percentage, 0)}%
+              </div>
             </TooltipContent>
           </Tooltip>
         )}
