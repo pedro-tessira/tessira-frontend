@@ -82,7 +82,7 @@ export default function InitiativeDetailPage() {
           <Rocket size={20} className="text-primary" />
         </div>
         <div className="flex-1">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-xl font-semibold">{init.name}</h1>
             <Badge variant="secondary" className={cn("text-[11px]", statusColors[init.status])}>
               {init.status}
@@ -91,6 +91,9 @@ export default function InitiativeDetailPage() {
               <StaffIcon size={10} />
               {sc.label}
             </Badge>
+            <Button variant="outline" size="sm" className="ml-auto h-7 text-xs gap-1.5" onClick={() => setEditOpen(true)}>
+              <Pencil size={12} /> Edit
+            </Button>
           </div>
           <p className="text-sm text-muted-foreground mt-1">{init.description}</p>
           <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
