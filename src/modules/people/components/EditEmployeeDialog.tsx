@@ -34,6 +34,7 @@ export default function EditEmployeeDialog({ open, onOpenChange, employee }: Pro
     department: "", status: "active" as EmployeeStatus,
     country: "", countryCode: "", timezone: "",
     startDate: "", managerId: "",
+    excludeFromCapacity: false,
   });
 
   useEffect(() => {
