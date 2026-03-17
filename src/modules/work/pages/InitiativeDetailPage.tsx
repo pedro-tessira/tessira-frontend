@@ -277,6 +277,15 @@ export default function InitiativeDetailPage() {
           </div>
         </div>
       </div>
+
+      <EditInitiativeDialog
+        initiative={init}
+        domains={domains}
+        valueStreams={valueStreams}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onSave={(updated) => setLocalInit(updated)}
+      />
     </div>
   );
 }
