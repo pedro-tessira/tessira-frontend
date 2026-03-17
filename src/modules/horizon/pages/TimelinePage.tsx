@@ -166,6 +166,7 @@ export default function TimelinePage() {
   const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null);
   const [addAllocPrefill, setAddAllocPrefill] = useState<{ employeeId?: string; startDate?: string; endDate?: string }>({});
   const [selectedInitiativeId, setSelectedInitiativeId] = useState<string | null>(null);
+  const [selectedEngineer, setSelectedEngineer] = useState<{ id: string; name: string; teamName: string; capacity: number } | null>(null);
 
   // Drag-to-create state
   const [dragState, setDragState] = useState<{ empId: string; startDayIndex: number; currentDayIndex: number } | null>(null);
