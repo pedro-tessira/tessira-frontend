@@ -20,7 +20,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     title: "Engineering Manager", department: "Frontend", status: "active",
     country: "United Kingdom", countryCode: "GB", timezone: "Europe/London",
     startDate: "2020-09-01", managerId: "emp-009", managerName: "Lin Zhou",
-    avatarUrl: null, teamIds: ["team-003"],
+    avatarUrl: null, teamIds: ["team-003"], excludeFromCapacity: true,
   },
   {
     id: "emp-004", firstName: "Jonas", lastName: "Eriksson", email: "jonas.eriksson@tessira.dev",
@@ -55,14 +55,14 @@ export const MOCK_EMPLOYEES: Employee[] = [
     title: "VP of Engineering", department: "Engineering", status: "active",
     country: "United States", countryCode: "US", timezone: "America/New_York",
     startDate: "2019-11-04", managerId: null, managerName: null,
-    avatarUrl: null, teamIds: ["team-005"],
+    avatarUrl: null, teamIds: ["team-005"], excludeFromCapacity: true,
   },
   {
     id: "emp-009", firstName: "Lin", lastName: "Zhou", email: "lin.zhou@tessira.dev",
     title: "Director of Engineering", department: "Engineering", status: "active",
     country: "Singapore", countryCode: "SG", timezone: "Asia/Singapore",
     startDate: "2020-04-12", managerId: "emp-008", managerName: "David Okafor",
-    avatarUrl: null, teamIds: ["team-005"],
+    avatarUrl: null, teamIds: ["team-005"], excludeFromCapacity: true,
   },
   {
     id: "emp-010", firstName: "Carlos", lastName: "Mendez", email: "carlos.mendez@tessira.dev",

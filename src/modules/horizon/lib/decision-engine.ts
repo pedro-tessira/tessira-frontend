@@ -268,8 +268,9 @@ function generateRecommendations(initRisk: InitiativeRisk, engineerCapacities: E
 // ── Main computation ────────────────────────────────────
 
 export function computeDecisionSummary(): DecisionSummary {
-  // 1. Compute engineer capacities
-  const engineerCapacities: EngineerCapacity[] = horizonEmployees.map((emp) => {
+  // 1. Compute engineer capacities — exclude non-capacity employees (management)
+  const capacityEmployees = horizonEmployees.filter((e) => !e.excludeFromCapacity);
+  const engineerCapacities: EngineerCapacity[] = capacityEmployees.map((emp) => {
     const activeAllocs = allocations.filter(
       (a) => a.employeeId === emp.id && a.startDate <= today && a.endDate >= today
     );
