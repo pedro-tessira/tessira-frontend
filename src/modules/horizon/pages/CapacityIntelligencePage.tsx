@@ -642,34 +642,36 @@ function CapacityRow({
         </div>
         {/* Initiative allocation split bar */}
         {emp.allocations.length > 0 && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex h-2 mt-1.5 rounded-full overflow-hidden bg-muted cursor-help" onClick={(e) => e.stopPropagation()}>
-                {emp.allocations.map((a, i) => (
-                  <div
-                    key={a.id}
-                    className="h-full"
-                    style={{
-                      width: `${a.percentage}%`,
-                      backgroundColor: initColorMap.get(a.initiative) || `hsl(var(--primary) / ${0.4 + (i * 0.15)})`,
-                    }}
-                  />
-                ))}
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs space-y-1 z-[100]" sideOffset={4}>
-              <p className="font-semibold text-foreground mb-0.5">Allocations</p>
-              {emp.allocations.map((a) => (
-                <div key={a.id} className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: initColorMap.get(a.initiative) || "hsl(var(--primary))" }} />
-                  <span>{a.initiative}: <span className="font-medium">{a.percentage}%</span></span>
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex h-3 mt-1.5 rounded-full overflow-hidden bg-muted cursor-help" onClick={(e) => e.stopPropagation()}>
+                  {emp.allocations.map((a, i) => (
+                    <div
+                      key={a.id}
+                      className="h-full"
+                      style={{
+                        width: `${a.percentage}%`,
+                        backgroundColor: initColorMap.get(a.initiative) || `hsl(var(--primary) / ${0.4 + (i * 0.15)})`,
+                      }}
+                    />
+                  ))}
                 </div>
-              ))}
-              <div className="border-t border-border/30 pt-1 mt-1 font-medium">
-                Total: {emp.allocations.reduce((s, a) => s + a.percentage, 0)}%
-              </div>
-            </TooltipContent>
-          </Tooltip>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs space-y-1 z-[100]" sideOffset={6}>
+                <p className="font-semibold text-foreground mb-0.5">Allocations</p>
+                {emp.allocations.map((a) => (
+                  <div key={a.id} className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: initColorMap.get(a.initiative) || "hsl(var(--primary))" }} />
+                    <span>{a.initiative}: <span className="font-medium">{a.percentage}%</span></span>
+                  </div>
+                ))}
+                <div className="border-t border-border/30 pt-1 mt-1 font-medium">
+                  Total: {emp.allocations.reduce((s, a) => s + a.percentage, 0)}%
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
       </div>
 
