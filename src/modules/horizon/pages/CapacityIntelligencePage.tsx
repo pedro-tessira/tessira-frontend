@@ -213,16 +213,33 @@ export default function CapacityIntelligencePage() {
   // Initiative staffing summary
   const initiativeStaffing = useMemo(() => {
     const activeInits = initiatives.filter((i) => i.status !== "completed");
-    return activeInits.map((init) => ({
-      id: init.id,
-      name: init.name,
-      required: getRequiredFTE(init),
-      allocated: getAllocatedFTE(init.id),
-      status: getStaffingStatus(init),
-      confidence: init.estimate.confidence,
-    })).sort((a, b) => {
+    return activeInits.map((init) => {
+      const allocs = getAllocationsForInitiative(init.id);
+      const allocByRole = getAllocatedFTEByRole(init.id);
+      return {
+        id: init.id,
+        name: init.name,
+        status: init.status,
+        startDate: init.startDate,
+        endDate: init.endDate,
+        required: getRequiredFTE(init),
+        allocated: getAllocatedFTE(init.id),
+        staffing: getStaffingStatus(init),
+        confidence: init.estimate.confidence,
+        totalEffortDays: init.estimate.totalEffortDays,
+        roleBreakdown: getRequiredFTEByRole(init).map((rb) => ({
+          ...rb,
+          allocated: allocByRole[rb.role] || 0,
+        })),
+        allocations: allocs.map((a) => ({
+          name: a.employeeName,
+          role: a.role,
+          percentage: a.percentage,
+        })),
+      };
+    }).sort((a, b) => {
       const order: Record<StaffingStatus, number> = { understaffed: 0, overstaffed: 1, balanced: 2 };
-      return order[a.status] - order[b.status];
+      return order[a.staffing] - order[b.staffing];
     });
   }, []);
 
