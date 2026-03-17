@@ -3,16 +3,17 @@ import { adminUsers } from "../data";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, UserPlus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Search, UserPlus, MoreHorizontal, Ban, KeyRound, Mail, ArrowRightLeft, Trash2,
+} from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { AdminUserStatus, AdminUserRole } from "../types";
 
 const statusStyle: Record<AdminUserStatus, string> = {
@@ -32,6 +33,7 @@ const roleStyle: Record<AdminUserRole, string> = {
 export default function UsersPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<AdminUserStatus | "all">("all");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const filtered = adminUsers.filter((u) => {
     const matchSearch =
@@ -40,6 +42,19 @@ export default function UsersPage() {
     const matchStatus = statusFilter === "all" || u.status === statusFilter;
     return matchSearch && matchStatus;
   });
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const toggleAll = () => {
+    if (selected.size === filtered.length) setSelected(new Set());
+    else setSelected(new Set(filtered.map((u) => u.id)));
+  };
 
   return (
     <div className="space-y-4">
@@ -73,22 +88,56 @@ export default function UsersPage() {
         </Button>
       </div>
 
+      {/* Bulk action bar */}
+      {selected.size > 0 && (
+        <div className="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-2.5">
+          <span className="text-sm font-medium">{selected.size} selected</span>
+          <div className="flex gap-1.5 ml-auto">
+            <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5">
+              <Mail size={12} /> Resend Invite
+            </Button>
+            <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5">
+              <Ban size={12} /> Suspend
+            </Button>
+            <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5">
+              <KeyRound size={12} /> Force Password Reset
+            </Button>
+            <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5 text-destructive hover:text-destructive">
+              <Trash2 size={12} /> Deactivate
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Table */}
       <div className="rounded-lg border border-border/50 bg-card">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[40px]">
+                <Checkbox
+                  checked={selected.size === filtered.length && filtered.length > 0}
+                  onCheckedChange={toggleAll}
+                />
+              </TableHead>
               <TableHead className="text-xs">User</TableHead>
               <TableHead className="text-xs">Role</TableHead>
               <TableHead className="text-xs">Status</TableHead>
               <TableHead className="text-xs">Auth</TableHead>
               <TableHead className="text-xs">Linked Employee</TableHead>
-              <TableHead className="text-xs">Last Login</TableHead>
+              <TableHead className="text-xs">Last Activity</TableHead>
+              <TableHead className="text-xs w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.map((user) => (
               <TableRow key={user.id} className="cursor-pointer">
+                <TableCell>
+                  <Checkbox
+                    checked={selected.has(user.id)}
+                    onCheckedChange={() => toggleSelect(user.id)}
+                  />
+                </TableCell>
                 <TableCell>
                   <div>
                     <p className="text-sm font-medium">{user.displayName}</p>
@@ -112,15 +161,33 @@ export default function UsersPage() {
                   )}
                 </TableCell>
                 <TableCell className="text-xs text-muted-foreground">
-                  {user.lastLogin
-                    ? new Date(user.lastLogin).toLocaleDateString()
+                  {user.lastActivity
+                    ? new Date(user.lastActivity).toLocaleDateString()
                     : "Never"}
+                </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7">
+                        <MoreHorizontal size={14} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem className="text-xs gap-2"><Mail size={12} /> Resend Invite</DropdownMenuItem>
+                      <DropdownMenuItem className="text-xs gap-2"><KeyRound size={12} /> Force Password Reset</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-xs gap-2"><Ban size={12} /> Suspend</DropdownMenuItem>
+                      <DropdownMenuItem className="text-xs gap-2"><ArrowRightLeft size={12} /> Transfer Ownership</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-xs gap-2 text-destructive"><Trash2 size={12} /> Deactivate</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))}
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-8">
+                <TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-8">
                   No users match your filters.
                 </TableCell>
               </TableRow>
