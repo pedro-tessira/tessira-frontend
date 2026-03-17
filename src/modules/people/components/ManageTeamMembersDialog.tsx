@@ -105,8 +105,9 @@ export default function ManageTeamMembersDialog({ open, onOpenChange, team }: Pr
                   size="icon"
                   className="h-7 w-7 text-muted-foreground hover:text-destructive"
                   onClick={() => {
+                    const name = `${m.employee.firstName} ${m.employee.lastName}`;
                     removeMembership(m.id);
-                    toast({ title: "Member removed", description: `${m.employee.firstName} ${m.employee.lastName} removed from ${team.name}.` });
+                    setTimeout(() => toast({ title: "Member removed", description: `${name} removed from ${team.name}.` }), 150);
                   }}
                 >
                   <X size={13} />

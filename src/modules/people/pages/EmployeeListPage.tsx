@@ -180,9 +180,10 @@ export default function EmployeeListPage() {
         description={`Are you sure you want to remove ${deleteTarget?.firstName} ${deleteTarget?.lastName}? This will also remove all their team memberships.`}
         onConfirm={() => {
           if (deleteTarget) {
+            const name = `${deleteTarget.firstName} ${deleteTarget.lastName}`;
             deleteEmployee(deleteTarget.id);
-            toast({ title: "Employee deleted", description: `${deleteTarget.firstName} ${deleteTarget.lastName} has been removed.` });
             setDeleteTarget(null);
+            setTimeout(() => toast({ title: "Employee deleted", description: `${name} has been removed.` }), 150);
           }
         }}
       />
