@@ -58,14 +58,30 @@ export default function TimelineInitiativeLanes({ initiatives, rangeStart, range
 
   if (visible.length === 0) return null;
 
+  // Compute today pixel position once
+  const todayDate = new Date(todayISO);
+  todayDate.setHours(0, 0, 0, 0);
+  const todayPx = ((todayDate.getTime() - rangeStart.getTime()) / 86400000) * dayWidth;
+  const todayInRange = todayPx >= 0 && todayPx < gridWidth;
+
   return (
-    <div className="border-b border-border/50">
+    <div className="border-b-2 border-primary/20 shadow-[0_2px_8px_-2px_hsl(var(--primary)/0.1)]">
       {/* Section header */}
-      <div className="flex border-b border-border/30 bg-muted/20">
-        <div className="w-48 shrink-0 border-r border-border/50 px-3 py-1.5 sticky left-0 z-10 bg-muted/20">
+      <div className="flex border-b border-border/30 bg-muted/30">
+        <div className="w-48 shrink-0 border-r border-border/50 px-3 py-1.5 sticky left-0 z-10 bg-muted/30 flex items-center gap-2">
+          <Layers size={11} className="text-primary/60" />
           <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Initiatives</span>
+          <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 ml-auto">{visible.length}</Badge>
         </div>
-        <div style={{ width: gridWidth }} />
+        <div className="relative" style={{ width: gridWidth }}>
+          {/* Today column highlight in header */}
+          {todayInRange && (
+            <div
+              className="absolute top-0 bottom-0 bg-primary/10 border-x border-primary/20 pointer-events-none"
+              style={{ left: todayPx, width: dayWidth, zIndex: 1 }}
+            />
+          )}
+        </div>
       </div>
 
       {/* Initiative rows */}
