@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/shared/lib/utils";
-import { getInitiative, getAllocationsForInitiative, getDomainsForInitiative, getValueStreamsForInitiative, getRequiredFTE, getRequiredFTEByRole, getAllocatedFTE, getStaffingStatus, domains, valueStreams } from "../data";
+import { getInitiative, getAllocationsForInitiative, getDomainsForInitiative, getValueStreamsForInitiative, getRequiredFTE, getRequiredFTEByRole, getAllocatedFTE, getAllocatedFTEByRole, getStaffingStatus, domains, valueStreams } from "../data";
 import type { Initiative, StaffingStatus, ConfidenceLevel } from "../types";
 import EditInitiativeDialog from "../components/EditInitiativeDialog";
 
