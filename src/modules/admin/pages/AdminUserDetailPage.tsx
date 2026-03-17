@@ -384,7 +384,7 @@ export default function AdminUserDetailPage() {
               {confirmAction === "deactivate" ? (
                 <CircleAlert size={16} className="text-destructive" />
               ) : (
-                <Ban size={16} className="text-amber-500" />
+                <Ban size={16} className="text-primary" />
               )}
               {confirmAction === "deactivate" ? "Deactivate User" : "Suspend User"}
             </DialogTitle>
