@@ -243,7 +243,8 @@ export default function CapacityIntelligencePage() {
       );
       return {
         ...emp,
-        capacity: getEmployeeCapacity(emp.id, dates),
+        capacity: getEmployeeCapacity(emp.id, dates, empAllocs),
+        currentWeek: getCurrentWeekCapacity(emp.id, today, empAllocs),
         enrichment: employeeEnrichment[emp.id],
         allocations: empAllocs,
       };
