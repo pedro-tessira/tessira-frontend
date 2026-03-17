@@ -43,8 +43,8 @@ export default function DomainDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Link to="/app/work/domains" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-        <ArrowLeft size={13} /> Back to Domains
+      <Link to={backTo} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft size={13} /> Back
       </Link>
 
       <div className="flex items-start gap-4">
