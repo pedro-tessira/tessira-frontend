@@ -44,6 +44,7 @@ import type { EventType, TimelineEvent, AvailabilityWindow, Allocation } from ".
 import AllocationDetailPanel from "../components/AllocationDetailPanel";
 import AddAllocationDialog from "../components/AddAllocationDialog";
 import EventDetailPanel from "../components/EventDetailPanel";
+import EngineerDetailPanel from "../components/EngineerDetailPanel";
 import TimelineDecisionBanner from "../components/TimelineDecisionBanner";
 import TimelineInitiativeLanes from "../components/TimelineInitiativeLanes";
 import { computeDecisionSummary } from "../lib/decision-engine";
@@ -165,6 +166,7 @@ export default function TimelinePage() {
   const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null);
   const [addAllocPrefill, setAddAllocPrefill] = useState<{ employeeId?: string; startDate?: string; endDate?: string }>({});
   const [selectedInitiativeId, setSelectedInitiativeId] = useState<string | null>(null);
+  const [selectedEngineer, setSelectedEngineer] = useState<{ id: string; name: string; teamName: string; capacity: number } | null>(null);
 
   // Drag-to-create state
   const [dragState, setDragState] = useState<{ empId: string; startDayIndex: number; currentDayIndex: number } | null>(null);
@@ -660,6 +662,7 @@ export default function TimelinePage() {
                     selectedInitiativeId={selectedInitiativeId}
                     getInitiativeIdForAlloc={getInitiativeIdForAlloc}
                     initiativeRiskMap={initiativeRiskMap}
+                    onLabelClick={() => setSelectedEngineer({ id: emp.id, name: emp.name, teamName: emp.teamName, capacity: 80 })}
                   />
                 );
               })}
@@ -703,6 +706,7 @@ export default function TimelinePage() {
       <AllocationDetailPanel open={!!selectedAllocation} onOpenChange={(open) => !open && setSelectedAllocation(null)} allocation={selectedAllocation} />
       <AddAllocationDialog open={addAllocOpen} onOpenChange={setAddAllocOpen} prefillEmployeeId={addAllocPrefill.employeeId} prefillStartDate={addAllocPrefill.startDate} prefillEndDate={addAllocPrefill.endDate} />
       <EventDetailPanel open={!!selectedEvent} onOpenChange={(open) => !open && setSelectedEvent(null)} event={selectedEvent} />
+      <EngineerDetailPanel open={!!selectedEngineer} onOpenChange={(open) => !open && setSelectedEngineer(null)} engineer={selectedEngineer} />
     </TooltipProvider>
   );
 }
@@ -733,9 +737,10 @@ interface TimelineLaneProps {
   selectedInitiativeId?: string | null;
   getInitiativeIdForAlloc?: (name: string) => string | null;
   initiativeRiskMap?: Record<string, { deliveryRisk: string }>;
+  onLabelClick?: () => void;
 }
 
-function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rangeDays, dates, todayISO, layers, expanded, onToggle, onAllocationClick, onEventClick, className, availFn, onDragStart, onDragMove, dragSelection, onResizeStart, resizeState, highlighted, selectedInitiativeId, getInitiativeIdForAlloc, initiativeRiskMap }: TimelineLaneProps) {
+function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rangeDays, dates, todayISO, layers, expanded, onToggle, onAllocationClick, onEventClick, className, availFn, onDragStart, onDragMove, dragSelection, onResizeStart, resizeState, highlighted, selectedInitiativeId, getInitiativeIdForAlloc, initiativeRiskMap, onLabelClick }: TimelineLaneProps) {
   const slottedEvents = useMemo(() => assignEventSlots(events), [events]);
   const slottedAllocs = useMemo(() => assignAllocSlots(allocs), [allocs]);
 
@@ -761,7 +766,15 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
       className
     )} onClick={!onDragStart ? onToggle : undefined}>
       {/* Sticky label */}
-      <div className="w-48 shrink-0 border-r border-border/50 px-3 py-2 flex items-center gap-2 sticky left-0 z-10 bg-card cursor-pointer" style={{ minHeight: Math.max(36, rowHeight) }} onClick={onToggle}>
+      <div
+        className="w-48 shrink-0 border-r border-border/50 px-3 py-2 flex items-center gap-2 sticky left-0 z-10 bg-card cursor-pointer hover:bg-accent/10 tessira-transition"
+        style={{ minHeight: Math.max(36, rowHeight) }}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (onLabelClick) onLabelClick();
+          else onToggle();
+        }}
+      >
         {label}
       </div>
 
