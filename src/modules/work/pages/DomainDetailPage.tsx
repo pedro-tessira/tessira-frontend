@@ -29,7 +29,7 @@ export default function DomainDetailPage() {
     return (
       <div className="py-12 text-center space-y-3">
         <p className="text-muted-foreground">Domain not found.</p>
-        <Link to="/app/work/domains"><Button variant="outline" size="sm">Back to Domains</Button></Link>
+        <Link to={backTo}><Button variant="outline" size="sm">Back</Button></Link>
       </div>
     );
   }
