@@ -27,8 +27,8 @@ import {
   UserPlus,
   Shuffle,
   Timer,
-  Scissors,
-} from "lucide-react";
+  Scissors } from
+"lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -37,21 +37,21 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue } from
+"@/components/ui/select";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  TooltipTrigger } from
+"@/components/ui/tooltip";
 import {
   horizonEmployees,
   horizonTeams,
   availabilityWindows,
   timelineEvents,
-  allocations,
-} from "../data";
+  allocations } from
+"../data";
 import type { AvailabilityWindow } from "../types";
 import { initiatives, workAllocations, getRequiredFTE, getRequiredFTEByRole, getAllocatedFTE, getAllocatedFTEByRole, getStaffingStatus, getAllocationsForInitiative } from "@/modules/work/data";
 import { Link } from "react-router-dom";
@@ -66,31 +66,31 @@ type AvailSource = "available" | "partial" | "vacation" | "sick_leave" | "compan
 type DayStatus = {
   availability: AvailSource;
   allocationPct: number;
-  allocDetails: { initiative: string; percentage: number }[];
+  allocDetails: {initiative: string;percentage: number;}[];
 };
 
-const sourceConfig: Record<AvailSource, { label: string; color: string; dotColor: string }> = {
-  available:      { label: "Available",          color: "bg-emerald-500/20", dotColor: "bg-emerald-500" },
-  partial:        { label: "Partial Allocation", color: "bg-amber-500/25",   dotColor: "bg-amber-500" },
-  vacation:       { label: "Vacation",           color: "bg-sky-500/25",     dotColor: "bg-sky-500" },
-  sick_leave:     { label: "Sick Leave",         color: "bg-red-500/25",     dotColor: "bg-red-500" },
-  company_event:  { label: "Company Event",      color: "bg-purple-500/25",  dotColor: "bg-purple-500" },
-  unavailable:    { label: "Unavailable",        color: "bg-muted/50",       dotColor: "bg-muted-foreground/40" },
+const sourceConfig: Record<AvailSource, {label: string;color: string;dotColor: string;}> = {
+  available: { label: "Available", color: "bg-emerald-500/20", dotColor: "bg-emerald-500" },
+  partial: { label: "Partial Allocation", color: "bg-amber-500/25", dotColor: "bg-amber-500" },
+  vacation: { label: "Vacation", color: "bg-sky-500/25", dotColor: "bg-sky-500" },
+  sick_leave: { label: "Sick Leave", color: "bg-red-500/25", dotColor: "bg-red-500" },
+  company_event: { label: "Company Event", color: "bg-purple-500/25", dotColor: "bg-purple-500" },
+  unavailable: { label: "Unavailable", color: "bg-muted/50", dotColor: "bg-muted-foreground/40" }
 };
 
-const employeeEnrichment: Record<string, { role: string; skill: string; location: string }> = {
-  "emp-001": { role: "Staff Engineer",    skill: "Platform",    location: "San Francisco" },
-  "emp-002": { role: "Senior Engineer",   skill: "Backend",     location: "Austin" },
-  "emp-003": { role: "Senior Engineer",   skill: "Frontend",    location: "London" },
-  "emp-004": { role: "Engineer",          skill: "Platform",    location: "Stockholm" },
-  "emp-005": { role: "Senior Engineer",   skill: "Backend",     location: "Tokyo" },
-  "emp-006": { role: "Engineer",          skill: "Data",        location: "Berlin" },
-  "emp-007": { role: "Senior Engineer",   skill: "Frontend",    location: "Mumbai" },
+const employeeEnrichment: Record<string, {role: string;skill: string;location: string;}> = {
+  "emp-001": { role: "Staff Engineer", skill: "Platform", location: "San Francisco" },
+  "emp-002": { role: "Senior Engineer", skill: "Backend", location: "Austin" },
+  "emp-003": { role: "Senior Engineer", skill: "Frontend", location: "London" },
+  "emp-004": { role: "Engineer", skill: "Platform", location: "Stockholm" },
+  "emp-005": { role: "Senior Engineer", skill: "Backend", location: "Tokyo" },
+  "emp-006": { role: "Engineer", skill: "Data", location: "Berlin" },
+  "emp-007": { role: "Senior Engineer", skill: "Frontend", location: "Mumbai" },
   "emp-008": { role: "Engineering Manager", skill: "Leadership", location: "New York" },
-  "emp-009": { role: "VP Engineering",    skill: "Leadership",  location: "San Francisco" },
-  "emp-010": { role: "Engineer",          skill: "Data",        location: "São Paulo" },
-  "emp-011": { role: "Junior Engineer",   skill: "Frontend",    location: "London" },
-  "emp-012": { role: "Engineer",          skill: "Data",        location: "Warsaw" },
+  "emp-009": { role: "VP Engineering", skill: "Leadership", location: "San Francisco" },
+  "emp-010": { role: "Engineer", skill: "Data", location: "São Paulo" },
+  "emp-011": { role: "Junior Engineer", skill: "Frontend", location: "London" },
+  "emp-012": { role: "Engineer", skill: "Data", location: "Warsaw" }
 };
 
 const roles = ["All Roles", "Staff Engineer", "Senior Engineer", "Engineer", "Junior Engineer", "Engineering Manager", "VP Engineering"];
@@ -98,15 +98,15 @@ const skills = ["All Skills", "Platform", "Backend", "Frontend", "Data", "Leader
 const locations = ["All Locations", "San Francisco", "Austin", "London", "Stockholm", "Tokyo", "Berlin", "Mumbai", "New York", "São Paulo", "Warsaw"];
 
 const INIT_COLORS = [
-  "hsl(var(--primary))",
-  "hsl(var(--success))",
-  "hsl(var(--warning))",
-  "hsl(var(--destructive))",
-  "hsl(210 70% 55%)",
-  "hsl(280 60% 55%)",
-  "hsl(35 80% 55%)",
-  "hsl(170 60% 45%)",
-];
+"hsl(var(--primary))",
+"hsl(var(--success))",
+"hsl(var(--warning))",
+"hsl(var(--destructive))",
+"hsl(210 70% 55%)",
+"hsl(280 60% 55%)",
+"hsl(35 80% 55%)",
+"hsl(170 60% 45%)"];
+
 
 function getInitColor(idx: number) {
   return INIT_COLORS[idx % INIT_COLORS.length];
@@ -145,7 +145,7 @@ function hasCompanyEvent(dayISO: string): boolean {
 function getDayStatus(empId: string, dayISO: string, empAllocs: typeof allocations): DayStatus {
   const companyEvent = hasCompanyEvent(dayISO);
   const availability = companyEvent ? "company_event" as AvailSource : resolveAvailSource(empId, dayISO);
-  const allocDetails: { initiative: string; percentage: number }[] = [];
+  const allocDetails: {initiative: string;percentage: number;}[] = [];
   for (const a of empAllocs) {
     if (a.startDate <= dayISO && a.endDate >= dayISO) {
       allocDetails.push({ initiative: a.initiative, percentage: a.percentage });
@@ -155,7 +155,7 @@ function getDayStatus(empId: string, dayISO: string, empAllocs: typeof allocatio
   return { availability, allocationPct, allocDetails };
 }
 
-function getEmployeeCapacity(empId: string, dates: Date[], empAllocs: typeof allocations): { availability: number; allocation: number; free: number } {
+function getEmployeeCapacity(empId: string, dates: Date[], empAllocs: typeof allocations): {availability: number;allocation: number;free: number;} {
   const workdays = dates.filter((d) => d.getDay() !== 0 && d.getDay() !== 6);
   const totalWorkdays = workdays.length;
   if (totalWorkdays === 0) return { availability: 100, allocation: 0, free: 100 };
@@ -164,19 +164,19 @@ function getEmployeeCapacity(empId: string, dates: Date[], empAllocs: typeof all
   for (const d of workdays) {
     const iso = toISO(d);
     const status = getDayStatus(empId, iso, empAllocs);
-    if (status.availability === "available") availDays++;
-    else if (status.availability === "partial") availDays += 0.5;
+    if (status.availability === "available") availDays++;else
+    if (status.availability === "partial") availDays += 0.5;
     if (status.availability === "available" || status.availability === "partial") {
       totalAllocPct += Math.min(100, status.allocationPct);
     }
   }
-  const availPct = Math.round((availDays / totalWorkdays) * 100);
+  const availPct = Math.round(availDays / totalWorkdays * 100);
   const allocPct = Math.round(totalAllocPct / totalWorkdays);
   const freePct = Math.max(0, availPct - allocPct);
   return { availability: availPct, allocation: allocPct, free: freePct };
 }
 
-function getCurrentWeekCapacity(empId: string, today: Date, empAllocs: typeof allocations): { availability: number; allocation: number; free: number } {
+function getCurrentWeekCapacity(empId: string, today: Date, empAllocs: typeof allocations): {availability: number;allocation: number;free: number;} {
   const dow = today.getDay();
   const monday = addDays(today, -(dow === 0 ? 6 : dow - 1));
   const weekDays: Date[] = [];
@@ -207,7 +207,7 @@ export default function CapacityIntelligencePage() {
   // Initiative risk lookup
   const initiativeRiskMap = useMemo(() => {
     const map: Record<string, InitiativeRisk> = {};
-    decisionSummary.allInitiativeRisks.forEach((r) => { map[r.id] = r; });
+    decisionSummary.allInitiativeRisks.forEach((r) => {map[r.id] = r;});
     return map;
   }, [decisionSummary]);
 
@@ -258,7 +258,7 @@ export default function CapacityIntelligencePage() {
         capacity: getEmployeeCapacity(emp.id, dates, empAllocs),
         currentWeek: getCurrentWeekCapacity(emp.id, today, empAllocs),
         enrichment: employeeEnrichment[emp.id],
-        allocations: empAllocs,
+        allocations: empAllocs
       };
     });
   }, [filteredEmployees, dates, rangeStart, rangeEnd]);
@@ -266,10 +266,10 @@ export default function CapacityIntelligencePage() {
   // Apply KPI filter to capacity data for the grid
   const filteredCapacityData = useMemo(() => {
     switch (kpiFilter) {
-      case "available": return capacityData.filter((e) => e.currentWeek.free >= 90);
-      case "constrained": return capacityData.filter((e) => e.currentWeek.free < 50);
-      case "alerts": return capacityData.filter((e) => e.currentWeek.free < CAPACITY_THRESHOLD);
-      default: return capacityData;
+      case "available":return capacityData.filter((e) => e.currentWeek.free >= 90);
+      case "constrained":return capacityData.filter((e) => e.currentWeek.free < 50);
+      case "alerts":return capacityData.filter((e) => e.currentWeek.free < CAPACITY_THRESHOLD);
+      default:return capacityData;
     }
   }, [capacityData, kpiFilter]);
 
@@ -292,12 +292,12 @@ export default function CapacityIntelligencePage() {
         totalEffortDays: init.estimate.totalEffortDays,
         roleBreakdown: getRequiredFTEByRole(init).map((rb) => ({
           ...rb,
-          allocated: allocByRole[rb.role] || 0,
+          allocated: allocByRole[rb.role] || 0
         })),
         allocations: allocs.map((a) => ({
           name: a.employeeName,
           role: a.role,
-          percentage: a.percentage,
+          percentage: a.percentage
         })),
         // Decision engine data
         deliveryRisk: risk?.deliveryRisk ?? "low",
@@ -305,7 +305,7 @@ export default function CapacityIntelligencePage() {
         riskReasons: risk?.riskReasons ?? [],
         estimatedDelayDays: risk?.estimatedDelayDays ?? 0,
         recommendations: risk?.recommendations ?? [],
-        roleGaps: risk?.roleGaps ?? [],
+        roleGaps: risk?.roleGaps ?? []
       };
     }).sort((a, b) => b.riskScore - a.riskScore);
   }, [initiativeRiskMap]);
@@ -316,27 +316,27 @@ export default function CapacityIntelligencePage() {
     return initiativeStaffing;
   }, [initiativeStaffing, kpiFilter]);
 
-  const totalCapacity = capacityData.length > 0
-    ? Math.round(capacityData.reduce((s, e) => s + e.currentWeek.free, 0) / capacityData.length)
-    : 0;
-  const totalAvailability = capacityData.length > 0
-    ? Math.round(capacityData.reduce((s, e) => s + e.currentWeek.availability, 0) / capacityData.length)
-    : 0;
-  const totalAllocation = capacityData.length > 0
-    ? Math.round(capacityData.reduce((s, e) => s + e.currentWeek.allocation, 0) / capacityData.length)
-    : 0;
+  const totalCapacity = capacityData.length > 0 ?
+  Math.round(capacityData.reduce((s, e) => s + e.currentWeek.free, 0) / capacityData.length) :
+  0;
+  const totalAvailability = capacityData.length > 0 ?
+  Math.round(capacityData.reduce((s, e) => s + e.currentWeek.availability, 0) / capacityData.length) :
+  0;
+  const totalAllocation = capacityData.length > 0 ?
+  Math.round(capacityData.reduce((s, e) => s + e.currentWeek.allocation, 0) / capacityData.length) :
+  0;
   const understaffedCount = initiativeStaffing.filter((i) => i.staffing === "understaffed").length;
   const availableCount = capacityData.filter((e) => e.currentWeek.free >= 90).length;
   const unavailableCount = capacityData.filter((e) => e.currentWeek.free < 50).length;
 
-  const alerts = capacityData
-    .filter((e) => e.currentWeek.free < CAPACITY_THRESHOLD)
-    .sort((a, b) => a.currentWeek.free - b.currentWeek.free);
+  const alerts = capacityData.
+  filter((e) => e.currentWeek.free < CAPACITY_THRESHOLD).
+  sort((a, b) => a.currentWeek.free - b.currentWeek.free);
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const todayPx = ((today.getTime() - rangeStart.getTime()) / 86400000) * DAY_WIDTH + 220;
+    const todayPx = (today.getTime() - rangeStart.getTime()) / 86400000 * DAY_WIDTH + 220;
     const check = () => {
       const sl = el.scrollLeft;
       const vw = el.clientWidth;
@@ -351,7 +351,7 @@ export default function CapacityIntelligencePage() {
   const scrollToToday = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const todayPx = ((today.getTime() - rangeStart.getTime()) / 86400000) * DAY_WIDTH + 220;
+    const todayPx = (today.getTime() - rangeStart.getTime()) / 86400000 * DAY_WIDTH + 220;
     el.scrollTo({ left: todayPx - el.clientWidth / 2, behavior: "smooth" });
   }, [rangeStart]);
 
@@ -359,12 +359,12 @@ export default function CapacityIntelligencePage() {
 
   const recIcon = (type: RecommendedAction["type"]) => {
     switch (type) {
-      case "reassign": return Shuffle;
-      case "add_role": return UserPlus;
-      case "delay": return Timer;
-      case "reduce_scope": return Scissors;
-      case "split_allocation": return Target;
-      default: return Zap;
+      case "reassign":return Shuffle;
+      case "add_role":return UserPlus;
+      case "delay":return Timer;
+      case "reduce_scope":return Scissors;
+      case "split_allocation":return Target;
+      default:return Zap;
     }
   };
 
@@ -372,7 +372,7 @@ export default function CapacityIntelligencePage() {
     critical: "bg-destructive/15 text-destructive border-destructive/25",
     high: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/25",
     medium: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-300 border-yellow-500/25",
-    low: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/25",
+    low: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/25"
   };
 
   return (
@@ -381,8 +381,8 @@ export default function CapacityIntelligencePage() {
         {/* ── Decision Banner ── */}
         <TimelineDecisionBanner
           summary={decisionSummary}
-          onInitiativeClick={() => {}}
-        />
+          onInitiativeClick={() => {}} />
+        
 
         {/* ── KPI Header (clickable) ── */}
         <div className="grid gap-3 grid-cols-2 lg:grid-cols-6">
@@ -395,46 +395,46 @@ export default function CapacityIntelligencePage() {
         </div>
 
         {/* Active filter indicator */}
-        {kpiFilter !== "all" && (
-          <div className="flex items-center gap-2">
+        {kpiFilter !== "all" &&
+        <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-xs gap-1.5 bg-primary/10 text-primary border-primary/20">
               <Filter size={10} />
               Filtered: {kpiFilter === "available" ? "Available engineers (≥90% free)" : kpiFilter === "constrained" ? "Constrained engineers (<50% free)" : kpiFilter === "understaffed" ? "Understaffed initiatives" : "Capacity alerts"}
             </Badge>
             <Button variant="ghost" size="sm" className="h-6 text-[11px] text-muted-foreground" onClick={() => setKpiFilter("all")}>Clear filter</Button>
           </div>
-        )}
+        }
 
         {/* ── Recommended Actions ── */}
-        {decisionSummary.recommendations.length > 0 && (
-          <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
+        {decisionSummary.recommendations.length > 0 &&
+        <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Zap size={14} className="text-primary" />
                 <h3 className="text-sm font-semibold">Recommended Actions</h3>
                 <Badge variant="secondary" className="text-[10px] h-4 bg-primary/10 text-primary">{decisionSummary.recommendations.length}</Badge>
               </div>
-              {decisionSummary.recommendations.length > 4 && (
-                <Button variant="ghost" size="sm" className="h-7 text-[11px] gap-1" onClick={() => setShowAllRecs(!showAllRecs)}>
+              {decisionSummary.recommendations.length > 4 &&
+            <Button variant="ghost" size="sm" className="h-7 text-[11px] gap-1" onClick={() => setShowAllRecs(!showAllRecs)}>
                   {showAllRecs ? <><ChevronUp size={12} /> Show less</> : <><ChevronDown size={12} /> Show all</>}
                 </Button>
-              )}
+            }
             </div>
             <div className="grid gap-2 grid-cols-1 md:grid-cols-2">
               {topRecs.map((rec) => {
-                const Icon = recIcon(rec.type);
-                const priorityStyle = rec.priority === "high"
-                  ? "border-destructive/20 bg-destructive/5"
-                  : rec.priority === "medium"
-                  ? "border-amber-500/20 bg-amber-500/5"
-                  : "border-border/50 bg-card";
-                return (
-                  <div key={rec.id} className={cn("rounded-md border p-3 space-y-1.5 tessira-transition hover:shadow-sm", priorityStyle)}>
+              const Icon = recIcon(rec.type);
+              const priorityStyle = rec.priority === "high" ?
+              "border-destructive/20 bg-destructive/5" :
+              rec.priority === "medium" ?
+              "border-amber-500/20 bg-amber-500/5" :
+              "border-border/50 bg-card";
+              return (
+                <div key={rec.id} className={cn("rounded-md border p-3 space-y-1.5 tessira-transition hover:shadow-sm", priorityStyle)}>
                     <div className="flex items-start gap-2">
                       <div className={cn(
-                        "h-6 w-6 rounded-md flex items-center justify-center shrink-0",
-                        rec.priority === "high" ? "bg-destructive/10" : rec.priority === "medium" ? "bg-amber-500/10" : "bg-muted"
-                      )}>
+                      "h-6 w-6 rounded-md flex items-center justify-center shrink-0",
+                      rec.priority === "high" ? "bg-destructive/10" : rec.priority === "medium" ? "bg-amber-500/10" : "bg-muted"
+                    )}>
                         <Icon size={12} className={rec.priority === "high" ? "text-destructive" : rec.priority === "medium" ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"} />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -442,15 +442,15 @@ export default function CapacityIntelligencePage() {
                         <p className="text-[10px] text-muted-foreground mt-0.5">{rec.detail}</p>
                       </div>
                       <Badge variant="outline" className={cn("text-[9px] h-4 shrink-0",
-                        rec.priority === "high" ? "border-destructive/30 text-destructive" : rec.priority === "medium" ? "border-amber-500/30 text-amber-600 dark:text-amber-400" : "text-muted-foreground"
-                      )}>{rec.priority}</Badge>
+                    rec.priority === "high" ? "border-destructive/30 text-destructive" : rec.priority === "medium" ? "border-amber-500/30 text-amber-600 dark:text-amber-400" : "text-muted-foreground"
+                    )}>{rec.priority}</Badge>
                     </div>
-                  </div>
-                );
-              })}
+                  </div>);
+
+            })}
             </div>
           </div>
-        )}
+        }
 
         {/* ── Initiative Staffing (enriched with risk) ── */}
         <div className="space-y-3">
@@ -461,20 +461,20 @@ export default function CapacityIntelligencePage() {
           </div>
           <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {filteredInitiatives.map((init) => {
-              const fillPct = init.required > 0 ? Math.min(100, Math.round((init.allocated / init.required) * 100)) : 0;
+              const fillPct = init.required > 0 ? Math.min(100, Math.round(init.allocated / init.required * 100)) : 0;
               const barColor = init.staffing === "understaffed" ? "bg-destructive" : init.staffing === "balanced" ? "bg-success" : "bg-warning";
               const textColor = init.staffing === "understaffed" ? "text-destructive" : init.staffing === "balanced" ? "text-success" : "text-warning";
               const statusColors: Record<string, string> = {
                 planned: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
-                active: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+                active: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
               };
               const formatDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
               return (
                 <Link
                   key={init.id}
                   to={`/app/work/initiatives/${init.id}?from=${encodeURIComponent("/app/horizon/capacity")}`}
-                  className="rounded-lg border border-border/50 bg-card p-4 space-y-3 hover:border-primary/30 transition-colors group"
-                >
+                  className="rounded-lg border border-border/50 bg-card p-4 space-y-3 hover:border-primary/30 transition-colors group">
+                  
                   {/* Header with risk badge */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
@@ -501,21 +501,21 @@ export default function CapacityIntelligencePage() {
                       {formatDate(init.startDate)} → {formatDate(init.endDate)}
                     </span>
                     <span className="tabular-nums">{init.totalEffortDays}d effort</span>
-                    {init.estimatedDelayDays > 0 && (
-                      <span className="flex items-center gap-0.5 text-amber-600 dark:text-amber-400 font-medium">
+                    {init.estimatedDelayDays > 0 &&
+                    <span className="flex items-center gap-0.5 text-amber-600 dark:text-amber-400 font-medium">
                         <Clock size={9} />+{init.estimatedDelayDays}d delay
                       </span>
-                    )}
+                    }
                   </div>
 
                   {/* Risk reasons */}
-                  {init.riskReasons.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {init.riskReasons.slice(0, 3).map((reason, i) => (
-                        <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-muted/80 text-muted-foreground">{reason}</span>
-                      ))}
+                  {init.riskReasons.length > 0 &&
+                  <div className="flex flex-wrap gap-1">
+                      {init.riskReasons.slice(0, 3).map((reason, i) =>
+                    <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-muted/80 text-muted-foreground">{reason}</span>
+                    )}
                     </div>
-                  )}
+                  }
 
                   {/* FTE bar */}
                   <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
@@ -529,32 +529,32 @@ export default function CapacityIntelligencePage() {
                   </div>
 
                   {/* Role gaps (if any) */}
-                  {init.roleGaps.length > 0 && (
-                    <div className="space-y-1 border-t border-border/30 pt-2">
+                  {init.roleGaps.length > 0 &&
+                  <div className="space-y-1 border-t border-border/30 pt-2">
                       <p className="text-[9px] font-medium text-destructive uppercase tracking-wider flex items-center gap-1">
                         <Shield size={8} /> Role Gaps
                       </p>
-                      {init.roleGaps.map((g) => (
-                        <div key={g.role} className="flex items-center justify-between text-[10px]">
+                      {init.roleGaps.map((g) =>
+                    <div key={g.role} className="flex items-center justify-between text-[10px]">
                           <span className="text-muted-foreground">{g.role}</span>
                           <span className="text-destructive font-medium tabular-nums">-{g.gapFTE} FTE</span>
                         </div>
-                      ))}
+                    )}
                     </div>
-                  )}
+                  }
 
                   {/* Inline recommendation (top 1) */}
-                  {init.recommendations.length > 0 && (
-                    <div className="border-t border-border/30 pt-2">
+                  {init.recommendations.length > 0 &&
+                  <div className="border-t border-border/30 pt-2">
                       <div className="flex items-center gap-1.5 text-[10px] text-primary">
                         <Zap size={9} />
                         <span className="font-medium truncate">{init.recommendations[0].label}</span>
                         <ArrowRight size={9} className="ml-auto shrink-0 opacity-0 group-hover:opacity-100 tessira-transition" />
                       </div>
                     </div>
-                  )}
-                </Link>
-              );
+                  }
+                </Link>);
+
             })}
           </div>
         </div>
@@ -591,39 +591,39 @@ export default function CapacityIntelligencePage() {
             <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search engineers..." className="h-8 text-xs pl-7 w-[180px] bg-transparent border-border/50" />
           </div>
           <div className="flex gap-0.5 rounded-md border border-border/50 p-0.5">
-            {(["2w", "4w", "8w"] as const).map((r) => (
-              <Button key={r} variant={range === r ? "secondary" : "ghost"} size="sm" className="h-6 text-[11px] px-2" onClick={() => setRange(r)}>{r}</Button>
-            ))}
+            {(["2w", "4w", "8w"] as const).map((r) =>
+            <Button key={r} variant={range === r ? "secondary" : "ghost"} size="sm" className="h-6 text-[11px] px-2" onClick={() => setRange(r)}>{r}</Button>
+            )}
           </div>
         </div>
 
         {/* ── Capacity Alerts ── */}
-        {alerts.length > 0 && kpiFilter !== "available" && (
-          <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 space-y-2">
-            <div className="flex items-center gap-2">
-              <AlertTriangle size={14} className="text-destructive" />
-              <span className="text-xs font-semibold text-destructive">Capacity Alerts — {alerts.length} engineer{alerts.length !== 1 ? "s" : ""} below {CAPACITY_THRESHOLD}%</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {alerts.map((a) => {
-                const risk = freeCapacityRisk(a.currentWeek.free);
-                return (
-                  <Badge key={a.id} variant="secondary" className={cn("text-[11px] cursor-pointer", riskBgSubtle(risk), riskText(risk), riskBorder(risk))} onClick={() => setSelectedEngineer(a)}>
-                    {a.name} — {a.currentWeek.free}% free
-                  </Badge>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {alerts.length > 0 && kpiFilter !== "available"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        }
 
         {/* ── Capacity Timeline Grid ── */}
         <div className="rounded-lg border border-border/50 bg-card overflow-hidden relative">
-          {!todayVisible && (
-            <Button size="sm" className="absolute bottom-3 right-3 z-40 h-7 text-[11px] gap-1.5 shadow-lg" onClick={scrollToToday}>
+          {!todayVisible &&
+          <Button size="sm" className="absolute bottom-3 right-3 z-40 h-7 text-[11px] gap-1.5 shadow-lg" onClick={scrollToToday}>
               <CalendarDays size={12} /> Go to today
             </Button>
-          )}
+          }
 
           <div className="overflow-x-auto" ref={scrollRef}>
             <div style={{ minWidth: 220 + gridWidth }}>
@@ -631,9 +631,9 @@ export default function CapacityIntelligencePage() {
               <div className="flex border-b border-border/50 sticky top-0 z-20 bg-card">
                 <div className="w-[220px] shrink-0 border-r border-border/50 px-3 py-2 sticky left-0 z-30 bg-card">
                   <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Engineer</span>
-                  {filteredCapacityData.length !== capacityData.length && (
-                    <span className="text-[10px] text-primary ml-2">{filteredCapacityData.length}/{capacityData.length}</span>
-                  )}
+                  {filteredCapacityData.length !== capacityData.length &&
+                  <span className="text-[10px] text-primary ml-2">{filteredCapacityData.length}/{capacityData.length}</span>
+                  }
                 </div>
                 <div className="flex">
                   {dates.map((d, i) => {
@@ -646,7 +646,7 @@ export default function CapacityIntelligencePage() {
                         key={i}
                         style={{
                           width: DAY_WIDTH,
-                          ...(isToday ? { boxShadow: "inset 2px 0 0 hsl(var(--primary) / 0.35), inset -2px 0 0 hsl(var(--primary) / 0.35)" } : {}),
+                          ...(isToday ? { boxShadow: "inset 2px 0 0 hsl(var(--primary) / 0.35), inset -2px 0 0 hsl(var(--primary) / 0.35)" } : {})
                         }}
                         className={cn(
                           "text-center py-1.5 text-[9px]",
@@ -654,57 +654,57 @@ export default function CapacityIntelligencePage() {
                           !isMonday && !isToday && "border-r border-border/10",
                           isToday && "font-semibold text-primary bg-primary/10",
                           isWeekend && !isToday && "bg-muted/20 text-muted-foreground/40"
-                        )}
-                      >
+                        )}>
+                        
                         <div>{d.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 2)}</div>
                         <div className="tabular-nums">{d.getDate()}</div>
                         {isToday && <span className="mx-auto mt-0.5 block h-1 w-1 rounded-full bg-primary animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite]" />}
-                      </div>
-                    );
+                      </div>);
+
                   })}
                 </div>
               </div>
 
               {/* Employee rows */}
-              {filteredCapacityData.map((emp) => (
-                <CapacityRow
-                  key={emp.id}
-                  emp={emp}
-                  dates={dates}
-                  todayISO={todayISO}
-                  gridWidth={gridWidth}
-                  rangeStart={rangeStart}
-                  initColorMap={initColorMap}
-                  onClick={() => setSelectedEngineer(emp)}
-                />
-              ))}
+              {filteredCapacityData.map((emp) =>
+              <CapacityRow
+                key={emp.id}
+                emp={emp}
+                dates={dates}
+                todayISO={todayISO}
+                gridWidth={gridWidth}
+                rangeStart={rangeStart}
+                initColorMap={initColorMap}
+                onClick={() => setSelectedEngineer(emp)} />
 
-              {filteredCapacityData.length === 0 && (
-                <div className="py-12 text-center text-sm text-muted-foreground">No engineers match the current filters.</div>
               )}
+
+              {filteredCapacityData.length === 0 &&
+              <div className="py-12 text-center text-sm text-muted-foreground">No engineers match the current filters.</div>
+              }
             </div>
           </div>
         </div>
 
         {/* ── Legend ── */}
         <div className="flex flex-wrap gap-4 text-[11px] text-muted-foreground">
-          {Object.entries(sourceConfig).map(([key, cfg]) => (
-            <span key={key} className="flex items-center gap-1.5">
+          {Object.entries(sourceConfig).map(([key, cfg]) =>
+          <span key={key} className="flex items-center gap-1.5">
               <span className={cn("h-2.5 w-2.5 rounded-sm", cfg.dotColor)} />
               {cfg.label}
             </span>
-          ))}
+          )}
         </div>
 
         {/* ── Engineer Detail Panel ── */}
         <EngineerDetailPanel
           open={!!selectedEngineer}
           onOpenChange={(open) => !open && setSelectedEngineer(null)}
-          engineer={selectedEngineer}
-        />
+          engineer={selectedEngineer} />
+        
       </div>
-    </TooltipProvider>
-  );
+    </TooltipProvider>);
+
 }
 
 // ── KPI Card (clickable) ─────────────────────────────────
@@ -715,29 +715,29 @@ function KPICard({
   detail,
   accent,
   active,
-  onClick,
-}: {
-  icon: typeof Users;
-  label: string;
-  value: string | number;
-  detail: string;
-  accent: "emerald" | "amber" | "orange" | "red" | "neutral";
-  active?: boolean;
-  onClick?: () => void;
-}) {
+  onClick
+
+
+
+
+
+
+
+
+}: {icon: typeof Users;label: string;value: string | number;detail: string;accent: "emerald" | "amber" | "orange" | "red" | "neutral";active?: boolean;onClick?: () => void;}) {
   const accentColors: Record<string, string> = {
     emerald: "border-success/20 bg-success/5",
     amber: "border-warning/20 bg-warning/5",
     orange: "border-orange/20 bg-orange/5",
     red: "border-destructive/20 bg-destructive/5",
-    neutral: "border-border/50 bg-card",
+    neutral: "border-border/50 bg-card"
   };
   const iconColors: Record<string, string> = {
     emerald: "text-success",
     amber: "text-warning",
     orange: "text-orange",
     red: "text-destructive",
-    neutral: "text-muted-foreground",
+    neutral: "text-muted-foreground"
   };
 
   return (
@@ -748,16 +748,16 @@ function KPICard({
         onClick && "cursor-pointer hover:shadow-sm",
         active && "ring-2 ring-primary/40 shadow-sm"
       )}
-      onClick={onClick}
-    >
+      onClick={onClick}>
+      
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
         <Icon size={14} strokeWidth={1.8} className={iconColors[accent]} />
       </div>
       <div className="text-xl font-bold tabular-nums">{value}</div>
       <div className="text-[11px] text-muted-foreground">{detail}</div>
-    </div>
-  );
+    </div>);
+
 }
 
 // ── Capacity Row ─────────────────────────────────────────
@@ -768,24 +768,24 @@ function CapacityRow({
   gridWidth,
   rangeStart,
   initColorMap,
-  onClick,
-}: {
-  emp: {
-    id: string;
-    name: string;
-    teamName: string;
-    capacity: { availability: number; allocation: number; free: number };
-    currentWeek: { availability: number; allocation: number; free: number };
-    enrichment?: { role: string; skill: string; location: string };
-    allocations: typeof allocations;
-  };
-  dates: Date[];
-  todayISO: string;
-  gridWidth: number;
-  rangeStart: Date;
-  initColorMap: Map<string, string>;
-  onClick?: () => void;
-}) {
+  onClick
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}: {emp: {id: string;name: string;teamName: string;capacity: {availability: number;allocation: number;free: number;};currentWeek: {availability: number;allocation: number;free: number;};enrichment?: {role: string;skill: string;location: string;};allocations: typeof allocations;};dates: Date[];todayISO: string;gridWidth: number;rangeStart: Date;initColorMap: Map<string, string>;onClick?: () => void;}) {
   const cw = emp.currentWeek;
   const free = cw.free;
   const capacityColor = free >= 40 ? "text-success" : free >= 20 ? "text-warning" : free >= 10 ? "text-orange" : "text-destructive";
@@ -830,16 +830,16 @@ function CapacityRow({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className={cn("flex h-2 mt-1.5 rounded-full overflow-hidden bg-muted cursor-help", isUpcoming && "opacity-50")} onClick={(e) => e.stopPropagation()}>
-                    {showAllocs.map((a, i) => (
-                      <div
-                        key={a.id}
-                        className="h-full"
-                        style={{
-                          width: `${a.percentage}%`,
-                          backgroundColor: initColorMap.get(a.initiative) || `hsl(var(--primary) / ${0.4 + (i * 0.15)})`,
-                        }}
-                      />
-                    ))}
+                    {showAllocs.map((a, i) =>
+                    <div
+                      key={a.id}
+                      className="h-full"
+                      style={{
+                        width: `${a.percentage}%`,
+                        backgroundColor: initColorMap.get(a.initiative) || `hsl(var(--primary) / ${0.4 + i * 0.15})`
+                      }} />
+
+                    )}
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="text-xs space-y-1 z-[100]" sideOffset={6}>
@@ -853,19 +853,19 @@ function CapacityRow({
                         <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: initColorMap.get(a.initiative) || "hsl(var(--primary))" }} />
                         <span>{a.initiative}: <span className="font-medium">{a.percentage}%</span></span>
                         <span className="text-muted-foreground text-[10px]">{formatD(a.startDate)}–{formatD(a.endDate)}</span>
-                      </div>
-                    );
+                      </div>);
+
                   })}
                   <div className="border-t border-border/30 pt-1 mt-1 font-medium">
                     Total: {showAllocs.reduce((s, a) => s + a.percentage, 0)}%
                   </div>
-                  {futureAllocs.length > 0 && activeAllocs.length > 0 && (
-                    <p className="text-[10px] text-muted-foreground">+{futureAllocs.length} upcoming</p>
-                  )}
+                  {futureAllocs.length > 0 && activeAllocs.length > 0 &&
+                  <p className="text-[10px] text-muted-foreground">+{futureAllocs.length} upcoming</p>
+                  }
                 </TooltipContent>
               </Tooltip>
-            </TooltipProvider>
-          );
+            </TooltipProvider>);
+
         })()}
       </div>
 
@@ -883,9 +883,9 @@ function CapacityRow({
           let cellColor = cfg.color;
           if (!isWeekend && (avail === "available" || avail === "partial")) {
             const pct = dayStatus.allocationPct;
-            if (pct >= 80) cellColor = "bg-destructive/25";
-            else if (pct >= 50) cellColor = "bg-warning/25";
-            else if (pct > 0) cellColor = "bg-primary/15";
+            if (pct >= 80) cellColor = "bg-destructive/25";else
+            if (pct >= 50) cellColor = "bg-warning/25";else
+            if (pct > 0) cellColor = "bg-primary/15";
           }
 
           let statusLabel = cfg.label;
@@ -901,16 +901,16 @@ function CapacityRow({
                     width: DAY_WIDTH,
                     ...(isToday ? {
                       backgroundImage: "linear-gradient(hsl(var(--primary) / 0.14), hsl(var(--primary) / 0.14))",
-                      boxShadow: "inset 2px 0 0 hsl(var(--primary) / 0.35), inset -2px 0 0 hsl(var(--primary) / 0.35)",
-                    } : {}),
+                      boxShadow: "inset 2px 0 0 hsl(var(--primary) / 0.35), inset -2px 0 0 hsl(var(--primary) / 0.35)"
+                    } : {})
                   }}
                   className={cn(
                     "h-full min-h-[2rem]",
                     isMonday && !isToday && "border-l-2 border-border/40",
                     !isMonday && !isToday && "border-r border-border/10",
-                    isWeekend ? "bg-muted/15" : cellColor,
-                  )}
-                />
+                    isWeekend ? "bg-muted/15" : cellColor
+                  )} />
+                
               </TooltipTrigger>
               <TooltipContent side="top" className="text-xs">
                 <p className="font-medium">{emp.name}</p>
@@ -919,28 +919,28 @@ function CapacityRow({
                   <span className={cn("h-2 w-2 rounded-full", cfg.dotColor)} />
                   {cfg.label}
                 </p>
-                {dayStatus.allocDetails.length > 0 && (avail === "available" || avail === "partial") && (
-                  <div className="mt-1 pt-1 border-t border-border/30 space-y-0.5">
-                    {dayStatus.allocDetails.map((ad, j) => (
-                      <p key={j} className="flex items-center gap-1.5">
+                {dayStatus.allocDetails.length > 0 && (avail === "available" || avail === "partial") &&
+                <div className="mt-1 pt-1 border-t border-border/30 space-y-0.5">
+                    {dayStatus.allocDetails.map((ad, j) =>
+                  <p key={j} className="flex items-center gap-1.5">
                         <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: initColorMap.get(ad.initiative) || "hsl(var(--primary))" }} />
                         {ad.initiative}: {ad.percentage}%
                       </p>
-                    ))}
+                  )}
                     <p className="font-medium">Total: {statusLabel}</p>
                   </div>
-                )}
+                }
               </TooltipContent>
-            </Tooltip>
-          );
+            </Tooltip>);
+
         })}
 
         {(() => {
-          const leftPx = ((new Date(todayISO).getTime() - rangeStart.getTime()) / 86400000) * DAY_WIDTH;
+          const leftPx = (new Date(todayISO).getTime() - rangeStart.getTime()) / 86400000 * DAY_WIDTH;
           if (leftPx < 0 || leftPx > gridWidth) return null;
           return <div className="absolute top-0 bottom-0 w-px bg-primary/50 pointer-events-none" style={{ left: leftPx, zIndex: 1 }} />;
         })()}
       </div>
-    </div>
-  );
+    </div>);
+
 }
