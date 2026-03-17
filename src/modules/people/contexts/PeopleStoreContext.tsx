@@ -15,6 +15,7 @@ export interface EmployeeInput {
   timezone: string;
   startDate: string;
   managerId: string | null;
+  excludeFromCapacity?: boolean;
 }
 
 export interface TeamInput {
