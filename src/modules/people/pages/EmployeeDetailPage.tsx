@@ -16,6 +16,8 @@ import { toast } from "@/hooks/use-toast";
 export default function EmployeeDetailPage() {
   const { employeeId } = useParams<{ employeeId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const fromParam = searchParams.get("from");
   const { getEmployee, getEmployeeMemberships, deleteEmployee } = usePeopleStore();
   const employee = getEmployee(employeeId ?? "");
   const memberships = employeeId ? getEmployeeMemberships(employeeId) : [];
