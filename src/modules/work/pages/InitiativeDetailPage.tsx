@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/shared/lib/utils";
-import { getInitiative, getAllocationsForInitiative, getDomainsForInitiative, getValueStreamsForInitiative, getRequiredFTE, getAllocatedFTE, getStaffingStatus } from "../data";
+import { getInitiative, getAllocationsForInitiative, getDomainsForInitiative, getValueStreamsForInitiative, getRequiredFTE, getRequiredFTEByRole, getAllocatedFTE, getStaffingStatus } from "../data";
 import type { StaffingStatus, ConfidenceLevel } from "../types";
 
 const statusColors: Record<string, string> = {
