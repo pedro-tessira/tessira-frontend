@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/shared/lib/utils";
 import { usePeopleStore } from "../contexts/PeopleStoreContext";
-import { Users2, AlertTriangle, Star, TrendingUp, Settings2 } from "lucide-react";
+import { Users2, AlertTriangle, Star, TrendingUp, Settings2, GitCompareArrows } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 // ── 9-box domain types ──────────────────────────────────────
