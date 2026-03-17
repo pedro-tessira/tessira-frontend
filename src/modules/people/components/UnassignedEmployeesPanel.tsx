@@ -21,7 +21,7 @@ export function UnassignedEmployeesPanel({
 
   const unassigned = useMemo(() => {
     const list = employees.filter(
-      (e) => !placedIds.has(e.id) && e.status === "active"
+      (e) => !placedIds.has(e.id) && e.status !== "inactive"
     );
     if (!search.trim()) return list;
     const q = search.toLowerCase();
