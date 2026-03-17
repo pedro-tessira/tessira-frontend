@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Search, Filter, Download, Plus, Pencil, Trash2 } from "lucide-react";
+import { Search, Filter, Download, Plus, Pencil, Trash2, ShieldOff } from "lucide-react";
 import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { StatusBadge } from "../components/StatusBadge";
 import { AvatarInitials } from "../components/AvatarInitials";
@@ -124,8 +124,13 @@ export default function EmployeeListPage() {
                     <Link to={`/app/people/employees/${emp.id}`} className="flex items-center gap-3 group">
                       <AvatarInitials firstName={emp.firstName} lastName={emp.lastName} size="sm" />
                       <div className="min-w-0">
-                        <div className="font-medium text-foreground group-hover:text-primary tessira-transition truncate">
+                        <div className="font-medium text-foreground group-hover:text-primary tessira-transition truncate flex items-center gap-1.5">
                           {emp.firstName} {emp.lastName}
+                          {emp.excludeFromCapacity && (
+                            <span title="Excluded from capacity planning" className="inline-flex items-center gap-0.5 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                              <ShieldOff size={10} /> Non-capacity
+                            </span>
+                          )}
                         </div>
                         <div className="text-xs text-muted-foreground truncate">{emp.email}</div>
                       </div>
