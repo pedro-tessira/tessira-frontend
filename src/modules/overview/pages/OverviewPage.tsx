@@ -10,19 +10,30 @@ import {
   Clock,
   Eye,
   Layers,
-  Lightbulb,
   Play,
   Rocket,
   Shield,
   ShieldAlert,
-  Target,
   TrendingDown,
   UserCheck,
   UserMinus,
   Users,
   Zap,
-  Activity } from
-"lucide-react";
+  Activity,
+  PieChart,
+} from "lucide-react";
+import {
+  PieChart as RePieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as ReTooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { cn } from "@/shared/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,18 +41,18 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger } from
-"@/components/ui/tooltip";
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   computeDecisionSummary,
   type DeliveryRiskLevel,
   type InitiativeRisk,
-  type RecommendedAction } from
-"@/modules/horizon/lib/decision-engine";
+  type RecommendedAction,
+} from "@/modules/horizon/lib/decision-engine";
 import { MOCK_RESILIENCE } from "@/modules/signals/data";
 import CapacityForecast from "../components/CapacityForecast";
 import SkillCoverageHeatmap from "../components/SkillCoverageHeatmap";
-import RecentActivity from "../components/RecentActivity";
 
 /* ── Risk styling ─────────────────────────────────────── */
 const riskColor: Record<DeliveryRiskLevel, string> = {
