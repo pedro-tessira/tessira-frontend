@@ -33,6 +33,7 @@ import {
 } from "recharts";
 import { cn } from "@/shared/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
