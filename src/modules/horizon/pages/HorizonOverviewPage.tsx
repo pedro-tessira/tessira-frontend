@@ -6,23 +6,26 @@ import {
   ArrowUpRight,
   BarChart3,
   ChevronRight,
+  ChevronDown,
   Clock,
-  Filter,
   Layers,
   Lightbulb,
   Rocket,
   Shield,
+  ShieldAlert,
+  Target,
   TrendingDown,
-  TrendingUp,
   UserCheck,
   UserMinus,
   Users,
   Zap,
+  Activity,
+  Eye,
+  Play,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import {
   Tooltip,
   TooltipContent,
@@ -34,8 +37,8 @@ import {
   type DeliveryRiskLevel,
   type InitiativeRisk,
   type RecommendedAction,
-  type ValueStreamSummary,
 } from "../lib/decision-engine";
+import { MOCK_RESILIENCE } from "@/modules/signals/data";
 
 /* ── Risk color helpers ──────────────────────────────── */
 const riskColor: Record<DeliveryRiskLevel, string> = {
@@ -71,13 +74,120 @@ const actionIcon: Record<string, string> = {
   split_allocation: "📊",
 };
 
+/* ── Derived actionable signals ──────────────────────── */
+interface ActionableSignal {
+  id: string;
+  severity: "critical" | "high" | "medium";
+  problem: string;
+  impact: string;
+  action: string;
+  link: string;
+  linkLabel: string;
+  category: "capacity" | "skill" | "resilience" | "delivery";
+}
+
+function deriveSignals(data: ReturnType<typeof computeDecisionSummary>): ActionableSignal[] {
+  const signals: ActionableSignal[] = [];
+  let idx = 0;
+
+  // From critical initiatives — delivery risks
+  for (const risk of data.criticalRisks.slice(0, 3)) {
+    const rootCause = risk.roleGaps.length > 0
+      ? `Missing ${risk.roleGaps.map(g => `${g.gapFTE} ${g.role}`).join(", ")} capacity`
+      : risk.riskReasons[0] || "Multiple risk factors";
+    signals.push({
+      id: `sig-delivery-${idx++}`,
+      severity: risk.deliveryRisk === "critical" ? "critical" : "high",
+      problem: `${risk.name} at ${risk.deliveryRisk} risk (score ${risk.riskScore})`,
+      impact: risk.estimatedDelayDays > 0
+        ? `Estimated +${risk.estimatedDelayDays}d delay. ${rootCause}`
+        : rootCause,
+      action: risk.recommendations[0]?.label || "Review staffing plan",
+      link: `/app/work/initiatives/${risk.id}?from=${encodeURIComponent("/app/horizon")}`,
+      linkLabel: "View initiative",
+      category: "delivery",
+    });
+  }
+
+  // From constrained engineers — capacity
+  if (data.stats.constrainedEngineers > 0) {
+    const constrained = data.engineerCapacities.filter(e => e.freeCapacity < 20 && e.isAvailable);
+    signals.push({
+      id: `sig-capacity-${idx++}`,
+      severity: data.stats.constrainedEngineers > 3 ? "critical" : "high",
+      problem: `${data.stats.constrainedEngineers} engineer${data.stats.constrainedEngineers > 1 ? "s" : ""} at ≤20% free capacity`,
+      impact: `Risk of burnout and delivery delays. Teams: ${[...new Set(constrained.map(e => e.teamName))].join(", ")}`,
+      action: "Rebalance allocation or defer lower-priority work",
+      link: "/app/horizon/capacity",
+      linkLabel: "View capacity",
+      category: "capacity",
+    });
+  }
+
+  // From FTE gap — staffing
+  if (data.stats.totalFTEGap > 1) {
+    const worstGaps = data.allInitiativeRisks
+      .filter(r => r.roleGaps.length > 0)
+      .flatMap(r => r.roleGaps.map(g => g.role));
+    const topRoles = [...new Set(worstGaps)].slice(0, 3);
+    signals.push({
+      id: `sig-fte-${idx++}`,
+      severity: data.stats.totalFTEGap > 3 ? "critical" : "high",
+      problem: `${data.stats.totalFTEGap} FTE gap across ${data.stats.atRiskCount} initiative${data.stats.atRiskCount > 1 ? "s" : ""}`,
+      impact: `Understaffed roles: ${topRoles.join(", ")}. Delivery timelines at risk.`,
+      action: "Hire or reallocate to close critical gaps",
+      link: "/app/horizon/capacity",
+      linkLabel: "View staffing",
+      category: "capacity",
+    });
+  }
+
+  // From resilience data — SPOFs
+  const criticalSPOFs = MOCK_RESILIENCE.filter(r => r.status === "critical");
+  if (criticalSPOFs.length > 0) {
+    signals.push({
+      id: `sig-spof-${idx++}`,
+      severity: criticalSPOFs.length > 2 ? "critical" : "high",
+      problem: `${criticalSPOFs.length} critical SPOF${criticalSPOFs.length > 1 ? "s" : ""} detected`,
+      impact: `Areas at risk: ${criticalSPOFs.slice(0, 3).map(s => s.area).join(", ")}. Single owner with no backup.`,
+      action: "Start cross-training or assign backup owners",
+      link: "/app/signals/resilience",
+      linkLabel: "View resilience",
+      category: "resilience",
+    });
+  }
+
+  // Skill gaps from resilience entries
+  const warningSPOFs = MOCK_RESILIENCE.filter(r => r.status === "warning");
+  if (warningSPOFs.length > 0) {
+    signals.push({
+      id: `sig-skill-${idx++}`,
+      severity: "medium",
+      problem: `${warningSPOFs.length} skill areas with insufficient coverage`,
+      impact: `${warningSPOFs.slice(0, 3).map(s => s.area).join(", ")} have limited backup capacity.`,
+      action: "Prioritize knowledge transfer sessions",
+      link: "/app/skills/risk",
+      linkLabel: "View skill gaps",
+      category: "skill",
+    });
+  }
+
+  // Sort by severity
+  const severityOrder = { critical: 0, high: 1, medium: 2 };
+  signals.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
+
+  return signals;
+}
+
 /* ── Component ───────────────────────────────────────── */
 export default function HorizonOverviewPage() {
   const navigate = useNavigate();
   const [vsFilter, setVsFilter] = useState<string | null>(null);
   const [showAllRecs, setShowAllRecs] = useState(false);
+  const [expandedDecision, setExpandedDecision] = useState(true);
 
   const data = useMemo(() => computeDecisionSummary(), []);
+  const signals = useMemo(() => deriveSignals(data), [data]);
 
   const filteredInitiatives = vsFilter
     ? data.allInitiativeRisks.filter((r) => r.valueStreamIds.includes(vsFilter))
@@ -85,89 +195,157 @@ export default function HorizonOverviewPage() {
 
   const visibleRecs = showAllRecs ? data.recommendations : data.recommendations.slice(0, 5);
 
+  const criticalSignals = signals.filter(s => s.severity === "critical");
+  const highSignals = signals.filter(s => s.severity === "high");
+  const mediumSignals = signals.filter(s => s.severity === "medium");
+
   return (
     <TooltipProvider delayDuration={150}>
       <div className="space-y-6">
-        {/* ═══════════════════════════════════════════════
-            SECTION 1: DECISION LAYER — Critical alerts
-           ═══════════════════════════════════════════════ */}
-        {data.criticalRisks.length > 0 && (
-          <div className="rounded-xl border border-destructive/20 bg-gradient-to-br from-destructive/5 via-card to-card p-5 space-y-4">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
-                  <AlertTriangle size={18} className="text-destructive" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold">
-                    {data.criticalRisks.length} critical delivery risk{data.criticalRisks.length !== 1 ? "s" : ""} detected
-                  </h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Initiatives requiring immediate attention based on staffing, confidence, and availability analysis
-                  </p>
+
+        {/* ═══════════════════════════════════════════════════════
+            PRIORITY 1: DECISION SUMMARY — What is at risk? Why?
+           ═══════════════════════════════════════════════════════ */}
+        <div className={cn(
+          "rounded-xl border-2 overflow-hidden transition-all",
+          data.criticalRisks.length > 0
+            ? "border-destructive/30 bg-gradient-to-br from-destructive/5 via-card to-card"
+            : "border-warning/20 bg-gradient-to-br from-warning/5 via-card to-card"
+        )}>
+          {/* Summary header */}
+          <button
+            onClick={() => setExpandedDecision(!expandedDecision)}
+            className="w-full flex items-start justify-between gap-4 p-5 text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "h-10 w-10 rounded-lg flex items-center justify-center shrink-0",
+                data.criticalRisks.length > 0 ? "bg-destructive/10" : "bg-warning/10"
+              )}>
+                <ShieldAlert size={20} className={data.criticalRisks.length > 0 ? "text-destructive" : "text-warning"} />
+              </div>
+              <div>
+                <h2 className="text-base font-bold tracking-tight">
+                  {data.stats.criticalCount > 0
+                    ? `⚠️ ${data.stats.criticalCount + data.stats.atRiskCount - data.stats.criticalCount} delivery risk${data.stats.atRiskCount > 1 ? "s" : ""} detected`
+                    : "All initiatives on track"
+                  }
+                </h2>
+                <div className="flex items-center gap-3 mt-1 flex-wrap">
+                  {data.stats.criticalCount > 0 && (
+                    <span className="text-xs text-destructive font-semibold">{data.stats.criticalCount} critical</span>
+                  )}
+                  {data.stats.totalFTEGap > 0 && (
+                    <span className="text-xs text-muted-foreground">{data.stats.totalFTEGap} FTE gap</span>
+                  )}
+                  {data.stats.constrainedEngineers > 0 && (
+                    <span className="text-xs text-muted-foreground">{data.stats.constrainedEngineers} constrained engineers</span>
+                  )}
+                  {criticalSignals.length > 0 && (
+                    <span className="text-xs text-muted-foreground">{MOCK_RESILIENCE.filter(r => r.status === "critical").length} SPOFs</span>
+                  )}
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="shrink-0 text-xs gap-1.5 border-destructive/20 text-destructive hover:bg-destructive/5"
-                onClick={() => {
-                  const el = document.getElementById("recommendations-section");
-                  el?.scrollIntoView({ behavior: "smooth" });
-                }}
-              >
-                <Lightbulb size={12} /> View recommendations
-              </Button>
             </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Badge variant="outline" className="text-[10px] h-5 border-muted-foreground/20">
+                {data.stats.totalInitiatives} initiatives
+              </Badge>
+              <ChevronDown size={16} className={cn(
+                "text-muted-foreground transition-transform",
+                !expandedDecision && "-rotate-90"
+              )} />
+            </div>
+          </button>
 
-            <div className="space-y-2">
-              {data.criticalRisks.map((risk) => (
-                <Link
+          {/* Expanded: Risk details with root cause + actions */}
+          {expandedDecision && (
+            <div className="px-5 pb-5 space-y-3 border-t border-border/30 pt-4">
+              {data.criticalRisks.slice(0, 4).map((risk) => (
+                <div
                   key={risk.id}
-                  to={`/app/work/initiatives/${risk.id}?from=${encodeURIComponent("/app/horizon")}`}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg border px-4 py-3 transition-all hover:shadow-sm",
+                    "rounded-lg border px-4 py-3 transition-all",
                     riskBg[risk.deliveryRisk]
                   )}
                 >
-                  <div className={cn("shrink-0 font-bold text-sm tabular-nums", riskColor[risk.deliveryRisk])}>
-                    {risk.riskScore}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold truncate">{risk.name}</span>
-                      <Badge variant="outline" className={cn("text-[9px] h-4 border", riskBadge[risk.deliveryRisk])}>
-                        {riskLabel[risk.deliveryRisk]}
-                      </Badge>
+                  <div className="flex items-start gap-3">
+                    <div className={cn("shrink-0 font-bold text-sm tabular-nums mt-0.5", riskColor[risk.deliveryRisk])}>
+                      {risk.riskScore}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                      {risk.riskReasons.slice(0, 2).join(" · ")}
-                    </p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    {risk.estimatedDelayDays > 0 && (
-                      <p className="text-xs font-medium text-muted-foreground">
-                        <Clock size={10} className="inline mr-1" />+{risk.estimatedDelayDays}d delay
-                      </p>
-                    )}
-                    <div className="flex gap-1 mt-1">
-                      {risk.roleGaps.slice(0, 2).map((g) => (
-                        <Badge key={g.role} variant="secondary" className="text-[9px] h-4 bg-destructive/10 text-destructive">
-                          -{g.gapFTE} {g.role}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Link
+                          to={`/app/work/initiatives/${risk.id}?from=${encodeURIComponent("/app/horizon")}`}
+                          className="text-sm font-semibold hover:underline"
+                        >
+                          {risk.name}
+                        </Link>
+                        <Badge variant="outline" className={cn("text-[9px] h-4 border", riskBadge[risk.deliveryRisk])}>
+                          {riskLabel[risk.deliveryRisk]}
                         </Badge>
-                      ))}
+                        {risk.estimatedDelayDays > 0 && (
+                          <span className="text-[10px] text-warning font-medium">
+                            <Clock size={9} className="inline mr-0.5" />+{risk.estimatedDelayDays}d delay
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Root cause */}
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {risk.riskReasons.slice(0, 3).map((reason, i) => (
+                          <Badge key={i} variant="secondary" className="text-[9px] h-4 bg-muted/80 text-muted-foreground font-normal">
+                            {reason}
+                          </Badge>
+                        ))}
+                        {risk.roleGaps.slice(0, 2).map((g) => (
+                          <Badge key={g.role} variant="secondary" className="text-[9px] h-4 bg-destructive/10 text-destructive">
+                            -{g.gapFTE} {g.role}
+                          </Badge>
+                        ))}
+                      </div>
+
+                      {/* Inline actions */}
+                      <div className="flex items-center gap-2 mt-2">
+                        {risk.recommendations.slice(0, 2).map((rec) => (
+                          <Button
+                            key={rec.id}
+                            variant="outline"
+                            size="sm"
+                            className="h-6 text-[10px] px-2 gap-1 border-primary/20 text-primary hover:bg-primary/5"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (rec.engineerId) navigate("/app/horizon/capacity");
+                              else if (rec.initiativeId) navigate(`/app/work/initiatives/${rec.initiativeId}?from=${encodeURIComponent("/app/horizon")}`);
+                            }}
+                          >
+                            <Play size={8} /> {rec.label.length > 30 ? rec.label.slice(0, 30) + "…" : rec.label}
+                          </Button>
+                        ))}
+                        <Link
+                          to={`/app/work/initiatives/${risk.id}?from=${encodeURIComponent("/app/horizon")}`}
+                          className="text-[10px] text-primary hover:underline flex items-center gap-0.5 ml-auto"
+                        >
+                          <Eye size={9} /> View details
+                        </Link>
+                      </div>
                     </div>
                   </div>
-                  <ChevronRight size={14} className="text-muted-foreground/40 shrink-0" />
-                </Link>
+                </div>
               ))}
-            </div>
-          </div>
-        )}
 
-        {/* ═══════════════════════════════════════════════
-            SECTION 2: ACTIONABLE KPI CARDS
-           ═══════════════════════════════════════════════ */}
+              {data.criticalRisks.length === 0 && data.allInitiativeRisks.filter(r => r.deliveryRisk === "medium").length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  No critical risks, but {data.allInitiativeRisks.filter(r => r.deliveryRisk === "medium").length} initiative(s) at medium risk.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════
+            PRIORITY 1b: ACTIONABLE KPI STRIP
+           ═══════════════════════════════════════════════════════ */}
         <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
           <KPICard
             icon={AlertTriangle}
@@ -182,7 +360,7 @@ export default function HorizonOverviewPage() {
             icon={TrendingDown}
             label="FTE Gap"
             value={data.stats.totalFTEGap}
-            detail="Total missing capacity"
+            detail="Missing capacity"
             accent={data.stats.totalFTEGap > 2 ? "red" : data.stats.totalFTEGap > 0 ? "amber" : "green"}
             onClick={() => navigate("/app/horizon/capacity")}
             tooltip="Sum of understaffed FTE across all initiatives"
@@ -197,22 +375,77 @@ export default function HorizonOverviewPage() {
             tooltip="Engineers with less than 20% free capacity"
           />
           <KPICard
-            icon={Lightbulb}
-            label="Actions"
-            value={data.stats.totalRecommendations}
-            detail="Recommended actions"
-            accent="blue"
-            onClick={() => {
-              const el = document.getElementById("recommendations-section");
-              el?.scrollIntoView({ behavior: "smooth" });
-            }}
-            tooltip="AI-generated recommendations to resolve delivery risks"
+            icon={ShieldAlert}
+            label="SPOFs"
+            value={MOCK_RESILIENCE.filter(r => r.status === "critical").length}
+            detail="Critical single-owner areas"
+            accent={MOCK_RESILIENCE.filter(r => r.status === "critical").length > 2 ? "red" : "amber"}
+            onClick={() => navigate("/app/signals/resilience")}
+            tooltip="Areas with a single owner and no backup"
           />
         </div>
 
-        {/* ═══════════════════════════════════════════════
-            SECTION 3: VALUE STREAM IMPACT
-           ═══════════════════════════════════════════════ */}
+        {/* ═══════════════════════════════════════════════════════
+            PRIORITY 2: ACTIONABLE SIGNALS — Problem / Impact / Action
+           ═══════════════════════════════════════════════════════ */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Zap size={14} className="text-warning" />
+            <h3 className="text-sm font-semibold">Actionable Signals</h3>
+            <div className="flex gap-1.5 ml-2">
+              {criticalSignals.length > 0 && (
+                <Badge variant="secondary" className="text-[9px] h-4 bg-destructive/10 text-destructive">{criticalSignals.length} critical</Badge>
+              )}
+              {highSignals.length > 0 && (
+                <Badge variant="secondary" className="text-[9px] h-4 bg-orange/10 text-orange">{highSignals.length} high</Badge>
+              )}
+              {mediumSignals.length > 0 && (
+                <Badge variant="secondary" className="text-[9px] h-4 bg-warning/10 text-warning">{mediumSignals.length} medium</Badge>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            {signals.map((signal) => (
+              <SignalCard key={signal.id} signal={signal} />
+            ))}
+          </div>
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════
+            PRIORITY 2b: RECOMMENDED ACTIONS
+           ═══════════════════════════════════════════════════════ */}
+        <div id="recommendations-section" className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Lightbulb size={14} className="text-primary" />
+            <h3 className="text-sm font-semibold">What to Do Next</h3>
+            <span className="text-[11px] text-muted-foreground">
+              — {data.recommendations.length} action{data.recommendations.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+
+          <div className="grid gap-2 md:grid-cols-2">
+            {visibleRecs.map((rec) => (
+              <RecommendationCard key={rec.id} rec={rec} />
+            ))}
+          </div>
+
+          {data.recommendations.length > 5 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-primary"
+              onClick={() => setShowAllRecs(!showAllRecs)}
+            >
+              {showAllRecs ? "Show less" : `Show all ${data.recommendations.length} recommendations`}
+              <ArrowRight size={12} className="ml-1" />
+            </Button>
+          )}
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════
+            PRIORITY 3: VALUE STREAM IMPACT
+           ═══════════════════════════════════════════════════════ */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -288,9 +521,9 @@ export default function HorizonOverviewPage() {
           </div>
         </div>
 
-        {/* ═══════════════════════════════════════════════
-            SECTION 4: INITIATIVE RISK TABLE
-           ═══════════════════════════════════════════════ */}
+        {/* ═══════════════════════════════════════════════════════
+            PRIORITY 3b: INITIATIVE RISK TABLE
+           ═══════════════════════════════════════════════════════ */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Rocket size={14} className="text-primary" />
@@ -308,7 +541,6 @@ export default function HorizonOverviewPage() {
           </div>
 
           <div className="rounded-lg border border-border/50 bg-card overflow-hidden">
-            {/* Table header */}
             <div className="grid grid-cols-[1fr_80px_100px_80px_80px_80px_32px] gap-2 px-4 py-2.5 border-b border-border/50 bg-muted/30 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
               <span>Initiative</span>
               <span className="text-center">Risk</span>
@@ -319,7 +551,6 @@ export default function HorizonOverviewPage() {
               <span />
             </div>
 
-            {/* Rows */}
             {filteredInitiatives.map((init) => {
               const fteGap = init.roleGaps.reduce((s, g) => s + Math.max(0, g.gapFTE), 0);
               return (
@@ -328,22 +559,17 @@ export default function HorizonOverviewPage() {
                   to={`/app/work/initiatives/${init.id}?from=${encodeURIComponent("/app/horizon")}`}
                   className="grid grid-cols-[1fr_80px_100px_80px_80px_80px_32px] gap-2 px-4 py-3 border-b border-border/20 last:border-0 hover:bg-accent/30 transition-colors items-center"
                 >
-                  {/* Name + status */}
                   <div className="min-w-0">
                     <p className="text-xs font-medium truncate">{init.name}</p>
                     <p className="text-[10px] text-muted-foreground truncate mt-0.5">
                       {init.riskReasons[0] || "On track"}
                     </p>
                   </div>
-
-                  {/* Risk */}
                   <div className="text-center">
                     <Badge variant="outline" className={cn("text-[10px] h-5 border", riskBadge[init.deliveryRisk])}>
                       {riskLabel[init.deliveryRisk]}
                     </Badge>
                   </div>
-
-                  {/* Staffing bar */}
                   <div className="flex items-center gap-1.5 justify-center">
                     <div className="w-14 h-1.5 rounded-full bg-muted overflow-hidden">
                       <div
@@ -362,8 +588,6 @@ export default function HorizonOverviewPage() {
                       {init.allocatedFTE}/{init.requiredFTE}
                     </span>
                   </div>
-
-                  {/* FTE Gap */}
                   <div className="text-center">
                     {fteGap > 0 ? (
                       <span className="text-xs font-semibold tabular-nums text-destructive">-{Math.round(fteGap * 10) / 10}</span>
@@ -371,8 +595,6 @@ export default function HorizonOverviewPage() {
                       <span className="text-xs text-success">—</span>
                     )}
                   </div>
-
-                  {/* Delay */}
                   <div className="text-center">
                     {init.estimatedDelayDays > 0 ? (
                       <span className="text-xs font-medium tabular-nums text-warning">+{init.estimatedDelayDays}d</span>
@@ -380,8 +602,6 @@ export default function HorizonOverviewPage() {
                       <span className="text-xs text-muted-foreground">—</span>
                     )}
                   </div>
-
-                  {/* Confidence */}
                   <div className="text-center">
                     <Badge
                       variant="secondary"
@@ -397,7 +617,6 @@ export default function HorizonOverviewPage() {
                       {init.confidence}
                     </Badge>
                   </div>
-
                   <ChevronRight size={12} className="text-muted-foreground/30" />
                 </Link>
               );
@@ -405,40 +624,9 @@ export default function HorizonOverviewPage() {
           </div>
         </div>
 
-        {/* ═══════════════════════════════════════════════
-            SECTION 5: RECOMMENDED ACTIONS
-           ═══════════════════════════════════════════════ */}
-        <div id="recommendations-section" className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Lightbulb size={14} className="text-warning" />
-            <h3 className="text-sm font-semibold">Recommended Actions</h3>
-            <span className="text-[11px] text-muted-foreground">
-              — {data.recommendations.length} suggestion{data.recommendations.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-
-          <div className="space-y-2">
-            {visibleRecs.map((rec) => (
-              <RecommendationCard key={rec.id} rec={rec} />
-            ))}
-          </div>
-
-          {data.recommendations.length > 5 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs text-primary"
-              onClick={() => setShowAllRecs(!showAllRecs)}
-            >
-              {showAllRecs ? "Show less" : `Show all ${data.recommendations.length} recommendations`}
-              <ArrowRight size={12} className="ml-1" />
-            </Button>
-          )}
-        </div>
-
-        {/* ═══════════════════════════════════════════════
-            SECTION 6: TEAM CAPACITY + ENGINEERS
-           ═══════════════════════════════════════════════ */}
+        {/* ═══════════════════════════════════════════════════════
+            PRIORITY 4: TEAM CAPACITY + AVAILABLE ENGINEERS
+           ═══════════════════════════════════════════════════════ */}
         <div className="grid gap-4 lg:grid-cols-2">
           {/* Team load */}
           <div className="rounded-lg border border-border/50 bg-card p-5 space-y-4">
@@ -447,7 +635,6 @@ export default function HorizonOverviewPage() {
               <h3 className="text-sm font-semibold">Team Capacity</h3>
             </div>
             {(() => {
-              // Group by team
               const teams = new Map<string, { name: string; engineers: typeof data.engineerCapacities }>();
               for (const eng of data.engineerCapacities) {
                 if (!teams.has(eng.teamId)) teams.set(eng.teamId, { name: eng.teamName, engineers: [] });
@@ -555,9 +742,9 @@ export default function HorizonOverviewPage() {
           </div>
         </div>
 
-        {/* ═══════════════════════════════════════════════
-            SECTION 7: QUICK LINKS
-           ═══════════════════════════════════════════════ */}
+        {/* ═══════════════════════════════════════════════════════
+            PRIORITY 5: QUICK NAVIGATION
+           ═══════════════════════════════════════════════════════ */}
         <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
           <Link
             to="/app/horizon/timeline"
@@ -566,7 +753,7 @@ export default function HorizonOverviewPage() {
             <BarChart3 size={18} className="text-primary shrink-0" />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium group-hover:text-primary transition-colors">Full Timeline</p>
-              <p className="text-[10px] text-muted-foreground">View all allocations, events & availability</p>
+              <p className="text-[10px] text-muted-foreground">Allocations, events & availability</p>
             </div>
             <ArrowUpRight size={14} className="text-muted-foreground/40 shrink-0" />
           </Link>
@@ -574,10 +761,10 @@ export default function HorizonOverviewPage() {
             to="/app/horizon/capacity"
             className="rounded-lg border border-border/50 bg-card p-4 flex items-center gap-3 hover:border-primary/30 transition-colors group"
           >
-            <Zap size={18} className="text-primary shrink-0" />
+            <Activity size={18} className="text-primary shrink-0" />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium group-hover:text-primary transition-colors">Capacity Intelligence</p>
-              <p className="text-[10px] text-muted-foreground">Detailed staffing & engineer timeline</p>
+              <p className="text-[10px] text-muted-foreground">Staffing & engineer timeline</p>
             </div>
             <ArrowUpRight size={14} className="text-muted-foreground/40 shrink-0" />
           </Link>
@@ -649,6 +836,56 @@ function KPICard({
       <TooltipTrigger asChild>{card}</TooltipTrigger>
       <TooltipContent className="text-xs">{tooltip}</TooltipContent>
     </Tooltip>
+  );
+}
+
+/* ── Signal Card ─────────────────────────────────────── */
+const severityConfig = {
+  critical: { bg: "border-destructive/20 bg-destructive/5", badge: "bg-destructive/15 text-destructive", icon: "text-destructive" },
+  high: { bg: "border-orange/20 bg-orange/5", badge: "bg-orange/15 text-orange", icon: "text-orange" },
+  medium: { bg: "border-warning/20 bg-warning/5", badge: "bg-warning/15 text-warning", icon: "text-warning" },
+};
+
+const categoryIcons: Record<string, typeof AlertTriangle> = {
+  capacity: Users,
+  skill: Target,
+  resilience: Shield,
+  delivery: Rocket,
+};
+
+function SignalCard({ signal }: { signal: ActionableSignal }) {
+  const config = severityConfig[signal.severity];
+  const CatIcon = categoryIcons[signal.category] || Zap;
+
+  return (
+    <div className={cn("rounded-lg border p-4 transition-all hover:shadow-sm", config.bg)}>
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 shrink-0">
+          <CatIcon size={14} className={config.icon} />
+        </div>
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-medium">{signal.problem}</span>
+            <Badge variant="secondary" className={cn("text-[9px] h-4", config.badge)}>
+              {signal.severity}
+            </Badge>
+          </div>
+          <p className="text-xs text-muted-foreground">{signal.impact}</p>
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-primary">
+              <Lightbulb size={10} />
+              <span>{signal.action}</span>
+            </div>
+            <Link
+              to={signal.link}
+              className="text-[10px] text-primary hover:underline flex items-center gap-0.5 shrink-0"
+            >
+              {signal.linkLabel} <ArrowUpRight size={9} />
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
