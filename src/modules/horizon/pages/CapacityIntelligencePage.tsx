@@ -305,27 +305,47 @@ export default function CapacityIntelligencePage() {
           <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {initiativeStaffing.map((init) => {
               const fillPct = init.required > 0 ? Math.min(100, Math.round((init.allocated / init.required) * 100)) : 0;
-              const barColor = init.status === "understaffed" ? "bg-destructive" : init.status === "balanced" ? "bg-success" : "bg-warning";
-              const textColor = init.status === "understaffed" ? "text-destructive" : init.status === "balanced" ? "text-success" : "text-warning";
+              const barColor = init.staffing === "understaffed" ? "bg-destructive" : init.staffing === "balanced" ? "bg-success" : "bg-warning";
+              const textColor = init.staffing === "understaffed" ? "text-destructive" : init.staffing === "balanced" ? "text-success" : "text-warning";
+              const statusColors: Record<string, string> = {
+                planned: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
+                active: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+              };
+              const formatDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
               return (
                 <Link
                   key={init.id}
                   to={`/app/work/initiatives/${init.id}?from=${encodeURIComponent("/app/horizon/capacity")}`}
-                  className="rounded-lg border border-border/50 bg-card p-4 space-y-2.5 hover:border-primary/30 transition-colors"
+                  className="rounded-lg border border-border/50 bg-card p-4 space-y-3 hover:border-primary/30 transition-colors"
                 >
+                  {/* Header */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="text-sm font-semibold truncate">{init.name}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        <Badge variant="secondary" className={cn("text-[9px] h-4", statusColors[init.status] || "bg-muted text-muted-foreground")}>
+                          {init.status}
+                        </Badge>
                         <Badge variant="secondary" className={cn("text-[9px] h-4", init.confidence === "high" ? "bg-success/10 text-success" : init.confidence === "medium" ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive")}>
-                          {init.confidence}
+                          {init.confidence} conf.
                         </Badge>
                       </div>
                     </div>
-                    <Badge variant="secondary" className={cn("text-[10px] shrink-0", init.status === "understaffed" ? "bg-destructive/10 text-destructive" : init.status === "balanced" ? "bg-success/10 text-success" : "bg-warning/10 text-warning")}>
-                      {init.status === "understaffed" ? "Understaffed" : init.status === "balanced" ? "Balanced" : "Overstaffed"}
+                    <Badge variant="secondary" className={cn("text-[10px] shrink-0", init.staffing === "understaffed" ? "bg-destructive/10 text-destructive" : init.staffing === "balanced" ? "bg-success/10 text-success" : "bg-warning/10 text-warning")}>
+                      {init.staffing === "understaffed" ? "Understaffed" : init.staffing === "balanced" ? "Balanced" : "Overstaffed"}
                     </Badge>
                   </div>
+
+                  {/* Dates & Effort */}
+                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                    <span className="flex items-center gap-1 tabular-nums">
+                      <Calendar size={10} />
+                      {formatDate(init.startDate)} → {formatDate(init.endDate)}
+                    </span>
+                    <span className="tabular-nums">{init.totalEffortDays}d effort</span>
+                  </div>
+
+                  {/* FTE bar */}
                   <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
                     <span className={cn("font-bold tabular-nums", textColor)}>{init.allocated}</span>
                     <span>/</span>
@@ -335,6 +355,42 @@ export default function CapacityIntelligencePage() {
                     </div>
                     <span className="tabular-nums">{fillPct}%</span>
                   </div>
+
+                  {/* Role breakdown */}
+                  <div className="space-y-1">
+                    {init.roleBreakdown.map((rb) => {
+                      const gap = Math.round((rb.allocated - rb.fte) * 10) / 10;
+                      return (
+                        <div key={rb.role} className="flex items-center justify-between text-[10px]">
+                          <span className="text-muted-foreground">{rb.role}</span>
+                          <div className="flex items-center gap-2">
+                            <span className={cn("tabular-nums font-medium", rb.allocated < rb.fte * 0.85 ? "text-destructive" : "text-foreground")}>
+                              {rb.allocated}/{rb.fte}
+                            </span>
+                            {gap !== 0 && (
+                              <span className={cn("tabular-nums", gap < 0 ? "text-destructive" : "text-warning")}>
+                                ({gap > 0 ? `+${gap}` : gap})
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Allocations */}
+                  {init.allocations.length > 0 && (
+                    <div className="border-t border-border/30 pt-2 space-y-1">
+                      <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">Assigned</p>
+                      <div className="flex flex-wrap gap-1">
+                        {init.allocations.map((a, i) => (
+                          <span key={i} className="inline-flex items-center gap-1 text-[10px] bg-muted/50 rounded px-1.5 py-0.5">
+                            {a.name} <span className="text-muted-foreground">{a.role} {a.percentage}%</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </Link>
               );
             })}
