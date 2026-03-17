@@ -141,6 +141,7 @@ function App() {
                 <Route path="governance" element={<GovernancePage />} />
                 <Route path="audit" element={<AuditPage />} />
               </Route>
+              <Route path="admin/users/:userId" element={<AdminUserDetailPage />} />
 
               {/* Personal Account */}
               <Route path="account" element={<AccountPage />}>
