@@ -154,6 +154,13 @@ export default function NineBoxPage() {
     }
   }, [selectedRound]);
 
+  const handleCloneRound = useCallback((sourceId: string, newId: string, newLabel: string) => {
+    const sourcePlacements = placementsMap[sourceId] ?? [];
+    setRounds((prev) => [{ id: newId, label: newLabel, placements: [...sourcePlacements] }, ...prev]);
+    setPlacementsMap((prev) => ({ ...prev, [newId]: sourcePlacements.map((p) => ({ ...p })) }));
+    setSelectedRound(newId);
+  }, [placementsMap]);
+
   const filteredPlacements = useMemo(() => {
     if (teamFilter === "all") return currentPlacements;
     const memberIds = memberships
@@ -402,6 +409,7 @@ export default function NineBoxPage() {
         onAdd={handleAddRound}
         onRename={handleRenameRound}
         onDelete={handleDeleteRound}
+        onClone={handleCloneRound}
       />
     </div>
   );
