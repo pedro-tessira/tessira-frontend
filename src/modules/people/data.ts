@@ -62,7 +62,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     title: "Director of Engineering", department: "Engineering", status: "active",
     country: "Singapore", countryCode: "SG", timezone: "Asia/Singapore",
     startDate: "2020-04-12", managerId: "emp-008", managerName: "David Okafor",
-    avatarUrl: null, teamIds: ["team-005"],
+    avatarUrl: null, teamIds: ["team-005"], excludeFromCapacity: true,
   },
   {
     id: "emp-010", firstName: "Carlos", lastName: "Mendez", email: "carlos.mendez@tessira.dev",
