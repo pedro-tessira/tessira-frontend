@@ -233,7 +233,8 @@ export default function CapacityIntelligencePage() {
   }, []);
 
   const filteredEmployees = useMemo(() => {
-    let emps = horizonEmployees;
+    // Exclude non-capacity employees (management) from capacity view
+    let emps = horizonEmployees.filter((e) => !e.excludeFromCapacity);
     if (teamFilter !== "all") emps = emps.filter((e) => e.teamId === teamFilter);
     if (roleFilter !== "All Roles") emps = emps.filter((e) => employeeEnrichment[e.id]?.role === roleFilter);
     if (skillFilter !== "All Skills") emps = emps.filter((e) => employeeEnrichment[e.id]?.skill === skillFilter);
