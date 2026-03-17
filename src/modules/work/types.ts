@@ -46,6 +46,7 @@ export interface WorkAllocation {
   employeeName: string;
   initiativeId: string;
   initiativeName: string;
+  role: string;
   percentage: number;
   startDate: string;
   endDate: string;
