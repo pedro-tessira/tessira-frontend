@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import {
   ArrowLeft, Mail, KeyRound, Ban, Trash2, ArrowRightLeft, Shield, Link2,
-  Clock, Monitor, Plus, X, Pencil, Check, CircleAlert, CheckCircle2,
+  Clock, Monitor, Plus, X, Pencil, Check, CircleAlert, CheckCircle2, Search, ChevronDown,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { formatDistanceToNow } from "date-fns";
