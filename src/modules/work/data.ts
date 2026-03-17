@@ -227,6 +227,16 @@ export function getRequiredFTE(init: Initiative): number {
   return Math.round((init.estimate.totalEffortDays / workdays) * 10) / 10;
 }
 
+/** Required FTE broken down by role */
+export function getRequiredFTEByRole(init: Initiative): { role: string; days: number; fte: number }[] {
+  const workdays = getInitiativeDurationWeekdays(init);
+  return init.estimate.roleBreakdown.map((rb) => ({
+    role: rb.role,
+    days: rb.days,
+    fte: Math.round((rb.days / workdays) * 10) / 10,
+  }));
+}
+
 /** Allocated FTE = sum of allocation percentages / 100 */
 export function getAllocatedFTE(initiativeId: string): number {
   const allocs = getAllocationsForInitiative(initiativeId);
