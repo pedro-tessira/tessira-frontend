@@ -160,7 +160,7 @@ export default function AllocationDetailPanel({
                     {matchedDomains.map((d) => (
                       <Link
                         key={d.id}
-                        to={`/app/work/domains/${d.id}`}
+                        to={`/app/work/domains/${d.id}?from=${encodeURIComponent("/app/horizon/timeline")}`}
                         className="block rounded-md border border-border/30 bg-muted/30 px-3 py-2 text-xs font-medium hover:border-primary/30 transition-colors"
                       >
                         {d.name}
