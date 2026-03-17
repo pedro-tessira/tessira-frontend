@@ -1,15 +1,28 @@
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Rocket, Users, Calendar, Boxes, BarChart3, Globe } from "lucide-react";
+import { ArrowLeft, Rocket, Users, Calendar, Boxes, Globe, AlertTriangle, CheckCircle, Scale, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/shared/lib/utils";
-import { getInitiative, getAllocationsForInitiative, getDomainsForInitiative, getValueStreamsForInitiative, getAllocationLoad } from "../data";
+import { getInitiative, getAllocationsForInitiative, getDomainsForInitiative, getValueStreamsForInitiative, getRequiredFTE, getAllocatedFTE, getStaffingStatus } from "../data";
+import type { StaffingStatus, ConfidenceLevel } from "../types";
 
 const statusColors: Record<string, string> = {
   planned: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
   active: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
   completed: "bg-muted text-muted-foreground",
+};
+
+const staffingConfig: Record<StaffingStatus, { label: string; color: string; icon: typeof AlertTriangle }> = {
+  understaffed: { label: "Understaffed", color: "text-destructive", icon: AlertTriangle },
+  balanced: { label: "Balanced", color: "text-success", icon: CheckCircle },
+  overstaffed: { label: "Overstaffed", color: "text-warning", icon: Scale },
+};
+
+const confidenceColors: Record<ConfidenceLevel, string> = {
+  low: "bg-destructive/10 text-destructive",
+  medium: "bg-warning/10 text-warning",
+  high: "bg-success/10 text-success",
 };
 
 function formatDate(iso: string) {
@@ -38,8 +51,13 @@ export default function InitiativeDetailPage() {
   const allocs = getAllocationsForInitiative(init.id);
   const initDomains = getDomainsForInitiative(init.id);
   const initVS = getValueStreamsForInitiative(init.id);
-  const totalLoad = getAllocationLoad(init.id);
+  const required = getRequiredFTE(init);
+  const allocated = getAllocatedFTE(init.id);
+  const staffing = getStaffingStatus(init);
+  const sc = staffingConfig[staffing];
+  const StaffIcon = sc.icon;
   const duration = getDurationDays(init.startDate, init.endDate);
+  const fillPct = required > 0 ? Math.min(100, Math.round((allocated / required) * 100)) : 0;
 
   // Timeline progress
   const today = new Date();
@@ -65,6 +83,10 @@ export default function InitiativeDetailPage() {
             <Badge variant="secondary" className={cn("text-[11px]", statusColors[init.status])}>
               {init.status}
             </Badge>
+            <Badge variant="secondary" className={cn("text-[11px] gap-1", staffing === "understaffed" ? "bg-destructive/10 text-destructive" : staffing === "balanced" ? "bg-success/10 text-success" : "bg-warning/10 text-warning")}>
+              <StaffIcon size={10} />
+              {sc.label}
+            </Badge>
           </div>
           <p className="text-sm text-muted-foreground mt-1">{init.description}</p>
           <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
@@ -89,11 +111,62 @@ export default function InitiativeDetailPage() {
                 <span>{formatDate(init.endDate)}</span>
               </div>
               <div className="h-3 rounded-full bg-secondary overflow-hidden">
+                <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progressPct}%` }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Effort Estimate (HLE) */}
+          <div className="rounded-lg border border-border/50 bg-card p-5 space-y-4">
+            <div className="flex items-center gap-2">
+              <BarChart3 size={14} className="text-primary" />
+              <h2 className="text-sm font-semibold">Effort Estimate</h2>
+              <Badge variant="secondary" className={cn("text-[10px] ml-auto", confidenceColors[init.estimate.confidence])}>
+                {init.estimate.confidence} confidence
+              </Badge>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-1">
+                <p className="text-[11px] text-muted-foreground">Total Effort</p>
+                <p className="text-lg font-bold tabular-nums">{init.estimate.totalEffortDays}d</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[11px] text-muted-foreground">Required FTE</p>
+                <p className="text-lg font-bold tabular-nums">{required}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[11px] text-muted-foreground">Allocated FTE</p>
+                <p className={cn("text-lg font-bold tabular-nums", sc.color)}>{allocated}</p>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-[11px] text-muted-foreground">
+                <span>Capacity fill</span>
+                <span>{fillPct}%</span>
+              </div>
+              <div className="h-2 rounded-full bg-muted overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-primary transition-all"
-                  style={{ width: `${progressPct}%` }}
+                  className={cn("h-full rounded-full transition-all", staffing === "understaffed" ? "bg-destructive" : staffing === "balanced" ? "bg-success" : "bg-warning")}
+                  style={{ width: `${fillPct}%` }}
                 />
               </div>
+            </div>
+            {/* Role breakdown */}
+            <div className="space-y-2">
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Effort by Role</p>
+              <div className="grid grid-cols-2 gap-2">
+                {init.estimate.roleBreakdown.map((rb) => (
+                  <div key={rb.role} className="flex items-center justify-between rounded-md border border-border/30 bg-muted/20 px-3 py-2">
+                    <span className="text-xs font-medium">{rb.role}</span>
+                    <span className="text-xs font-bold tabular-nums">{rb.days}d</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Drivers */}
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Key Drivers</p>
+              <p className="text-xs text-muted-foreground">{init.estimate.drivers}</p>
             </div>
           </div>
 
@@ -133,18 +206,6 @@ export default function InitiativeDetailPage() {
 
         {/* Sidebar */}
         <div className="space-y-4">
-          {/* Total load */}
-          <div className="rounded-lg border border-border/50 bg-card p-5 space-y-3">
-            <div className="flex items-center gap-2">
-              <BarChart3 size={14} className="text-primary" />
-              <h2 className="text-sm font-semibold">Allocation Load</h2>
-            </div>
-            <div className="text-3xl font-bold tabular-nums">{totalLoad}%</div>
-            <p className="text-xs text-muted-foreground">
-              Across {allocs.length} engineer{allocs.length !== 1 ? "s" : ""}
-            </p>
-          </div>
-
           {/* Domains */}
           <div className="rounded-lg border border-border/50 bg-card p-5 space-y-3">
             <div className="flex items-center gap-2">
@@ -153,11 +214,7 @@ export default function InitiativeDetailPage() {
             </div>
             <div className="space-y-2">
               {initDomains.map((d) => (
-                <Link
-                  key={d.id}
-                  to={`/app/work/domains/${d.id}`}
-                  className="block rounded-md border border-border/30 bg-muted/30 p-3 hover:border-primary/30 transition-colors"
-                >
+                <Link key={d.id} to={`/app/work/domains/${d.id}`} className="block rounded-md border border-border/30 bg-muted/30 p-3 hover:border-primary/30 transition-colors">
                   <p className="text-sm font-medium">{d.name}</p>
                   <p className="text-[11px] text-muted-foreground">{d.owningTeamName}</p>
                 </Link>
@@ -173,11 +230,7 @@ export default function InitiativeDetailPage() {
             </div>
             <div className="space-y-2">
               {initVS.map((vs) => (
-                <Link
-                  key={vs.id}
-                  to={`/app/work/value-streams/${vs.id}`}
-                  className="block rounded-md border border-border/30 bg-muted/30 p-3 hover:border-primary/30 transition-colors"
-                >
+                <Link key={vs.id} to={`/app/work/value-streams/${vs.id}`} className="block rounded-md border border-border/30 bg-muted/30 p-3 hover:border-primary/30 transition-colors">
                   <p className="text-sm font-medium">{vs.name}</p>
                 </Link>
               ))}
