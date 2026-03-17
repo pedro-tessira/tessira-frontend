@@ -109,7 +109,7 @@ function getBoxLabel(perf: PerformanceLevel, pot: PotentialLevel) {
 }
 
 export default function NineBoxPage() {
-  const { teams, memberships } = usePeopleStore();
+  const { employees, teams, memberships } = usePeopleStore();
   const [teamFilter, setTeamFilter] = useState<string>("all");
   const [rounds, setRounds] = useState<ReviewRound[]>([...REVIEW_ROUNDS]);
   const [selectedRound, setSelectedRound] = useState<string>("q1-2026");
