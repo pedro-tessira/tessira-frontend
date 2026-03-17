@@ -70,93 +70,92 @@ export function NineBoxCard({ employeeId, note, movement, onDragStart, onSelect,
   const evidence = getEvidenceSummary(employeeId);
 
   return (
-    <ContextMenu>
-      <ContextMenuTrigger asChild>
-        <TooltipProvider delayDuration={300}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div
-                draggable
-                onDragStart={(e) => {
-                  e.dataTransfer.setData("text/plain", employeeId);
-                  e.dataTransfer.effectAllowed = "move";
-                  onDragStart(employeeId);
+    <TooltipProvider delayDuration={300}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div
+            draggable
+            onDragStart={(e) => {
+              e.dataTransfer.setData("text/plain", employeeId);
+              e.dataTransfer.effectAllowed = "move";
+              onDragStart(employeeId);
+            }}
+            className="cursor-grab active:cursor-grabbing"
+          >
+            <div className="flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-background/60 tessira-transition group w-full text-left relative">
+              <button
+                type="button"
+                className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-muted hover:bg-destructive hover:text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove(employeeId);
                 }}
-                className="cursor-grab active:cursor-grabbing"
               >
-                <button
-                  type="button"
-                  className="flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-background/60 tessira-transition group w-full text-left"
-                  onClick={(e) => {
-                    if (e.defaultPrevented) return;
-                    onSelect(employeeId);
-                  }}
-                >
-                  <AvatarInitials firstName={emp.firstName} lastName={emp.lastName} size="sm" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium truncate group-hover:text-primary tessira-transition">
-                      {emp.firstName} {emp.lastName}
+                <X className="h-2.5 w-2.5" />
+              </button>
+              <button
+                type="button"
+                className="flex items-center gap-2 w-full text-left"
+                onClick={(e) => {
+                  if (e.defaultPrevented) return;
+                  onSelect(employeeId);
+                }}
+              >
+                <AvatarInitials firstName={emp.firstName} lastName={emp.lastName} size="sm" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium truncate group-hover:text-primary tessira-transition">
+                    {emp.firstName} {emp.lastName}
+                  </p>
+                  {isNewHire ? (
+                    <p className="text-[10px] text-chart-5 truncate">New hire · ramping</p>
+                  ) : note ? (
+                    <p className="text-[10px] text-muted-foreground truncate">{note}</p>
+                  ) : null}
+                  {movement && (
+                    <p className="text-[10px] text-chart-2 flex items-center gap-0.5 truncate">
+                      <ArrowUp size={8} /> moved from {movement.previousLabel}
                     </p>
-                    {isNewHire ? (
-                      <p className="text-[10px] text-chart-5 truncate">New hire · ramping</p>
-                    ) : note ? (
-                      <p className="text-[10px] text-muted-foreground truncate">{note}</p>
-                    ) : null}
-                    {movement && (
-                      <p className="text-[10px] text-chart-2 flex items-center gap-0.5 truncate">
-                        <ArrowUp size={8} /> moved from {movement.previousLabel}
-                      </p>
-                    )}
-                    {signals.length > 0 && (
-                      <div className="flex flex-wrap gap-0.5 mt-0.5">
-                        {signals.map((s) => (
-                          <span key={s} className="text-[9px] bg-primary/10 text-primary rounded px-1 py-0 leading-tight">
-                            {s}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </button>
-              </div>
-            </TooltipTrigger>
-            {evidence.total > 0 && (
-              <TooltipContent side="right" className="max-w-[220px] p-3 space-y-2">
-                <p className="text-xs font-semibold">Evidence Summary</p>
-                <div className="space-y-1 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Positive observations</span>
-                    <span className="font-medium">{evidence.positive}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Concerns</span>
-                    <span className="font-medium">{evidence.concerns}</span>
-                  </div>
-                </div>
-                {evidence.topDims.length > 0 && (
-                  <div>
-                    <p className="text-[10px] text-muted-foreground mb-1">Top dimensions</p>
-                    <div className="flex flex-wrap gap-1">
-                      {evidence.topDims.map((d) => (
-                        <Badge key={d} variant="secondary" className="text-[9px] px-1 py-0">{d}</Badge>
+                  )}
+                  {signals.length > 0 && (
+                    <div className="flex flex-wrap gap-0.5 mt-0.5">
+                      {signals.map((s) => (
+                        <span key={s} className="text-[9px] bg-primary/10 text-primary rounded px-1 py-0 leading-tight">
+                          {s}
+                        </span>
                       ))}
                     </div>
-                  </div>
-                )}
-              </TooltipContent>
+                  )}
+                </div>
+              </button>
+            </div>
+          </div>
+        </TooltipTrigger>
+        {evidence.total > 0 && (
+          <TooltipContent side="right" className="max-w-[220px] p-3 space-y-2">
+            <p className="text-xs font-semibold">Evidence Summary</p>
+            <div className="space-y-1 text-xs">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Positive observations</span>
+                <span className="font-medium">{evidence.positive}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Concerns</span>
+                <span className="font-medium">{evidence.concerns}</span>
+              </div>
+            </div>
+            {evidence.topDims.length > 0 && (
+              <div>
+                <p className="text-[10px] text-muted-foreground mb-1">Top dimensions</p>
+                <div className="flex flex-wrap gap-1">
+                  {evidence.topDims.map((d) => (
+                    <Badge key={d} variant="secondary" className="text-[9px] px-1 py-0">{d}</Badge>
+                  ))}
+                </div>
+              </div>
             )}
-          </Tooltip>
-        </TooltipProvider>
-      </ContextMenuTrigger>
-      <ContextMenuContent>
-        <ContextMenuItem
-          className="text-destructive focus:text-destructive text-xs gap-2"
-          onClick={() => onRemove(employeeId)}
-        >
-          <UserMinus className="h-3.5 w-3.5" />
-          Remove from round
-        </ContextMenuItem>
-      </ContextMenuContent>
-    </ContextMenu>
+          </TooltipContent>
+        )}
+      </Tooltip>
+    </TooltipProvider>
   );
 }
