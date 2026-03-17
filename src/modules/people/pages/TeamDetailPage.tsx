@@ -230,9 +230,10 @@ export default function TeamDetailPage() {
         title="Delete Team"
         description={`Are you sure you want to delete ${team.name}? All memberships will be removed.`}
         onConfirm={() => {
+          const name = team.name;
           deleteTeam(team.id);
-          toast({ title: "Team deleted", description: `${team.name} has been removed.` });
           navigate("/app/people/teams");
+          setTimeout(() => toast({ title: "Team deleted", description: `${name} has been removed.` }), 150);
         }}
       />
       <DeleteConfirmDialog
