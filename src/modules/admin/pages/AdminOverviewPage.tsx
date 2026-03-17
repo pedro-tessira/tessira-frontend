@@ -76,12 +76,12 @@ export default function AdminOverviewPage() {
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats - now clickable */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total Users" value={stats.totalUsers} icon={Users} detail={`${stats.activeUsers} active`} />
-        <StatCard label="Linked Users" value={stats.linkedUsers} icon={Link2} detail={`${stats.totalUsers - stats.linkedUsers} unlinked`} />
-        <StatCard label="Auth Providers" value={stats.authProviders} icon={ShieldCheck} detail="Active providers" />
-        <StatCard label="Audit Events Today" value={stats.auditEventsToday} icon={ScrollText} detail="Logged today" />
+        <StatCard label="Total Users" value={stats.totalUsers} icon={Users} detail={`${stats.activeUsers} active`} href="/app/admin/users" />
+        <StatCard label="Linked Users" value={stats.linkedUsers} icon={Link2} detail={`${stats.totalUsers - stats.linkedUsers} unlinked`} href="/app/admin/linking" />
+        <StatCard label="Auth Providers" value={stats.authProviders} icon={ShieldCheck} detail="Active providers" href="/app/admin/access" />
+        <StatCard label="Audit Events Today" value={stats.auditEventsToday} icon={ScrollText} detail="Logged today" href="/app/admin/audit" />
       </div>
 
       {/* Insights / Signals */}

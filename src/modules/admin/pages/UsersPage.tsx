@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { adminUsers } from "../data";
+import { useNavigate } from "react-router-dom";
+import { adminUsers as initialUsers } from "../data";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Search, UserPlus, MoreHorizontal, Ban, KeyRound, Mail, ArrowRightLeft, Trash2,
+  Search, UserPlus, MoreHorizontal, Ban, KeyRound, Mail, ArrowRightLeft, Trash2, Plus,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import {
@@ -14,7 +15,9 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { AdminUserStatus, AdminUserRole } from "../types";
+import { toast } from "sonner";
+import { CreateUserDialog } from "../components/CreateUserDialog";
+import type { AdminUser, AdminUserStatus, AdminUserRole } from "../types";
 
 const statusStyle: Record<AdminUserStatus, string> = {
   active: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
@@ -31,11 +34,14 @@ const roleStyle: Record<AdminUserRole, string> = {
 };
 
 export default function UsersPage() {
+  const navigate = useNavigate();
+  const [users, setUsers] = useState<AdminUser[]>(initialUsers);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<AdminUserStatus | "all">("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [showCreateUser, setShowCreateUser] = useState(false);
 
-  const filtered = adminUsers.filter((u) => {
+  const filtered = users.filter((u) => {
     const matchSearch =
       u.displayName.toLowerCase().includes(search.toLowerCase()) ||
       u.email.toLowerCase().includes(search.toLowerCase());
@@ -54,6 +60,17 @@ export default function UsersPage() {
   const toggleAll = () => {
     if (selected.size === filtered.length) setSelected(new Set());
     else setSelected(new Set(filtered.map((u) => u.id)));
+  };
+
+  const handleCreateUser = (user: AdminUser) => {
+    setUsers((prev) => [...prev, user]);
+    toast.success(`User "${user.displayName}" created`);
+  };
+
+  const handleBulkAction = (action: string) => {
+    const count = selected.size;
+    setSelected(new Set());
+    toast.success(`${action} applied to ${count} user(s)`);
   };
 
   return (
@@ -82,10 +99,15 @@ export default function UsersPage() {
             </Button>
           ))}
         </div>
-        <Button size="sm" className="h-8 text-xs ml-auto gap-1.5">
-          <UserPlus size={13} />
-          Invite User
-        </Button>
+        <div className="flex gap-2 ml-auto">
+          <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => setShowCreateUser(true)}>
+            <Plus size={13} /> Create User
+          </Button>
+          <Button size="sm" className="h-8 text-xs gap-1.5" onClick={() => setShowCreateUser(true)}>
+            <UserPlus size={13} />
+            Invite User
+          </Button>
+        </div>
       </div>
 
       {/* Bulk action bar */}
@@ -93,16 +115,16 @@ export default function UsersPage() {
         <div className="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-2.5">
           <span className="text-sm font-medium">{selected.size} selected</span>
           <div className="flex gap-1.5 ml-auto">
-            <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5">
+            <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={() => handleBulkAction("Resend invite")}>
               <Mail size={12} /> Resend Invite
             </Button>
-            <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5">
+            <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={() => handleBulkAction("Suspend")}>
               <Ban size={12} /> Suspend
             </Button>
-            <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5">
+            <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={() => handleBulkAction("Password reset")}>
               <KeyRound size={12} /> Force Password Reset
             </Button>
-            <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5 text-destructive hover:text-destructive">
+            <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5 text-destructive hover:text-destructive" onClick={() => handleBulkAction("Deactivate")}>
               <Trash2 size={12} /> Deactivate
             </Button>
           </div>
@@ -131,7 +153,15 @@ export default function UsersPage() {
           </TableHeader>
           <TableBody>
             {filtered.map((user) => (
-              <TableRow key={user.id} className="cursor-pointer">
+              <TableRow
+                key={user.id}
+                className="cursor-pointer"
+                onClick={(e) => {
+                  // Don't navigate if clicking checkbox or dropdown
+                  if ((e.target as HTMLElement).closest('[role="checkbox"], [role="menuitem"], button')) return;
+                  navigate(`/app/admin/users/${user.id}`);
+                }}
+              >
                 <TableCell>
                   <Checkbox
                     checked={selected.has(user.id)}
@@ -173,13 +203,15 @@ export default function UsersPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem className="text-xs gap-2"><Mail size={12} /> Resend Invite</DropdownMenuItem>
-                      <DropdownMenuItem className="text-xs gap-2"><KeyRound size={12} /> Force Password Reset</DropdownMenuItem>
+                      <DropdownMenuItem className="text-xs gap-2" onClick={() => navigate(`/app/admin/users/${user.id}`)}>View Details</DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-xs gap-2"><Ban size={12} /> Suspend</DropdownMenuItem>
-                      <DropdownMenuItem className="text-xs gap-2"><ArrowRightLeft size={12} /> Transfer Ownership</DropdownMenuItem>
+                      <DropdownMenuItem className="text-xs gap-2" onClick={() => toast.success("Invite resent")}><Mail size={12} /> Resend Invite</DropdownMenuItem>
+                      <DropdownMenuItem className="text-xs gap-2" onClick={() => toast.success("Password reset sent")}><KeyRound size={12} /> Force Password Reset</DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-xs gap-2 text-destructive"><Trash2 size={12} /> Deactivate</DropdownMenuItem>
+                      <DropdownMenuItem className="text-xs gap-2" onClick={() => toast.success("User suspended")}><Ban size={12} /> Suspend</DropdownMenuItem>
+                      <DropdownMenuItem className="text-xs gap-2" onClick={() => toast.info("Ownership transfer initiated")}><ArrowRightLeft size={12} /> Transfer Ownership</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-xs gap-2 text-destructive" onClick={() => toast.success("User deactivated")}><Trash2 size={12} /> Deactivate</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -195,6 +227,8 @@ export default function UsersPage() {
           </TableBody>
         </Table>
       </div>
+
+      <CreateUserDialog open={showCreateUser} onOpenChange={setShowCreateUser} onCreate={handleCreateUser} />
     </div>
   );
 }
