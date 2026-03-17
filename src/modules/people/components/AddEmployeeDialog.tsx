@@ -49,6 +49,7 @@ export default function AddEmployeeDialog({ open, onOpenChange }: Props) {
       country: "", countryCode: "", timezone: "",
       startDate: new Date().toISOString().slice(0, 10),
       managerId: "",
+      excludeFromCapacity: false,
     });
     onOpenChange(false);
     setTimeout(() => toast({ title: "Employee added", description: `${name} has been added.` }), 150);
