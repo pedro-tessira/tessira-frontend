@@ -31,6 +31,7 @@ export default function AddEmployeeDialog({ open, onOpenChange }: Props) {
     country: "", countryCode: "", timezone: "",
     startDate: new Date().toISOString().slice(0, 10),
     managerId: "" as string,
+    excludeFromCapacity: false,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
