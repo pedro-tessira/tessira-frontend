@@ -39,7 +39,7 @@ export default function AddEmployeeDialog({ open, onOpenChange }: Props) {
       ...form,
       managerId: form.managerId || null,
     });
-    toast({ title: "Employee added", description: `${form.firstName} ${form.lastName} has been added.` });
+    const name = `${form.firstName} ${form.lastName}`;
     setForm({
       firstName: "", lastName: "", email: "", title: "",
       department: "Engineering", status: "active",
@@ -48,6 +48,7 @@ export default function AddEmployeeDialog({ open, onOpenChange }: Props) {
       managerId: "",
     });
     onOpenChange(false);
+    setTimeout(() => toast({ title: "Employee added", description: `${name} has been added.` }), 150);
   };
 
   return (
