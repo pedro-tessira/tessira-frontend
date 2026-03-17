@@ -40,7 +40,7 @@ import {
   allocations,
 } from "../data";
 import type { AvailabilityWindow } from "../types";
-import { initiatives, workAllocations, getRequiredFTE, getAllocatedFTE, getStaffingStatus } from "@/modules/work/data";
+import { initiatives, workAllocations, getRequiredFTE, getRequiredFTEByRole, getAllocatedFTE, getAllocatedFTEByRole, getStaffingStatus, getAllocationsForInitiative } from "@/modules/work/data";
 import { Link } from "react-router-dom";
 import type { StaffingStatus } from "@/modules/work/types";
 
