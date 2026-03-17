@@ -381,15 +381,15 @@ export default function AdminUserDetailPage() {
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-sm flex items-center gap-2">
-              {confirmAction === "deactivate" ? (
+              {confirmAction === "deactivated" ? (
                 <CircleAlert size={16} className="text-destructive" />
               ) : (
                 <Ban size={16} className="text-primary" />
               )}
-              {confirmAction === "deactivate" ? "Deactivate User" : "Suspend User"}
+              {confirmAction === "deactivated" ? "Deactivate User" : "Suspend User"}
             </DialogTitle>
             <DialogDescription className="text-xs">
-              {confirmAction === "deactivate"
+              {confirmAction === "deactivated"
                 ? `This will permanently deactivate ${userData.displayName}'s account. They will lose all access.`
                 : `This will suspend ${userData.displayName}'s account. They will be unable to log in until reactivated.`}
             </DialogDescription>
@@ -397,13 +397,13 @@ export default function AdminUserDetailPage() {
           <DialogFooter>
             <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setConfirmAction(null)}>Cancel</Button>
             <Button
-              variant={confirmAction === "deactivate" ? "destructive" : "default"}
+              variant={confirmAction === "deactivated" ? "destructive" : "default"}
               size="sm"
               className="h-8 text-xs gap-1.5"
               onClick={() => applyStatusChange(confirmAction!)}
             >
               <CheckCircle2 size={12} />
-              {confirmAction === "deactivate" ? "Deactivate" : "Suspend"}
+              {confirmAction === "deactivated" ? "Deactivate" : "Suspend"}
             </Button>
           </DialogFooter>
         </DialogContent>
