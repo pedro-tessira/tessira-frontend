@@ -76,8 +76,8 @@ export default function InitiativeDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Link to="/app/work/initiatives" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-        <ArrowLeft size={13} /> Back to Initiatives
+      <Link to={backTo} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft size={13} /> Back
       </Link>
 
       {/* Header */}
