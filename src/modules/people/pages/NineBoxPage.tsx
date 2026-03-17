@@ -369,6 +369,16 @@ export default function NineBoxPage() {
             : undefined
         }
       />
+
+      <ManageReviewRoundsDialog
+        open={roundsDialogOpen}
+        onOpenChange={setRoundsDialogOpen}
+        rounds={rounds.map((r) => ({ id: r.id, label: r.label }))}
+        activeRoundId={selectedRound}
+        onAdd={handleAddRound}
+        onRename={handleRenameRound}
+        onDelete={handleDeleteRound}
+      />
     </div>
   );
 }
