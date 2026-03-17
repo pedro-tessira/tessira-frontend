@@ -1,11 +1,13 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Rocket, Users, Calendar, Boxes, Globe, AlertTriangle, CheckCircle, Scale, BarChart3 } from "lucide-react";
+import { ArrowLeft, Rocket, Users, Calendar, Boxes, Globe, AlertTriangle, CheckCircle, Scale, BarChart3, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/shared/lib/utils";
-import { getInitiative, getAllocationsForInitiative, getDomainsForInitiative, getValueStreamsForInitiative, getRequiredFTE, getRequiredFTEByRole, getAllocatedFTE, getStaffingStatus } from "../data";
-import type { StaffingStatus, ConfidenceLevel } from "../types";
+import { getInitiative, getAllocationsForInitiative, getDomainsForInitiative, getValueStreamsForInitiative, getRequiredFTE, getRequiredFTEByRole, getAllocatedFTE, getStaffingStatus, domains, valueStreams } from "../data";
+import type { Initiative, StaffingStatus, ConfidenceLevel } from "../types";
+import EditInitiativeDialog from "../components/EditInitiativeDialog";
 
 const statusColors: Record<string, string> = {
   planned: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
