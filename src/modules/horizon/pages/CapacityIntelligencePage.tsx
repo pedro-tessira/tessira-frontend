@@ -639,6 +639,7 @@ function CapacityRow({
     name: string;
     teamName: string;
     capacity: { availability: number; allocation: number; free: number };
+    currentWeek: { availability: number; allocation: number; free: number };
     enrichment?: { role: string; skill: string; location: string };
     allocations: typeof allocations;
   };
@@ -649,7 +650,8 @@ function CapacityRow({
   initColorMap: Map<string, string>;
   onClick?: () => void;
 }) {
-  const free = emp.capacity.free;
+  const cw = emp.currentWeek;
+  const free = cw.free;
   const capacityColor = free >= 40 ? "text-success" : free >= 20 ? "text-warning" : free >= 10 ? "text-orange" : "text-destructive";
 
   return (
@@ -668,58 +670,95 @@ function CapacityRow({
             <TooltipTrigger asChild>
               <span className={cn("text-[11px] font-bold tabular-nums cursor-help shrink-0", capacityColor)}>{free}%</span>
             </TooltipTrigger>
-            <TooltipContent side="left" className="text-xs space-y-0.5 z-[100]">
-              <p>Availability: {emp.capacity.availability}%</p>
-              <p className="text-muted-foreground">Allocation: {emp.capacity.allocation}%</p>
-              <p className="font-semibold">Free capacity: {free}%</p>
+            <TooltipContent side="left" className="text-xs space-y-1 z-[100]">
+              <p className="font-semibold text-foreground mb-0.5">This Week</p>
+              <p>Availability: {cw.availability}%</p>
+              <p className="text-muted-foreground">Allocation: {cw.allocation}%</p>
+              <p className="font-semibold">Free capacity: {cw.free}%</p>
+              <div className="border-t border-border/30 pt-1 mt-1 text-muted-foreground">
+                <p className="text-[10px]">Range avg: {emp.capacity.free}% free ({emp.capacity.allocation}% alloc)</p>
+              </div>
             </TooltipContent>
           </Tooltip>
         </div>
-        {/* Initiative allocation split bar */}
-        {emp.allocations.length > 0 && (
-          <TooltipProvider delayDuration={100}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex h-2 mt-1.5 rounded-full overflow-hidden bg-muted cursor-help" onClick={(e) => e.stopPropagation()}>
-                  {emp.allocations.map((a, i) => (
-                    <div
-                      key={a.id}
-                      className="h-full"
-                      style={{
-                        width: `${a.percentage}%`,
-                        backgroundColor: initColorMap.get(a.initiative) || `hsl(var(--primary) / ${0.4 + (i * 0.15)})`,
-                      }}
-                    />
-                  ))}
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs space-y-1 z-[100]" sideOffset={6}>
-                <p className="font-semibold text-foreground mb-0.5">Allocations</p>
-                {emp.allocations.map((a) => (
-                  <div key={a.id} className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: initColorMap.get(a.initiative) || "hsl(var(--primary))" }} />
-                    <span>{a.initiative}: <span className="font-medium">{a.percentage}%</span></span>
+        {/* Initiative allocation split bar — only show currently active allocations */}
+        {emp.allocations.length > 0 && (() => {
+          const todayStr = todayISO;
+          const activeAllocs = emp.allocations.filter((a) => a.startDate <= todayStr && a.endDate >= todayStr);
+          const futureAllocs = emp.allocations.filter((a) => a.startDate > todayStr);
+          const showAllocs = activeAllocs.length > 0 ? activeAllocs : futureAllocs.slice(0, 3);
+          if (showAllocs.length === 0) return null;
+          const isUpcoming = activeAllocs.length === 0;
+          return (
+            <TooltipProvider delayDuration={100}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className={cn("flex h-2 mt-1.5 rounded-full overflow-hidden bg-muted cursor-help", isUpcoming && "opacity-50")} onClick={(e) => e.stopPropagation()}>
+                    {showAllocs.map((a, i) => (
+                      <div
+                        key={a.id}
+                        className="h-full"
+                        style={{
+                          width: `${a.percentage}%`,
+                          backgroundColor: initColorMap.get(a.initiative) || `hsl(var(--primary) / ${0.4 + (i * 0.15)})`,
+                        }}
+                      />
+                    ))}
                   </div>
-                ))}
-                <div className="border-t border-border/30 pt-1 mt-1 font-medium">
-                  Total: {emp.allocations.reduce((s, a) => s + a.percentage, 0)}%
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs space-y-1 z-[100]" sideOffset={6}>
+                  <p className="font-semibold text-foreground mb-0.5">
+                    {isUpcoming ? "Upcoming Allocations" : "Current Allocations"}
+                  </p>
+                  {showAllocs.map((a) => {
+                    const formatD = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+                    return (
+                      <div key={a.id} className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: initColorMap.get(a.initiative) || "hsl(var(--primary))" }} />
+                        <span>{a.initiative}: <span className="font-medium">{a.percentage}%</span></span>
+                        <span className="text-muted-foreground text-[10px]">{formatD(a.startDate)}–{formatD(a.endDate)}</span>
+                      </div>
+                    );
+                  })}
+                  <div className="border-t border-border/30 pt-1 mt-1 font-medium">
+                    Total: {showAllocs.reduce((s, a) => s + a.percentage, 0)}%
+                  </div>
+                  {futureAllocs.length > 0 && activeAllocs.length > 0 && (
+                    <p className="text-[10px] text-muted-foreground">+{futureAllocs.length} upcoming</p>
+                  )}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          );
+        })()}
       </div>
 
-      {/* Timeline cells */}
+      {/* Timeline cells — show allocation intensity */}
       <div className="flex relative" style={{ width: gridWidth }}>
         {dates.map((d, i) => {
           const iso = toISO(d);
           const isToday = iso === todayISO;
           const isWeekend = d.getDay() === 0 || d.getDay() === 6;
           const isMonday = d.getDay() === 1;
-          const companyEvent = hasCompanyEvent(iso);
-          const source = companyEvent ? "company_event" : resolveAvailSource(emp.id, iso);
-          const cfg = sourceConfig[source];
+          const dayStatus = getDayStatus(emp.id, iso, emp.allocations);
+          const avail = dayStatus.availability;
+          const cfg = sourceConfig[avail];
+
+          // Determine cell color based on availability + allocation
+          let cellColor = cfg.color;
+          if (!isWeekend && (avail === "available" || avail === "partial")) {
+            const pct = dayStatus.allocationPct;
+            if (pct >= 80) cellColor = "bg-destructive/25";
+            else if (pct >= 50) cellColor = "bg-warning/25";
+            else if (pct > 0) cellColor = "bg-primary/15";
+            // else stays green (available)
+          }
+
+          // Build tooltip label
+          let statusLabel = cfg.label;
+          if ((avail === "available" || avail === "partial") && dayStatus.allocationPct > 0) {
+            statusLabel = `${dayStatus.allocationPct}% allocated`;
+          }
 
           return (
             <Tooltip key={i}>
@@ -736,7 +775,7 @@ function CapacityRow({
                     "h-8",
                     isMonday && !isToday && "border-l-2 border-border/40",
                     !isMonday && !isToday && "border-r border-border/10",
-                    isWeekend ? "bg-muted/15" : cfg.color,
+                    isWeekend ? "bg-muted/15" : cellColor,
                   )}
                 />
               </TooltipTrigger>
@@ -747,6 +786,17 @@ function CapacityRow({
                   <span className={cn("h-2 w-2 rounded-full", cfg.dotColor)} />
                   {cfg.label}
                 </p>
+                {dayStatus.allocDetails.length > 0 && (avail === "available" || avail === "partial") && (
+                  <div className="mt-1 pt-1 border-t border-border/30 space-y-0.5">
+                    {dayStatus.allocDetails.map((ad, j) => (
+                      <p key={j} className="flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: initColorMap.get(ad.initiative) || "hsl(var(--primary))" }} />
+                        {ad.initiative}: {ad.percentage}%
+                      </p>
+                    ))}
+                    <p className="font-medium">Total: {statusLabel}</p>
+                  </div>
+                )}
               </TooltipContent>
             </Tooltip>
           );
