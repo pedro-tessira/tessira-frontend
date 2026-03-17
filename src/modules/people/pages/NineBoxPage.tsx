@@ -110,6 +110,7 @@ function getBoxLabel(perf: PerformanceLevel, pot: PotentialLevel) {
 export default function NineBoxPage() {
   const { teams, memberships } = usePeopleStore();
   const [teamFilter, setTeamFilter] = useState<string>("all");
+  const [rounds, setRounds] = useState<ReviewRound[]>([...REVIEW_ROUNDS]);
   const [selectedRound, setSelectedRound] = useState<string>("q1-2026");
   const [placementsMap, setPlacementsMap] = useState<Record<string, NineBoxPlacement[]>>(() => {
     const map: Record<string, NineBoxPlacement[]> = {};
@@ -120,9 +121,36 @@ export default function NineBoxPage() {
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const [roundsDialogOpen, setRoundsDialogOpen] = useState(false);
 
   const currentPlacements = placementsMap[selectedRound] ?? [];
-  const currentRound = REVIEW_ROUNDS.find((r) => r.id === selectedRound);
+  const currentRound = rounds.find((r) => r.id === selectedRound);
+
+  // Round management handlers
+  const handleAddRound = useCallback((id: string, label: string) => {
+    setRounds((prev) => [{ id, label, placements: [] }, ...prev]);
+    setPlacementsMap((prev) => ({ ...prev, [id]: [] }));
+    setSelectedRound(id);
+  }, []);
+
+  const handleRenameRound = useCallback((id: string, label: string) => {
+    setRounds((prev) => prev.map((r) => (r.id === id ? { ...r, label } : r)));
+  }, []);
+
+  const handleDeleteRound = useCallback((id: string) => {
+    setRounds((prev) => prev.filter((r) => r.id !== id));
+    setPlacementsMap((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    if (selectedRound === id) {
+      setRounds((prev) => {
+        if (prev.length > 0) setSelectedRound(prev[0].id);
+        return prev;
+      });
+    }
+  }, [selectedRound]);
 
   const filteredPlacements = useMemo(() => {
     if (teamFilter === "all") return currentPlacements;
