@@ -65,6 +65,10 @@ export default function AdminUserDetailPage() {
   // Confirm dialogs
   const [confirmAction, setConfirmAction] = useState<AdminUserStatus | null>(null);
 
+  // Activity log
+  const [activitySearch, setActivitySearch] = useState("");
+  const [activityLimit, setActivityLimit] = useState(5);
+
   const availableRoles = initialRoles;
   const unassignedRoles = availableRoles.filter((r) => !assignedRoles.includes(r.name));
 
