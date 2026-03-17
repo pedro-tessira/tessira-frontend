@@ -120,11 +120,14 @@ export default function TimelineInitiativeLanes({ initiatives, rangeStart, range
               </div>
             </div>
 
-            {/* Bar area */}
             <div className="relative" style={{ width: gridWidth, height: 32 }}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div
+              {/* Today column overlay */}
+              {todayInRange && (
+                <div
+                  className="absolute top-0 bottom-0 bg-primary/10 border-x border-primary/20 pointer-events-none"
+                  style={{ left: todayPx, width: dayWidth, zIndex: 1 }}
+                />
+              )}
                     className={cn(
                       "absolute top-1 h-6 rounded-md flex items-center px-2 text-[10px] font-semibold truncate border transition-all",
                       riskBg[init.deliveryRisk],
