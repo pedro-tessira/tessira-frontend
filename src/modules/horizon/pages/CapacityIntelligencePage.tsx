@@ -628,7 +628,7 @@ function CapacityRow({
             <TooltipTrigger asChild>
               <span className={cn("text-[11px] font-bold tabular-nums cursor-help shrink-0", capacityColor)}>{free}%</span>
             </TooltipTrigger>
-            <TooltipContent side="left" className="text-xs space-y-0.5">
+            <TooltipContent side="left" className="text-xs space-y-0.5 z-[100]">
               <p>Availability: {emp.capacity.availability}%</p>
               <p className="text-muted-foreground">Allocation: {emp.capacity.allocation}%</p>
               <p className="font-semibold">Free capacity: {free}%</p>
