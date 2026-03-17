@@ -4,25 +4,33 @@ import {
   AlertTriangle,
   ArrowRight,
   ArrowUpRight,
-  BarChart3,
   ChevronDown,
   ChevronRight,
   Clock,
   Eye,
   Layers,
-  Lightbulb,
   Play,
   Rocket,
-  Shield,
   ShieldAlert,
-  Target,
   TrendingDown,
   UserCheck,
   UserMinus,
   Users,
-  Zap,
-  Activity } from
-"lucide-react";
+  Activity,
+  PieChart,
+} from "lucide-react";
+import {
+  PieChart as RePieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as ReTooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { cn } from "@/shared/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,18 +38,16 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger } from
-"@/components/ui/tooltip";
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   computeDecisionSummary,
   type DeliveryRiskLevel,
-  type InitiativeRisk,
-  type RecommendedAction } from
-"@/modules/horizon/lib/decision-engine";
+} from "@/modules/horizon/lib/decision-engine";
 import { MOCK_RESILIENCE } from "@/modules/signals/data";
 import CapacityForecast from "../components/CapacityForecast";
 import SkillCoverageHeatmap from "../components/SkillCoverageHeatmap";
-import RecentActivity from "../components/RecentActivity";
 
 /* ── Risk styling ─────────────────────────────────────── */
 const riskColor: Record<DeliveryRiskLevel, string> = {
@@ -69,126 +75,15 @@ const riskLabel: Record<DeliveryRiskLevel, string> = {
   low: "Low"
 };
 
-const actionIcon: Record<string, string> = {
-  add_role: "➕",
-  reassign: "🔄",
-  delay: "⏳",
-  reduce_scope: "✂️",
-  split_allocation: "📊"
-};
 
-/* ── Actionable signals (same approach as Horizon) ────── */
-interface ActionableSignal {
-  id: string;
-  severity: "critical" | "high" | "medium";
-  problem: string;
-  impact: string;
-  action: string;
-  link: string;
-  linkLabel: string;
-  category: "capacity" | "skill" | "resilience" | "delivery";
-}
-
-function deriveSignals(data: ReturnType<typeof computeDecisionSummary>): ActionableSignal[] {
-  const signals: ActionableSignal[] = [];
-  let idx = 0;
-
-  for (const risk of data.criticalRisks.slice(0, 3)) {
-    const rootCause = risk.roleGaps.length > 0 ?
-    `Missing ${risk.roleGaps.map((g) => `${g.gapFTE} ${g.role}`).join(", ")} capacity` :
-    risk.riskReasons[0] || "Multiple risk factors";
-    signals.push({
-      id: `sig-d-${idx++}`,
-      severity: risk.deliveryRisk === "critical" ? "critical" : "high",
-      problem: `${risk.name} at ${risk.deliveryRisk} risk`,
-      impact: risk.estimatedDelayDays > 0 ?
-      `+${risk.estimatedDelayDays}d delay. ${rootCause}` :
-      rootCause,
-      action: risk.recommendations[0]?.label || "Review staffing plan",
-      link: `/app/work/initiatives/${risk.id}`,
-      linkLabel: "View initiative",
-      category: "delivery"
-    });
-  }
-
-  if (data.stats.constrainedEngineers > 0) {
-    const constrained = data.engineerCapacities.filter((e) => e.freeCapacity < 20 && e.isAvailable);
-    signals.push({
-      id: `sig-c-${idx++}`,
-      severity: data.stats.constrainedEngineers > 3 ? "critical" : "high",
-      problem: `${data.stats.constrainedEngineers} engineer${data.stats.constrainedEngineers > 1 ? "s" : ""} at ≤20% free capacity`,
-      impact: `Risk of burnout. Teams: ${[...new Set(constrained.map((e) => e.teamName))].join(", ")}`,
-      action: "Rebalance allocation or defer lower-priority work",
-      link: "/app/horizon/capacity",
-      linkLabel: "View capacity",
-      category: "capacity"
-    });
-  }
-
-  if (data.stats.totalFTEGap > 1) {
-    const worstGaps = data.allInitiativeRisks.
-    filter((r) => r.roleGaps.length > 0).
-    flatMap((r) => r.roleGaps.map((g) => g.role));
-    const topRoles = [...new Set(worstGaps)].slice(0, 3);
-    signals.push({
-      id: `sig-f-${idx++}`,
-      severity: data.stats.totalFTEGap > 3 ? "critical" : "high",
-      problem: `${data.stats.totalFTEGap} FTE gap across ${data.stats.atRiskCount} initiatives`,
-      impact: `Understaffed roles: ${topRoles.join(", ")}. Delivery timelines at risk.`,
-      action: "Hire or reallocate to close critical gaps",
-      link: "/app/horizon/capacity",
-      linkLabel: "View staffing",
-      category: "capacity"
-    });
-  }
-
-  const criticalSPOFs = MOCK_RESILIENCE.filter((r) => r.status === "critical");
-  if (criticalSPOFs.length > 0) {
-    signals.push({
-      id: `sig-s-${idx++}`,
-      severity: criticalSPOFs.length > 2 ? "critical" : "high",
-      problem: `${criticalSPOFs.length} critical SPOF${criticalSPOFs.length > 1 ? "s" : ""} detected`,
-      impact: `Areas: ${criticalSPOFs.slice(0, 3).map((s) => s.area).join(", ")}. Single owner, no backup.`,
-      action: "Start cross-training or assign backup owners",
-      link: "/app/signals/resilience",
-      linkLabel: "View resilience",
-      category: "resilience"
-    });
-  }
-
-  const warningSPOFs = MOCK_RESILIENCE.filter((r) => r.status === "warning");
-  if (warningSPOFs.length > 0) {
-    signals.push({
-      id: `sig-sk-${idx++}`,
-      severity: "medium",
-      problem: `${warningSPOFs.length} skill areas with insufficient coverage`,
-      impact: `${warningSPOFs.slice(0, 3).map((s) => s.area).join(", ")} have limited backup.`,
-      action: "Prioritize knowledge transfer sessions",
-      link: "/app/skills/risk",
-      linkLabel: "View skill gaps",
-      category: "skill"
-    });
-  }
-
-  const severityOrder = { critical: 0, high: 1, medium: 2 };
-  signals.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
-  return signals;
-}
 
 /* ── Component ────────────────────────────────────────── */
 export default function OverviewPage() {
   const navigate = useNavigate();
   const [expandedDecision, setExpandedDecision] = useState(true);
-  const [showAllRecs, setShowAllRecs] = useState(false);
 
   const data = useMemo(() => computeDecisionSummary(), []);
-  const signals = useMemo(() => deriveSignals(data), [data]);
 
-  const criticalSignals = signals.filter((s) => s.severity === "critical");
-  const highSignals = signals.filter((s) => s.severity === "high");
-  const mediumSignals = signals.filter((s) => s.severity === "medium");
-
-  const visibleRecs = showAllRecs ? data.recommendations : data.recommendations.slice(0, 4);
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -414,53 +309,208 @@ export default function OverviewPage() {
         </div>
 
         {/* ═══════════════════════════════════════════════════════
-             PRIORITY 2: ACTIONABLE SIGNALS
+             PRIORITY 2: VISUAL CHARTS
             ═══════════════════════════════════════════════════════ */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Zap size={14} className="text-warning" />
-            <h3 className="text-sm font-semibold">Actionable Signals</h3>
-            <div className="flex gap-1.5 ml-2">
-              {criticalSignals.length > 0 &&
-              <Badge variant="secondary" className="text-[9px] h-4 bg-destructive/10 text-destructive">{criticalSignals.length} critical</Badge>
-              }
-              {highSignals.length > 0 &&
-              <Badge variant="secondary" className="text-[9px] h-4 bg-orange/10 text-orange">{highSignals.length} high</Badge>
-              }
-              {mediumSignals.length > 0 &&
-              <Badge variant="secondary" className="text-[9px] h-4 bg-warning/10 text-warning">{mediumSignals.length} medium</Badge>
-              }
-            </div>
-          </div>
-          <div className="space-y-2">
-            {signals.map((signal) =>
-            <SignalCard key={signal.id} signal={signal} />
-            )}
-          </div>
-        </div>
+        <div className="grid gap-4 lg:grid-cols-3">
+          {/* Risk Distribution Donut */}
+          <Card className="border-border/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <PieChart size={14} className="text-primary" />
+                Risk Distribution
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">Initiatives by delivery risk level</p>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {(() => {
+                const riskCounts = { critical: 0, high: 0, medium: 0, low: 0 };
+                data.allInitiativeRisks.forEach((r) => riskCounts[r.deliveryRisk]++);
+                const pieData = [
+                  { name: "Critical", value: riskCounts.critical, color: "hsl(var(--destructive))" },
+                  { name: "High", value: riskCounts.high, color: "hsl(var(--orange))" },
+                  { name: "Medium", value: riskCounts.medium, color: "hsl(var(--warning))" },
+                  { name: "Low", value: riskCounts.low, color: "hsl(var(--success))" },
+                ].filter((d) => d.value > 0);
+                return (
+                  <div className="flex items-center gap-4">
+                    <div className="h-[140px] w-[140px] shrink-0">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RePieChart>
+                          <Pie
+                            data={pieData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={35}
+                            outerRadius={60}
+                            paddingAngle={3}
+                            dataKey="value"
+                            strokeWidth={0}
+                          >
+                            {pieData.map((entry, i) => (
+                              <Cell key={i} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <ReTooltip
+                            contentStyle={{
+                              background: "hsl(var(--card))",
+                              border: "1px solid hsl(var(--border))",
+                              borderRadius: 6,
+                              fontSize: 12,
+                            }}
+                          />
+                        </RePieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="space-y-2 text-xs">
+                      {pieData.map((d) => (
+                        <div key={d.name} className="flex items-center gap-2">
+                          <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: d.color }} />
+                          <span className="text-muted-foreground">{d.name}</span>
+                          <span className="font-bold tabular-nums ml-auto">{d.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
 
-        {/* ═══════════════════════════════════════════════════════
-             PRIORITY 2b: WHAT TO DO NEXT
-            ═══════════════════════════════════════════════════════ */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Lightbulb size={14} className="text-primary" />
-            <h3 className="text-sm font-semibold">What to Do Next</h3>
-            <span className="text-[11px] text-muted-foreground">
-              — {data.recommendations.length} action{data.recommendations.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-          <div className="grid gap-2 md:grid-cols-2">
-            {visibleRecs.map((rec) =>
-            <RecommendationCard key={rec.id} rec={rec} />
-            )}
-          </div>
-          {data.recommendations.length > 4 &&
-          <Button variant="ghost" size="sm" className="text-xs text-primary" onClick={() => setShowAllRecs(!showAllRecs)}>
-              {showAllRecs ? "Show less" : `Show all ${data.recommendations.length} recommendations`}
-              <ArrowRight size={12} className="ml-1" />
-            </Button>
-          }
+          {/* Team Allocation Chart */}
+          <Card className="border-border/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Users size={14} className="text-primary" />
+                Team Allocation
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">Average allocation by team</p>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {(() => {
+                const teams = new Map<string, { name: string; allocs: number[] }>();
+                for (const eng of data.engineerCapacities) {
+                  if (!teams.has(eng.teamId)) teams.set(eng.teamId, { name: eng.teamName, allocs: [] });
+                  teams.get(eng.teamId)!.allocs.push(eng.currentAllocation);
+                }
+                const barData = [...teams.entries()].map(([, t]) => ({
+                  team: t.name,
+                  allocation: Math.round(t.allocs.reduce((s, v) => s + v, 0) / t.allocs.length),
+                }));
+                return (
+                  <div className="h-[140px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={barData} layout="vertical" margin={{ top: 0, right: 8, bottom: 0, left: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                        <XAxis
+                          type="number"
+                          domain={[0, 120]}
+                          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                          axisLine={false}
+                          tickLine={false}
+                          tickFormatter={(v) => `${v}%`}
+                        />
+                        <YAxis
+                          dataKey="team"
+                          type="category"
+                          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                          axisLine={false}
+                          tickLine={false}
+                          width={60}
+                        />
+                        <ReTooltip
+                          contentStyle={{
+                            background: "hsl(var(--card))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: 6,
+                            fontSize: 12,
+                          }}
+                          formatter={(v: number) => [`${v}%`, "Allocation"]}
+                        />
+                        <Bar dataKey="allocation" radius={[0, 4, 4, 0]} maxBarSize={16}>
+                          {barData.map((entry, i) => (
+                            <Cell
+                              key={i}
+                              fill={
+                                entry.allocation > 80
+                                  ? "hsl(var(--destructive))"
+                                  : entry.allocation >= 60
+                                  ? "hsl(var(--warning))"
+                                  : "hsl(var(--success))"
+                              }
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
+
+          {/* Delivery Risk by Initiative */}
+          <Card className="border-border/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Activity size={14} className="text-primary" />
+                Delivery Risk Scores
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">Risk score per initiative</p>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {(() => {
+                const barData = data.allInitiativeRisks.slice(0, 6).map((r) => ({
+                  name: r.name.length > 18 ? r.name.slice(0, 16) + "…" : r.name,
+                  score: r.riskScore,
+                  risk: r.deliveryRisk,
+                }));
+                const riskFill: Record<string, string> = {
+                  critical: "hsl(var(--destructive))",
+                  high: "hsl(var(--orange))",
+                  medium: "hsl(var(--warning))",
+                  low: "hsl(var(--success))",
+                };
+                return (
+                  <div className="h-[140px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={barData} layout="vertical" margin={{ top: 0, right: 8, bottom: 0, left: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                        <XAxis
+                          type="number"
+                          domain={[0, 100]}
+                          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          dataKey="name"
+                          type="category"
+                          tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
+                          axisLine={false}
+                          tickLine={false}
+                          width={80}
+                        />
+                        <ReTooltip
+                          contentStyle={{
+                            background: "hsl(var(--card))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: 6,
+                            fontSize: 12,
+                          }}
+                          formatter={(v: number) => [`${v}/100`, "Risk Score"]}
+                        />
+                        <Bar dataKey="score" radius={[0, 4, 4, 0]} maxBarSize={14}>
+                          {barData.map((entry, i) => (
+                            <Cell key={i} fill={riskFill[entry.risk] || riskFill.low} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
         </div>
 
         {/* ═══════════════════════════════════════════════════════
@@ -718,93 +768,4 @@ function KPICard({
 
 }
 
-const severityConfig = {
-  critical: { bg: "border-destructive/20 bg-destructive/5", badge: "bg-destructive/15 text-destructive", icon: "text-destructive" },
-  high: { bg: "border-orange/20 bg-orange/5", badge: "bg-orange/15 text-orange", icon: "text-orange" },
-  medium: { bg: "border-warning/20 bg-warning/5", badge: "bg-warning/15 text-warning", icon: "text-warning" }
-};
 
-const categoryIcons: Record<string, typeof AlertTriangle> = {
-  capacity: Users,
-  skill: Target,
-  resilience: Shield,
-  delivery: Rocket
-};
-
-function SignalCard({ signal }: {signal: ActionableSignal;}) {
-  const config = severityConfig[signal.severity];
-  const CatIcon = categoryIcons[signal.category] || Zap;
-
-  return (
-    <div className={cn("rounded-lg border p-4 transition-all hover:shadow-sm", config.bg)}>
-      <div className="flex items-start gap-3">
-        <CatIcon size={14} className={cn("mt-0.5 shrink-0", config.icon)} />
-        <div className="min-w-0 flex-1 space-y-1.5">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium">{signal.problem}</span>
-            <Badge variant="secondary" className={cn("text-[9px] h-4", config.badge)}>
-              {signal.severity}
-            </Badge>
-          </div>
-          <p className="text-xs text-muted-foreground">{signal.impact}</p>
-          <div className="flex items-center justify-between gap-2 pt-1">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-primary">
-              <Lightbulb size={10} />
-              <span>{signal.action}</span>
-            </div>
-            <Link
-              to={signal.link}
-              className="text-[10px] text-primary hover:underline flex items-center gap-0.5 shrink-0">
-              
-              {signal.linkLabel} <ArrowUpRight size={9} />
-            </Link>
-          </div>
-        </div>
-      </div>
-    </div>);
-
-}
-
-function RecommendationCard({ rec }: {rec: RecommendedAction;}) {
-  const priorityStyles: Record<string, string> = {
-    high: "border-destructive/20 bg-destructive/5",
-    medium: "border-warning/20 bg-warning/5",
-    low: "border-border/50 bg-card"
-  };
-  const priorityBadge: Record<string, string> = {
-    high: "bg-destructive/15 text-destructive",
-    medium: "bg-warning/15 text-warning",
-    low: "bg-muted text-muted-foreground"
-  };
-
-  return (
-    <div className={cn("rounded-lg border p-4 transition-all hover:shadow-sm", priorityStyles[rec.priority])}>
-      <div className="flex items-start gap-3">
-        <span className="text-base shrink-0 mt-0.5">{actionIcon[rec.type] || "💡"}</span>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium">{rec.label}</span>
-            <Badge variant="secondary" className={cn("text-[9px] h-4", priorityBadge[rec.priority])}>
-              {rec.priority}
-            </Badge>
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">{rec.detail}</p>
-          {(rec.initiativeId || rec.engineerId) &&
-          <div className="flex gap-2 mt-2">
-              {rec.initiativeId &&
-            <Link to={`/app/work/initiatives/${rec.initiativeId}`} className="text-[10px] text-primary hover:underline flex items-center gap-0.5">
-                  View initiative <ArrowUpRight size={9} />
-                </Link>
-            }
-              {rec.engineerId &&
-            <Link to="/app/horizon/capacity" className="text-[10px] text-primary hover:underline flex items-center gap-0.5">
-                  View engineer <ArrowUpRight size={9} />
-                </Link>
-            }
-            </div>
-          }
-        </div>
-      </div>
-    </div>);
-
-}
