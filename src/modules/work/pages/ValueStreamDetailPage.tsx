@@ -20,6 +20,8 @@ const staffingConfig: Record<StaffingStatus, { label: string; bgColor: string }>
 
 export default function ValueStreamDetailPage() {
   const { valueStreamId } = useParams<{ valueStreamId: string }>();
+  const [searchParams] = useSearchParams();
+  const backTo = searchParams.get("from") || "/app/work/value-streams";
   const vs = getValueStream(valueStreamId ?? "");
 
   if (!vs) {
