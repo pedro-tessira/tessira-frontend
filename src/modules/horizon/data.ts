@@ -7,6 +7,8 @@ import type {
   HorizonEmployee,
   Allocation,
 } from "./types";
+import { workAllocations } from "@/modules/work/data";
+import { sharedEmployees } from "@/shared/data/employees";
 
 // ── Helpers ──────────────────────────────────────────────
 function daysFromNow(offset: number): string {
@@ -15,21 +17,8 @@ function daysFromNow(offset: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-// ── Employees (scheduling roster) ────────────────────────
-export const horizonEmployees: HorizonEmployee[] = [
-  { id: "emp-001", name: "Sarah Chen", teamId: "team-001", teamName: "Platform Core" },
-  { id: "emp-002", name: "Marcus Rivera", teamId: "team-002", teamName: "Backend Services" },
-  { id: "emp-003", name: "Aisha Patel", teamId: "team-003", teamName: "Frontend" },
-  { id: "emp-004", name: "Jonas Eriksson", teamId: "team-001", teamName: "Platform Core" },
-  { id: "emp-005", name: "Mei Tanaka", teamId: "team-002", teamName: "Backend Services" },
-  { id: "emp-006", name: "Alex Novak", teamId: "team-004", teamName: "Data & Observability" },
-  { id: "emp-007", name: "Priya Sharma", teamId: "team-003", teamName: "Frontend" },
-  { id: "emp-008", name: "David Okafor", teamId: "team-005", teamName: "Engineering Leadership" },
-  { id: "emp-009", name: "Lin Zhou", teamId: "team-005", teamName: "Engineering Leadership" },
-  { id: "emp-010", name: "Carlos Mendez", teamId: "team-004", teamName: "Data & Observability" },
-  { id: "emp-011", name: "Emma Wilson", teamId: "team-003", teamName: "Frontend" },
-  { id: "emp-012", name: "Tomasz Kowalski", teamId: "team-004", teamName: "Data & Observability" },
-];
+// ── Employees (re-exported from shared) ──────────────────
+export const horizonEmployees: HorizonEmployee[] = sharedEmployees;
 
 export const horizonTeams = [
   { id: "all", name: "All Teams" },
@@ -147,22 +136,19 @@ export const availabilityWindows: AvailabilityWindow[] = [
   { employeeId: "emp-012", employeeName: "Tomasz Kowalski", teamName: "Data & Observability", status: "available", startDate: daysFromNow(25), endDate: daysFromNow(28) },
 ];
 
-// ── Allocations ─────────────────────────────────────────
-export const allocations: Allocation[] = [
-  { id: "alloc-01", employeeId: "emp-001", employeeName: "Sarah Chen", initiative: "Auth Refactor", percentage: 60, startDate: daysFromNow(-5), endDate: daysFromNow(9), teamId: "team-001", teamName: "Platform Core", source: "jira" },
-  { id: "alloc-02", employeeId: "emp-001", employeeName: "Sarah Chen", initiative: "API Gateway Hardening", percentage: 30, startDate: daysFromNow(10), endDate: daysFromNow(20), teamId: "team-001", teamName: "Platform Core", source: "jira" },
-  { id: "alloc-03", employeeId: "emp-002", employeeName: "Marcus Rivera", initiative: "Stripe Migration", percentage: 80, startDate: daysFromNow(0), endDate: daysFromNow(14), teamId: "team-002", teamName: "Backend Services", source: "linear" },
-  { id: "alloc-04", employeeId: "emp-003", employeeName: "Aisha Patel", initiative: "Design System Refresh", percentage: 50, startDate: daysFromNow(0), endDate: daysFromNow(17), teamId: "team-003", teamName: "Frontend", source: "manual" },
-  { id: "alloc-05", employeeId: "emp-003", employeeName: "Aisha Patel", initiative: "Dashboard v2", percentage: 40, startDate: daysFromNow(0), endDate: daysFromNow(12), teamId: "team-003", teamName: "Frontend", source: "jira" },
-  { id: "alloc-06", employeeId: "emp-004", employeeName: "Jonas Eriksson", initiative: "API Gateway Hardening", percentage: 70, startDate: daysFromNow(4), endDate: daysFromNow(18), teamId: "team-001", teamName: "Platform Core", source: "jira" },
-  { id: "alloc-07", employeeId: "emp-005", employeeName: "Mei Tanaka", initiative: "Checkout Performance", percentage: 100, startDate: daysFromNow(0), endDate: daysFromNow(28), teamId: "team-002", teamName: "Backend Services", source: "linear" },
-  { id: "alloc-08", employeeId: "emp-006", employeeName: "Alex Novak", initiative: "Pipeline Performance", percentage: 50, startDate: daysFromNow(0), endDate: daysFromNow(11), teamId: "team-004", teamName: "Data & Observability", source: "jira" },
-  { id: "alloc-09", employeeId: "emp-006", employeeName: "Alex Novak", initiative: "Observability Rollout", percentage: 40, startDate: daysFromNow(15), endDate: daysFromNow(28), teamId: "team-004", teamName: "Data & Observability", source: "manual" },
-  { id: "alloc-10", employeeId: "emp-007", employeeName: "Priya Sharma", initiative: "Dashboard v2", percentage: 80, startDate: daysFromNow(-5), endDate: daysFromNow(9), teamId: "team-003", teamName: "Frontend", source: "jira" },
-  { id: "alloc-11", employeeId: "emp-008", employeeName: "David Okafor", initiative: "Eng Strategy", percentage: 40, startDate: daysFromNow(0), endDate: daysFromNow(28), teamId: "team-005", teamName: "Engineering Leadership", source: "manual" },
-  { id: "alloc-12", employeeId: "emp-010", employeeName: "Carlos Mendez", initiative: "Pipeline Performance", percentage: 70, startDate: daysFromNow(0), endDate: daysFromNow(11), teamId: "team-004", teamName: "Data & Observability", source: "jira" },
-  { id: "alloc-13", employeeId: "emp-012", employeeName: "Tomasz Kowalski", initiative: "Data Lake Migration", percentage: 90, startDate: daysFromNow(0), endDate: daysFromNow(18), teamId: "team-004", teamName: "Data & Observability", source: "linear" },
-];
+// ── Allocations (derived from work module's single source of truth) ──
+export const allocations: Allocation[] = workAllocations.map((wa) => ({
+  id: wa.id,
+  employeeId: wa.employeeId,
+  employeeName: wa.employeeName,
+  initiative: wa.initiativeName,
+  percentage: wa.percentage,
+  startDate: wa.startDate,
+  endDate: wa.endDate,
+  teamId: wa.teamId,
+  teamName: wa.teamName,
+  source: "jira" as const,
+}));
 
 // ── Share Links ──────────────────────────────────────────
 export const shareLinks: ShareLink[] = [

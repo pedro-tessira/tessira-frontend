@@ -1,5 +1,5 @@
 import type { ValueStream, Domain, Initiative, WorkAllocation, StaffingStatus } from "./types";
-import { horizonEmployees } from "@/modules/horizon/data";
+import { sharedEmployees } from "@/shared/data/employees";
 
 function daysFromNow(offset: number): string {
   const d = new Date();
@@ -178,7 +178,7 @@ export function getDomainFTE(domainId: string): number {
 export function getEngineersForDomain(domainId: string) {
   const allocs = getAllocationsForDomain(domainId);
   const empIds = [...new Set(allocs.map((a) => a.employeeId))];
-  return empIds.map((id) => horizonEmployees.find((e) => e.id === id)!).filter(Boolean);
+  return empIds.map((id) => sharedEmployees.find((e) => e.id === id)!).filter(Boolean);
 }
 
 export function getDomainsForInitiative(initiativeId: string) {
@@ -208,7 +208,7 @@ export function getEngineersForValueStream(vsId: string) {
   const initIds = new Set(inits.map((i) => i.id));
   const allocs = workAllocations.filter((a) => initIds.has(a.initiativeId));
   const empIds = [...new Set(allocs.map((a) => a.employeeId))];
-  return empIds.map((id) => horizonEmployees.find((e) => e.id === id)!).filter(Boolean);
+  return empIds.map((id) => sharedEmployees.find((e) => e.id === id)!).filter(Boolean);
 }
 
 // ── Initiative Planning Helpers ──────────────────────────
