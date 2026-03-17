@@ -54,7 +54,10 @@ export default function TeamDetailPage() {
       <ModulePageHeader
         title={team.name}
         description={team.description}
-        breadcrumbs={[
+        breadcrumbs={fromParam ? [
+          { label: "Back", href: fromParam },
+          { label: team.name },
+        ] : [
           { label: "People", href: "/app/people" },
           { label: "Teams", href: "/app/people/teams" },
           { label: team.name },

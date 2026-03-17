@@ -59,7 +59,10 @@ export default function EmployeeDetailPage() {
     <div className="space-y-6">
       <ModulePageHeader
         title={`${employee.firstName} ${employee.lastName}`}
-        breadcrumbs={[
+        breadcrumbs={fromParam ? [
+          { label: "Back", href: fromParam },
+          { label: `${employee.firstName} ${employee.lastName}` },
+        ] : [
           { label: "People", href: "/app/people" },
           { label: "Employees", href: "/app/people/employees" },
           { label: `${employee.firstName} ${employee.lastName}` },
