@@ -86,16 +86,9 @@ const riskLabel: Record<DeliveryRiskLevel, string> = {
 export default function OverviewPage() {
   const navigate = useNavigate();
   const [expandedDecision, setExpandedDecision] = useState(true);
-  const [showAllRecs, setShowAllRecs] = useState(false);
 
   const data = useMemo(() => computeDecisionSummary(), []);
-  const signals = useMemo(() => deriveSignals(data), [data]);
 
-  const criticalSignals = signals.filter((s) => s.severity === "critical");
-  const highSignals = signals.filter((s) => s.severity === "high");
-  const mediumSignals = signals.filter((s) => s.severity === "medium");
-
-  const visibleRecs = showAllRecs ? data.recommendations : data.recommendations.slice(0, 4);
 
   return (
     <TooltipProvider delayDuration={150}>
