@@ -4,16 +4,29 @@ import { adminUsers, customRoles as initialRoles } from "../data";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Mail, KeyRound, Ban, Trash2, ArrowRightLeft, Shield, Link2, Clock, Monitor, Plus, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  ArrowLeft, Mail, KeyRound, Ban, Trash2, ArrowRightLeft, Shield, Link2,
+  Clock, Monitor, Plus, X, Pencil, Check, CircleAlert, CheckCircle2,
+} from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { toast } from "sonner";
-import type { AdminUserStatus, AdminUserRole } from "../types";
+import type { AdminUserStatus, AdminUserRole, AdminUser } from "../types";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 
 const statusStyle: Record<AdminUserStatus, string> = {
@@ -30,14 +43,26 @@ const roleStyle: Record<AdminUserRole, string> = {
   viewer: "bg-muted text-muted-foreground",
 };
 
+const ALL_STATUSES: AdminUserStatus[] = ["active", "invited", "suspended", "deactivated"];
+const ALL_ROLES: AdminUserRole[] = ["owner", "admin", "member", "viewer"];
+
 export default function AdminUserDetailPage() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
-  const user = adminUsers.find((u) => u.id === userId);
+  const originalUser = adminUsers.find((u) => u.id === userId);
 
-  const [assignedRoles, setAssignedRoles] = useState<string[]>(user?.customRoles ?? []);
+  // Editable user state
+  const [userData, setUserData] = useState<AdminUser | null>(originalUser ? { ...originalUser } : null);
+  const [assignedRoles, setAssignedRoles] = useState<string[]>(originalUser?.customRoles ?? []);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [pendingSelections, setPendingSelections] = useState<string[]>([]);
+
+  // Edit mode
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ displayName: "", email: "" });
+
+  // Confirm dialogs
+  const [confirmAction, setConfirmAction] = useState<AdminUserStatus | null>(null);
 
   const availableRoles = initialRoles;
   const unassignedRoles = availableRoles.filter((r) => !assignedRoles.includes(r.name));
@@ -64,7 +89,52 @@ export default function AdminUserDetailPage() {
     );
   };
 
-  if (!user) {
+  // Edit user
+  const startEditing = () => {
+    if (!userData) return;
+    setEditForm({ displayName: userData.displayName, email: userData.email });
+    setIsEditing(true);
+  };
+
+  const cancelEditing = () => setIsEditing(false);
+
+  const saveEditing = () => {
+    if (!userData) return;
+    setUserData({ ...userData, displayName: editForm.displayName, email: editForm.email });
+    setIsEditing(false);
+    toast.success("User profile updated");
+  };
+
+  // Inline status change
+  const handleStatusChange = (newStatus: AdminUserStatus) => {
+    if (!userData) return;
+    if (newStatus === "suspended" || newStatus === "deactivated") {
+      setConfirmAction(newStatus);
+      return;
+    }
+    applyStatusChange(newStatus);
+  };
+
+  const applyStatusChange = (newStatus: AdminUserStatus) => {
+    if (!userData) return;
+    const prev = userData.status;
+    setUserData({ ...userData, status: newStatus });
+    toast.success(`Status changed from "${prev}" to "${newStatus}"`);
+    setConfirmAction(null);
+  };
+
+  // Inline role change
+  const handleBaseRoleChange = (newRole: AdminUserRole) => {
+    if (!userData) return;
+    setUserData({ ...userData, role: newRole });
+    toast.success(`Base role changed to "${newRole}"`);
+  };
+
+  // Quick actions
+  const handleResendInvite = () => toast.success("Invite email resent");
+  const handleResetPassword = () => toast.success("Password reset email sent");
+
+  if (!userData) {
     return (
       <div className="space-y-4">
         <Button variant="ghost" size="sm" className="gap-1.5 text-xs" onClick={() => navigate("/app/admin/users")}>
@@ -88,23 +158,75 @@ export default function AdminUserDetailPage() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center text-lg font-bold text-primary">
-              {user.displayName.split(" ").map((n) => n[0]).join("")}
+              {userData.displayName.split(" ").map((n) => n[0]).join("")}
             </div>
             <div>
-              <h2 className="text-lg font-semibold">{user.displayName}</h2>
-              <p className="text-sm text-muted-foreground">{user.email}</p>
-              <div className="flex items-center gap-2 mt-2">
-                <Badge variant="secondary" className={cn("text-[11px]", roleStyle[user.role])}>{user.role}</Badge>
-                <Badge variant="secondary" className={cn("text-[11px]", statusStyle[user.status])}>{user.status}</Badge>
-              </div>
+              {isEditing ? (
+                <div className="space-y-2">
+                  <Input
+                    value={editForm.displayName}
+                    onChange={(e) => setEditForm((f) => ({ ...f, displayName: e.target.value }))}
+                    className="h-8 text-sm font-semibold w-56"
+                    placeholder="Display name"
+                  />
+                  <Input
+                    value={editForm.email}
+                    onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
+                    className="h-8 text-sm w-56"
+                    placeholder="Email"
+                  />
+                  <div className="flex gap-1.5 pt-1">
+                    <Button size="sm" className="h-7 text-xs gap-1" onClick={saveEditing}>
+                      <Check size={12} /> Save
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={cancelEditing}>Cancel</Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-semibold">{userData.displayName}</h2>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground" onClick={startEditing}>
+                      <Pencil size={12} />
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{userData.email}</p>
+                </>
+              )}
+              {!isEditing && (
+                <div className="flex items-center gap-2 mt-2">
+                  {/* Inline base role select */}
+                  <Select value={userData.role} onValueChange={(v) => handleBaseRoleChange(v as AdminUserRole)}>
+                    <SelectTrigger className={cn("h-6 w-auto gap-1 border-0 px-2 text-[11px] font-medium rounded-full", roleStyle[userData.role])}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ALL_ROLES.map((r) => (
+                        <SelectItem key={r} value={r} className="text-xs capitalize">{r}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {/* Inline status select */}
+                  <Select value={userData.status} onValueChange={(v) => handleStatusChange(v as AdminUserStatus)}>
+                    <SelectTrigger className={cn("h-6 w-auto gap-1 border-0 px-2 text-[11px] font-medium rounded-full", statusStyle[userData.status])}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ALL_STATUSES.map((s) => (
+                        <SelectItem key={s} value={s} className="text-xs capitalize">{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5"><Mail size={12} /> Resend Invite</Button>
-            <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5"><KeyRound size={12} /> Reset Password</Button>
-            <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5"><Ban size={12} /> Suspend</Button>
+            <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={handleResendInvite}><Mail size={12} /> Resend Invite</Button>
+            <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={handleResetPassword}><KeyRound size={12} /> Reset Password</Button>
+            <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => handleStatusChange("suspended")}><Ban size={12} /> Suspend</Button>
             <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5"><ArrowRightLeft size={12} /> Transfer Ownership</Button>
-            <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 text-destructive hover:text-destructive"><Trash2 size={12} /> Deactivate</Button>
+            <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 text-destructive hover:text-destructive" onClick={() => handleStatusChange("deactivated")}><Trash2 size={12} /> Deactivate</Button>
           </div>
         </div>
       </div>
@@ -116,19 +238,19 @@ export default function AdminUserDetailPage() {
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground flex items-center gap-1.5"><Shield size={12} /> Auth Provider</span>
-              <span className="capitalize">{user.authProvider}</span>
+              <span className="capitalize">{userData.authProvider}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground flex items-center gap-1.5"><Clock size={12} /> Created</span>
-              <span>{new Date(user.createdAt).toLocaleDateString()}</span>
+              <span>{new Date(userData.createdAt).toLocaleDateString()}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground flex items-center gap-1.5"><Monitor size={12} /> Last Login</span>
-              <span>{user.lastLogin ? new Date(user.lastLogin).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "Never"}</span>
+              <span>{userData.lastLogin ? new Date(userData.lastLogin).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "Never"}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground flex items-center gap-1.5"><Clock size={12} /> Last Activity</span>
-              <span>{user.lastActivity ? new Date(user.lastActivity).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "Never"}</span>
+              <span>{userData.lastActivity ? new Date(userData.lastActivity).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "Never"}</span>
             </div>
           </div>
         </div>
@@ -136,15 +258,15 @@ export default function AdminUserDetailPage() {
         {/* Linked Employee */}
         <div className="rounded-lg border border-border/50 bg-card p-5 space-y-4">
           <h3 className="text-sm font-semibold">Employee Link</h3>
-          {user.linkedEmployeeName ? (
+          {userData.linkedEmployeeName ? (
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground flex items-center gap-1.5"><Link2 size={12} /> Linked To</span>
-                <span className="font-medium">{user.linkedEmployeeName}</span>
+                <span className="font-medium">{userData.linkedEmployeeName}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Employee ID</span>
-                <code className="text-xs font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{user.linkedEmployeeId}</code>
+                <code className="text-xs font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{userData.linkedEmployeeId}</code>
               </div>
             </div>
           ) : (
@@ -214,7 +336,7 @@ export default function AdminUserDetailPage() {
       <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-sm">Assign Roles to {user.displayName}</DialogTitle>
+            <DialogTitle className="text-sm">Assign Roles to {userData.displayName}</DialogTitle>
           </DialogHeader>
           <div className="space-y-2 max-h-64 overflow-y-auto py-2">
             {unassignedRoles.length > 0 ? (
@@ -249,6 +371,39 @@ export default function AdminUserDetailPage() {
             <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setShowAssignDialog(false)}>Cancel</Button>
             <Button size="sm" className="h-8 text-xs" disabled={pendingSelections.length === 0} onClick={handleAssign}>
               Assign {pendingSelections.length > 0 ? `(${pendingSelections.length})` : ""}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm Suspend / Deactivate Dialog */}
+      <Dialog open={confirmAction !== null} onOpenChange={() => setConfirmAction(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-sm flex items-center gap-2">
+              {confirmAction === "deactivated" ? (
+                <CircleAlert size={16} className="text-destructive" />
+              ) : (
+                <Ban size={16} className="text-primary" />
+              )}
+              {confirmAction === "deactivated" ? "Deactivate User" : "Suspend User"}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              {confirmAction === "deactivated"
+                ? `This will permanently deactivate ${userData.displayName}'s account. They will lose all access.`
+                : `This will suspend ${userData.displayName}'s account. They will be unable to log in until reactivated.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setConfirmAction(null)}>Cancel</Button>
+            <Button
+              variant={confirmAction === "deactivated" ? "destructive" : "default"}
+              size="sm"
+              className="h-8 text-xs gap-1.5"
+              onClick={() => applyStatusChange(confirmAction!)}
+            >
+              <CheckCircle2 size={12} />
+              {confirmAction === "deactivated" ? "Deactivate" : "Suspend"}
             </Button>
           </DialogFooter>
         </DialogContent>
