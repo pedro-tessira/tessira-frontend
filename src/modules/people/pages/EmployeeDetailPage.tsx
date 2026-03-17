@@ -94,6 +94,11 @@ export default function EmployeeDetailPage() {
                 <div className="flex items-center gap-3 flex-wrap">
                   <h2 className="text-lg font-semibold">{employee.firstName} {employee.lastName}</h2>
                   <StatusBadge status={employee.status} />
+                  {employee.excludeFromCapacity && (
+                    <span className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                      <ShieldOff size={11} /> Non-capacity
+                    </span>
+                  )}
                 </div>
                 <p className="text-sm text-muted-foreground mt-0.5">{employee.title}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{employee.department}</p>

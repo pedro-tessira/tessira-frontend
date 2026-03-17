@@ -10,7 +10,7 @@ import { AvatarInitials } from "./AvatarInitials";
 import { StatusBadge } from "./StatusBadge";
 import { Link } from "react-router-dom";
 import {
-  Mail, MapPin, Clock, Calendar, Users2, Shield, ExternalLink, Grid3X3,
+  Mail, MapPin, Clock, Calendar, Users2, Shield, ExternalLink, Grid3X3, ShieldOff,
 } from "lucide-react";
 import { getEmployee, getEmployeeMemberships, getNotesForEmployee } from "../data";
 
