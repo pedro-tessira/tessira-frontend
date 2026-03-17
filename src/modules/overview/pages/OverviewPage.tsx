@@ -361,6 +361,59 @@ export default function OverviewPage() {
         </div>
 
         {/* ═══════════════════════════════════════════════════════
+            PRIORITY 1c: VALUE STREAM IMPACT
+           ═══════════════════════════════════════════════════════ */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Layers size={14} className="text-primary" />
+            <h3 className="text-sm font-semibold">Value Stream Impact</h3>
+          </div>
+          <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+            {data.valueStreamSummaries.map((vs) => {
+              const worstRisk: DeliveryRiskLevel =
+                vs.atRiskCount > 0
+                  ? vs.initiatives.reduce<DeliveryRiskLevel>((worst, i) => {
+                      const order: DeliveryRiskLevel[] = ["low", "medium", "high", "critical"];
+                      return order.indexOf(i.deliveryRisk) > order.indexOf(worst) ? i.deliveryRisk : worst;
+                    }, "low")
+                  : "low";
+              return (
+                <Link
+                  key={vs.id}
+                  to={`/app/work/value-streams/${vs.id}`}
+                  className={cn(
+                    "rounded-lg border p-3.5 text-left transition-all hover:shadow-sm group",
+                    vs.atRiskCount > 0
+                      ? riskBg[worstRisk]
+                      : "border-border/50 bg-card hover:border-primary/20"
+                  )}
+                >
+                  <p className="text-xs font-semibold truncate group-hover:text-primary transition-colors">{vs.name}</p>
+                  <div className="flex items-baseline gap-2 mt-1.5">
+                    <span className="text-lg font-bold tabular-nums">{vs.initiativeCount}</span>
+                    <span className="text-[10px] text-muted-foreground">initiatives</span>
+                  </div>
+                  <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-2 text-[10px]">
+                    {vs.atRiskCount > 0 && (
+                      <span className="text-destructive font-medium">{vs.atRiskCount} at risk</span>
+                    )}
+                    {vs.understaffedCount > 0 && (
+                      <span className="text-warning font-medium">{vs.understaffedCount} understaffed</span>
+                    )}
+                    {vs.totalFTEGap > 0 && (
+                      <span className="text-muted-foreground tabular-nums">{vs.totalFTEGap} FTE gap</span>
+                    )}
+                    {vs.atRiskCount === 0 && vs.understaffedCount === 0 && (
+                      <span className="text-success font-medium">On track</span>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════
             PRIORITY 2: ACTIONABLE SIGNALS
            ═══════════════════════════════════════════════════════ */}
         <div className="space-y-3">
