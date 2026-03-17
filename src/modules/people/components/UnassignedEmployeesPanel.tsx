@@ -21,7 +21,7 @@ export function UnassignedEmployeesPanel({
 
   const unassigned = useMemo(() => {
     const list = employees.filter(
-      (e) => !placedIds.has(e.id) && e.status === "active"
+      (e) => !placedIds.has(e.id) && e.status !== "inactive"
     );
     if (!search.trim()) return list;
     const q = search.toLowerCase();
@@ -33,7 +33,7 @@ export function UnassignedEmployeesPanel({
     );
   }, [employees, placedIds, search]);
 
-  if (employees.filter((e) => !placedIds.has(e.id) && e.status === "active").length === 0) {
+  if (employees.filter((e) => !placedIds.has(e.id) && e.status !== "inactive").length === 0) {
     return null;
   }
 
@@ -46,7 +46,7 @@ export function UnassignedEmployeesPanel({
             Unassigned
           </span>
           <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-            {employees.filter((e) => !placedIds.has(e.id) && e.status === "active").length}
+            {employees.filter((e) => !placedIds.has(e.id) && e.status !== "inactive").length}
           </Badge>
         </div>
       </div>
