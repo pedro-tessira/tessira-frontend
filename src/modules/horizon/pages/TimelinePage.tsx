@@ -14,6 +14,8 @@ import {
   Layers,
   Briefcase,
   AlertTriangle,
+  Shield,
+  Filter,
 } from "lucide-react";
 import {
   Select,
@@ -37,15 +39,19 @@ import {
   availabilityWindows,
   allocations,
 } from "../data";
+import { valueStreams, initiatives as workInitiatives } from "@/modules/work/data";
 import type { EventType, TimelineEvent, AvailabilityWindow, Allocation } from "../types";
 import AllocationDetailPanel from "../components/AllocationDetailPanel";
 import AddAllocationDialog from "../components/AddAllocationDialog";
 import EventDetailPanel from "../components/EventDetailPanel";
+import TimelineDecisionBanner from "../components/TimelineDecisionBanner";
+import TimelineInitiativeLanes from "../components/TimelineInitiativeLanes";
+import { computeDecisionSummary } from "../lib/decision-engine";
 
 // ── Constants ────────────────────────────────────────────
 const MAX_VISIBLE_EVENTS = 2;
-const ROW_EVENT_HEIGHT = 22;
-const ALLOC_HEIGHT = 20;
+const ROW_EVENT_HEIGHT = 18;
+const ALLOC_HEIGHT = 22;
 const ROW_GAP = 2;
 const ROW_PADDING = 3;
 const DAY_WIDTH = 40;
@@ -65,37 +71,29 @@ const EVENT_TYPE_FILTERS: { type: EventType | "all"; label: string }[] = [
 ];
 
 const eventColors: Record<EventType, string> = {
-  all_hands: "bg-primary/20 border-primary/40 text-primary",
-  team_sync: "bg-blue-500/15 border-blue-500/30 text-blue-400",
-  vacation: "bg-amber-500/15 border-amber-500/30 text-amber-400",
-  pto: "bg-orange-500/15 border-orange-500/30 text-orange-400",
+  all_hands: "bg-primary/15 border-primary/30 text-primary",
+  team_sync: "bg-blue-500/10 border-blue-500/25 text-blue-400",
+  vacation: "bg-amber-500/10 border-amber-500/25 text-amber-400",
+  pto: "bg-orange-500/10 border-orange-500/25 text-orange-400",
   milestone: "bg-emerald-500/15 border-emerald-500/30 text-emerald-400",
-  incident: "bg-destructive/15 border-destructive/30 text-red-400",
-  onboarding: "bg-emerald-500/15 border-emerald-500/30 text-emerald-400",
-  offboarding: "bg-amber-500/15 border-amber-500/30 text-amber-400",
-  sprint: "bg-primary/15 border-primary/30 text-primary",
-  release: "bg-emerald-500/15 border-emerald-500/30 text-emerald-400",
-  custom: "bg-muted border-border text-muted-foreground",
+  incident: "bg-destructive/10 border-destructive/25 text-destructive",
+  onboarding: "bg-emerald-500/10 border-emerald-500/25 text-emerald-400",
+  offboarding: "bg-amber-500/10 border-amber-500/25 text-amber-400",
+  sprint: "bg-primary/10 border-primary/25 text-primary",
+  release: "bg-emerald-500/10 border-emerald-500/25 text-emerald-400",
+  custom: "bg-muted/50 border-border text-muted-foreground",
 };
 
 const eventTypeLabels: Record<EventType, string> = {
-  all_hands: "All Hands",
-  team_sync: "Team Sync",
-  vacation: "Vacation",
-  pto: "PTO",
-  milestone: "Milestone",
-  incident: "Incident",
-  onboarding: "Onboarding",
-  offboarding: "Offboarding",
-  sprint: "Sprint",
-  release: "Release",
-  custom: "Custom",
+  all_hands: "All Hands", team_sync: "Team Sync", vacation: "Vacation", pto: "PTO",
+  milestone: "Milestone", incident: "Incident", onboarding: "Onboarding", offboarding: "Offboarding",
+  sprint: "Sprint", release: "Release", custom: "Custom",
 };
 
 const availStatusColors: Record<AvailabilityWindow["status"], string> = {
-  available: "bg-emerald-500/10",
-  partial: "bg-amber-500/10",
-  unavailable: "bg-red-500/10",
+  available: "bg-emerald-500/8",
+  partial: "bg-amber-500/8",
+  unavailable: "bg-red-500/8",
 };
 
 // ── Helpers ──────────────────────────────────────────────
@@ -123,21 +121,12 @@ function assignEventSlots(events: TimelineEvent[]): { event: TimelineEvent; slot
   const sorted = [...events].sort((a, b) => a.startDate.localeCompare(b.startDate) || a.endDate.localeCompare(b.endDate));
   const result: { event: TimelineEvent; slot: number }[] = [];
   const slotEnds: string[] = [];
-
   for (const ev of sorted) {
     let placed = false;
     for (let s = 0; s < slotEnds.length; s++) {
-      if (ev.startDate > slotEnds[s]) {
-        slotEnds[s] = ev.endDate;
-        result.push({ event: ev, slot: s });
-        placed = true;
-        break;
-      }
+      if (ev.startDate > slotEnds[s]) { slotEnds[s] = ev.endDate; result.push({ event: ev, slot: s }); placed = true; break; }
     }
-    if (!placed) {
-      result.push({ event: ev, slot: slotEnds.length });
-      slotEnds.push(ev.endDate);
-    }
+    if (!placed) { result.push({ event: ev, slot: slotEnds.length }); slotEnds.push(ev.endDate); }
   }
   return result;
 }
@@ -146,70 +135,60 @@ function assignAllocSlots(allocs: Allocation[]): { alloc: Allocation; slot: numb
   const sorted = [...allocs].sort((a, b) => a.startDate.localeCompare(b.startDate));
   const result: { alloc: Allocation; slot: number }[] = [];
   const slotEnds: string[] = [];
-
   for (const a of sorted) {
     let placed = false;
     for (let s = 0; s < slotEnds.length; s++) {
-      if (a.startDate > slotEnds[s]) {
-        slotEnds[s] = a.endDate;
-        result.push({ alloc: a, slot: s });
-        placed = true;
-        break;
-      }
+      if (a.startDate > slotEnds[s]) { slotEnds[s] = a.endDate; result.push({ alloc: a, slot: s }); placed = true; break; }
     }
-    if (!placed) {
-      result.push({ alloc: a, slot: slotEnds.length });
-      slotEnds.push(a.endDate);
-    }
+    if (!placed) { result.push({ alloc: a, slot: slotEnds.length }); slotEnds.push(a.endDate); }
   }
   return result;
 }
 
 // ── Layer Types ──────────────────────────────────────────
-type TimelineLayer = "availability" | "allocations" | "events";
+type TimelineLayer = "availability" | "allocations" | "events" | "initiatives";
 
 // ── Component ────────────────────────────────────────────
 export default function TimelinePage() {
   const [range, setRange] = useState<"2w" | "4w" | "8w">("4w");
   const [teamFilter, setTeamFilter] = useState("all");
+  const [vsFilter, setVsFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState<EventType | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [offset, setOffset] = useState(0);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
   const [todayVisible, setTodayVisible] = useState(true);
-  const [layers, setLayers] = useState<Set<TimelineLayer>>(new Set(["availability", "allocations", "events"]));
+  const [layers, setLayers] = useState<Set<TimelineLayer>>(new Set(["availability", "allocations", "events", "initiatives"]));
   const [selectedAllocation, setSelectedAllocation] = useState<Allocation | null>(null);
   const [addAllocOpen, setAddAllocOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null);
   const [addAllocPrefill, setAddAllocPrefill] = useState<{ employeeId?: string; startDate?: string; endDate?: string }>({});
+  const [selectedInitiativeId, setSelectedInitiativeId] = useState<string | null>(null);
 
   // Drag-to-create state
-  const [dragState, setDragState] = useState<{
-    empId: string;
-    startDayIndex: number;
-    currentDayIndex: number;
-  } | null>(null);
+  const [dragState, setDragState] = useState<{ empId: string; startDayIndex: number; currentDayIndex: number } | null>(null);
   const isDragging = useRef(false);
 
-  // Drag-to-resize state (works for both allocations and events)
+  // Drag-to-resize state
   const [resizeState, setResizeState] = useState<{
-    itemId: string;
-    itemType: "allocation" | "event";
-    edge: "left" | "right";
-    originalStart: string;
-    originalEnd: string;
-    currentDayIndex: number;
+    itemId: string; itemType: "allocation" | "event"; edge: "left" | "right";
+    originalStart: string; originalEnd: string; currentDayIndex: number;
   } | null>(null);
   const isResizing = useRef(false);
 
+  // Decision engine
+  const decisionSummary = useMemo(() => computeDecisionSummary(), []);
+
+  // Initiative risk lookup
+  const initiativeRiskMap = useMemo(() => {
+    const map: Record<string, typeof decisionSummary.allInitiativeRisks[0]> = {};
+    decisionSummary.allInitiativeRisks.forEach((r) => { map[r.id] = r; });
+    return map;
+  }, [decisionSummary]);
+
   const toggleLayer = (layer: TimelineLayer) => {
-    setLayers((prev) => {
-      const next = new Set(prev);
-      if (next.has(layer)) next.delete(layer);
-      else next.add(layer);
-      return next;
-    });
+    setLayers((prev) => { const next = new Set(prev); if (next.has(layer)) next.delete(layer); else next.add(layer); return next; });
   };
 
   const rangeDays = range === "2w" ? 14 : range === "4w" ? 28 : 56;
@@ -250,12 +229,7 @@ export default function TimelinePage() {
   }, []);
 
   const toggleRow = useCallback((id: string) => {
-    setExpandedRows((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    setExpandedRows((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   }, []);
 
   const dates = useMemo(() => {
@@ -264,6 +238,7 @@ export default function TimelinePage() {
     return arr;
   }, [rangeDays, offset]);
 
+  // Filter employees by team and value stream
   const filteredEmployees = useMemo(() => {
     let emps = horizonEmployees;
     if (teamFilter !== "all") emps = emps.filter((e) => e.teamId === teamFilter);
@@ -271,8 +246,23 @@ export default function TimelinePage() {
       const q = searchQuery.toLowerCase();
       emps = emps.filter((e) => e.name.toLowerCase().includes(q));
     }
+    // Filter by value stream: only show engineers allocated to initiatives in this VS
+    if (vsFilter !== "all") {
+      const vsInits = workInitiatives.filter((i) => i.valueStreamIds.includes(vsFilter));
+      const vsInitNames = new Set(vsInits.map((i) => i.name));
+      const empIdsInVS = new Set(
+        allocations.filter((a) => vsInitNames.has(a.initiative)).map((a) => a.employeeId)
+      );
+      emps = emps.filter((e) => empIdsInVS.has(e.id));
+    }
     return emps;
-  }, [teamFilter, searchQuery]);
+  }, [teamFilter, searchQuery, vsFilter]);
+
+  // Filter initiative risks by value stream
+  const filteredInitiativeRisks = useMemo(() => {
+    if (vsFilter === "all") return decisionSummary.allInitiativeRisks;
+    return decisionSummary.allInitiativeRisks.filter((r) => r.valueStreamIds.includes(vsFilter));
+  }, [decisionSummary, vsFilter]);
 
   const getEventsForLane = useCallback((empId: string | null): TimelineEvent[] => {
     return timelineEvents.filter((e) => {
@@ -280,7 +270,6 @@ export default function TimelinePage() {
       const evEnd = new Date(e.endDate);
       const evStart = new Date(e.startDate);
       if (evEnd < rangeStart || evStart > rangeEnd) return false;
-
       if (empId === null) return e.isGlobal;
       if (e.employeeId === empId) return true;
       const emp = horizonEmployees.find((h) => h.id === empId);
@@ -290,13 +279,20 @@ export default function TimelinePage() {
   }, [typeFilter, rangeStart, rangeEnd]);
 
   const getAllocsForLane = useCallback((empId: string): Allocation[] => {
-    return allocations.filter((a) => {
+    let result = allocations.filter((a) => {
       if (a.employeeId !== empId) return false;
       const aEnd = new Date(a.endDate);
       const aStart = new Date(a.startDate);
       return !(aEnd < rangeStart || aStart > rangeEnd);
     });
-  }, [rangeStart, rangeEnd]);
+    // If value stream filter active, only show matching allocations
+    if (vsFilter !== "all") {
+      const vsInits = workInitiatives.filter((i) => i.valueStreamIds.includes(vsFilter));
+      const vsInitNames = new Set(vsInits.map((i) => i.name));
+      result = result.filter((a) => vsInitNames.has(a.initiative));
+    }
+    return result;
+  }, [rangeStart, rangeEnd, vsFilter]);
 
   const getAvailForDay = (empId: string, dayISO: string): AvailabilityWindow["status"] | null => {
     const w = availabilityWindows.find(
@@ -311,15 +307,12 @@ export default function TimelinePage() {
     for (const emp of filteredEmployees) {
       const empAllocs = allocations.filter((a) => a.employeeId === emp.id);
       if (empAllocs.length < 2) continue;
-      let peak = 0;
-      let peakDate = "";
+      let peak = 0; let peakDate = "";
       for (const d of dates) {
         if (d.getDay() === 0 || d.getDay() === 6) continue;
         const iso = toISO(d);
         let dayTotal = 0;
-        for (const a of empAllocs) {
-          if (a.startDate <= iso && a.endDate >= iso) dayTotal += a.percentage;
-        }
+        for (const a of empAllocs) { if (a.startDate <= iso && a.endDate >= iso) dayTotal += a.percentage; }
         if (dayTotal > peak) { peak = dayTotal; peakDate = iso; }
       }
       if (peak > 100) result.push({ empId: emp.id, empName: emp.name, peakPct: peak, peakDate });
@@ -328,6 +321,26 @@ export default function TimelinePage() {
   }, [filteredEmployees, dates]);
 
   const conflictSet = useMemo(() => new Set(conflicts.map((c) => c.empId)), [conflicts]);
+
+  // Engineer risk: check if engineer is allocated to a high/critical risk initiative
+  const engineerRiskMap = useMemo(() => {
+    const map: Record<string, "critical" | "high" | "medium" | "low"> = {};
+    for (const emp of horizonEmployees) {
+      const empAllocs = allocations.filter((a) => a.employeeId === emp.id);
+      let worst: "low" | "medium" | "high" | "critical" = "low";
+      const order = { low: 0, medium: 1, high: 2, critical: 3 };
+      for (const a of empAllocs) {
+        // Match allocation to initiative risk
+        for (const ir of decisionSummary.allInitiativeRisks) {
+          if (ir.name === a.initiative && order[ir.deliveryRisk] > order[worst]) {
+            worst = ir.deliveryRisk;
+          }
+        }
+      }
+      if (worst !== "low") map[emp.id] = worst;
+    }
+    return map;
+  }, [decisionSummary]);
 
   // ── Drag-to-create handlers ──
   const handleDragStart = useCallback((empId: string, dayIndex: number) => {
@@ -341,15 +354,10 @@ export default function TimelinePage() {
   }, []);
 
   const handleDragEnd = useCallback(() => {
-    if (!isDragging.current || !dragState) {
-      isDragging.current = false;
-      setDragState(null);
-      return;
-    }
+    if (!isDragging.current || !dragState) { isDragging.current = false; setDragState(null); return; }
     isDragging.current = false;
     const minDay = Math.min(dragState.startDayIndex, dragState.currentDayIndex);
     const maxDay = Math.max(dragState.startDayIndex, dragState.currentDayIndex);
-    // Need at least 1 day span
     if (maxDay - minDay >= 0) {
       const startDate = toISO(addDays(rangeStart, minDay));
       const endDate = toISO(addDays(rangeStart, maxDay));
@@ -361,8 +369,7 @@ export default function TimelinePage() {
 
   // ── Drag-to-resize handlers ──
   const handleResizeStart = useCallback((itemId: string, itemType: "allocation" | "event", edge: "left" | "right", originalStart: string, originalEnd: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+    e.stopPropagation(); e.preventDefault();
     isResizing.current = true;
     const edgeDate = new Date(edge === "left" ? originalStart : originalEnd);
     edgeDate.setHours(0, 0, 0, 0);
@@ -376,11 +383,7 @@ export default function TimelinePage() {
   }, []);
 
   const handleResizeEnd = useCallback(() => {
-    if (!isResizing.current || !resizeState) {
-      isResizing.current = false;
-      setResizeState(null);
-      return;
-    }
+    if (!isResizing.current || !resizeState) { isResizing.current = false; setResizeState(null); return; }
     isResizing.current = false;
     const newDate = toISO(addDays(rangeStart, resizeState.currentDayIndex));
     const newStart = resizeState.edge === "left" ? newDate : resizeState.originalStart;
@@ -397,7 +400,6 @@ export default function TimelinePage() {
     setResizeState(null);
   }, [resizeState, rangeStart]);
 
-  // Global mouseup listener for drag & resize
   useEffect(() => {
     const onMouseUp = () => {
       if (isDragging.current) handleDragEnd();
@@ -407,13 +409,28 @@ export default function TimelinePage() {
     return () => window.removeEventListener("mouseup", onMouseUp);
   }, [handleDragEnd, handleResizeEnd]);
 
+  // Get initiative for an allocation name
+  const getInitiativeIdForAlloc = useCallback((allocName: string) => {
+    const init = workInitiatives.find((i) => i.name === allocName);
+    return init?.id ?? null;
+  }, []);
+
   return (
     <TooltipProvider delayDuration={200}>
       <div className="space-y-4">
+        {/* ── Decision Banner ── */}
+        <TimelineDecisionBanner
+          summary={decisionSummary}
+          onInitiativeClick={(id) => {
+            setSelectedInitiativeId(id);
+            if (!layers.has("initiatives")) setLayers((prev) => new Set([...prev, "initiatives"]));
+          }}
+        />
+
         {/* ── Top Controls ── */}
         <div className="flex flex-wrap items-center gap-3">
-          <Select value={teamFilter} onValueChange={setTeamFilter}>
-            <SelectTrigger className="w-[180px] h-8 text-xs">
+          <Select value={teamFilter} onValueChange={(v) => { setTeamFilter(v); setSelectedInitiativeId(null); }}>
+            <SelectTrigger className="w-[160px] h-8 text-xs">
               <SelectValue placeholder="Team" />
             </SelectTrigger>
             <SelectContent>
@@ -423,8 +440,21 @@ export default function TimelinePage() {
             </SelectContent>
           </Select>
 
+          <Select value={vsFilter} onValueChange={(v) => { setVsFilter(v); setSelectedInitiativeId(null); }}>
+            <SelectTrigger className="w-[160px] h-8 text-xs">
+              <Filter size={12} className="mr-1" />
+              <SelectValue placeholder="Value Stream" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" className="text-xs">All Value Streams</SelectItem>
+              {valueStreams.map((vs) => (
+                <SelectItem key={vs.id} value={vs.id} className="text-xs">{vs.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
-            <Share2 size={13} /> Share View
+            <Share2 size={13} /> Share
           </Button>
           <Button size="sm" className="h-8 text-xs gap-1.5">
             <Plus size={13} /> Add Event
@@ -458,13 +488,9 @@ export default function TimelinePage() {
           <div className="flex items-center gap-3 rounded-lg border border-border/50 bg-card px-3 py-1.5">
             <Layers size={13} className="text-muted-foreground" />
             <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Layers</span>
-            {(["availability", "allocations", "events"] as TimelineLayer[]).map((layer) => (
+            {(["initiatives", "allocations", "availability", "events"] as TimelineLayer[]).map((layer) => (
               <label key={layer} className="flex items-center gap-1.5 cursor-pointer">
-                <Checkbox
-                  checked={layers.has(layer)}
-                  onCheckedChange={() => toggleLayer(layer)}
-                  className="h-3.5 w-3.5"
-                />
+                <Checkbox checked={layers.has(layer)} onCheckedChange={() => toggleLayer(layer)} className="h-3.5 w-3.5" />
                 <span className="text-[11px] capitalize">{layer}</span>
               </label>
             ))}
@@ -481,7 +507,7 @@ export default function TimelinePage() {
           )}
         </div>
 
-        {/* ── Allocation Conflicts Alert ── */}
+        {/* ── Conflict Alert ── */}
         {conflicts.length > 0 && layers.has("allocations") && (
           <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
             <div className="flex items-center gap-2">
@@ -503,11 +529,7 @@ export default function TimelinePage() {
         {/* ── Calendar Grid ── */}
         <div className="rounded-lg border border-border/50 bg-card overflow-hidden relative">
           {!todayVisible && (
-            <Button
-              size="sm"
-              className="absolute bottom-3 right-3 z-40 h-7 text-[11px] gap-1.5 shadow-lg"
-              onClick={scrollToToday}
-            >
+            <Button size="sm" className="absolute bottom-3 right-3 z-40 h-7 text-[11px] gap-1.5 shadow-lg" onClick={scrollToToday}>
               Go to today
             </Button>
           )}
@@ -528,16 +550,12 @@ export default function TimelinePage() {
                     const isWeekend = d.getDay() === 0 || d.getDay() === 6;
                     const isMonday = d.getDay() === 1;
                     return (
-                      <div
-                        key={i}
-                        style={{ width: DAY_WIDTH }}
-                        className={cn(
-                          "text-center py-1.5 text-[10px] border-r border-border/20 last:border-0",
-                          isToday && "font-semibold text-primary bg-primary/10 border-x border-primary/30",
-                          isWeekend && !isToday && "bg-muted/20 text-muted-foreground/40",
-                          isMonday && !isToday && "border-l border-border/40"
-                        )}
-                      >
+                      <div key={i} style={{ width: DAY_WIDTH }} className={cn(
+                        "text-center py-1.5 text-[10px] border-r border-border/20 last:border-0",
+                        isToday && "font-semibold text-primary bg-primary/10 border-x border-primary/30",
+                        isWeekend && !isToday && "bg-muted/20 text-muted-foreground/40",
+                        isMonday && !isToday && "border-l border-border/40"
+                      )}>
                         <div>{d.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 2)}</div>
                         <div className="tabular-nums">{d.getDate()}</div>
                         {isToday && <span className="mx-auto mt-0.5 block h-1 w-1 rounded-full bg-primary animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite]" />}
@@ -546,6 +564,19 @@ export default function TimelinePage() {
                   })}
                 </div>
               </div>
+
+              {/* ── Initiative Lanes ── */}
+              {layers.has("initiatives") && (
+                <TimelineInitiativeLanes
+                  initiatives={filteredInitiativeRisks}
+                  rangeStart={rangeStart}
+                  rangeDays={rangeDays}
+                  dayWidth={DAY_WIDTH}
+                  todayISO={todayISO}
+                  selectedInitiativeId={selectedInitiativeId}
+                  onInitiativeClick={(id) => setSelectedInitiativeId(selectedInitiativeId === id ? null : id)}
+                />
+              )}
 
               {/* Global lane */}
               {layers.has("events") && (
@@ -570,49 +601,68 @@ export default function TimelinePage() {
               )}
 
               {/* Employee lanes */}
-              {filteredEmployees.map((emp) => (
-                <TimelineLane
-                  key={emp.id}
-                  id={emp.id}
-                  label={
-                    <>
-                      <div className={cn(
-                        "h-6 w-6 rounded-full flex items-center justify-center",
-                        conflictSet.has(emp.id) ? "bg-amber-500/20" : "bg-primary/10"
-                      )}>
-                        {conflictSet.has(emp.id)
-                          ? <AlertTriangle size={11} className="text-amber-600 dark:text-amber-400" />
-                          : <User size={11} className="text-primary" />
-                        }
-                      </div>
-                      <div className="min-w-0">
-                        <p className={cn("text-xs font-medium truncate", conflictSet.has(emp.id) && "text-amber-700 dark:text-amber-300")}>{emp.name}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{emp.teamName}</p>
-                      </div>
-                    </>
-                  }
-                  events={layers.has("events") ? getEventsForLane(emp.id) : []}
-                  allocations={layers.has("allocations") ? getAllocsForLane(emp.id) : []}
-                  rangeStart={rangeStart}
-                  rangeDays={rangeDays}
-                  dates={dates}
-                  todayISO={todayISO}
-                  layers={layers}
-                  expanded={expandedRows.has(emp.id)}
-                  onToggle={() => toggleRow(emp.id)}
-                  onAllocationClick={setSelectedAllocation}
-                  onEventClick={setSelectedEvent}
-                  availFn={layers.has("availability") ? (dayISO: string) => getAvailForDay(emp.id, dayISO) : undefined}
-                  onDragStart={(dayIndex) => handleDragStart(emp.id, dayIndex)}
-                  onDragMove={isResizing.current ? handleResizeMove : handleDragMove}
-                  dragSelection={dragState?.empId === emp.id ? {
-                    startIndex: Math.min(dragState.startDayIndex, dragState.currentDayIndex),
-                    endIndex: Math.max(dragState.startDayIndex, dragState.currentDayIndex),
-                  } : undefined}
-                  onResizeStart={handleResizeStart}
-                  resizeState={resizeState}
-                />
-              ))}
+              {filteredEmployees.map((emp) => {
+                const empRisk = engineerRiskMap[emp.id];
+                const isHighlighted = selectedInitiativeId
+                  ? allocations.some((a) => a.employeeId === emp.id && getInitiativeIdForAlloc(a.initiative) === selectedInitiativeId)
+                  : false;
+
+                return (
+                  <TimelineLane
+                    key={emp.id}
+                    id={emp.id}
+                    label={
+                      <>
+                        <div className={cn(
+                          "h-6 w-6 rounded-full flex items-center justify-center",
+                          conflictSet.has(emp.id) ? "bg-amber-500/20"
+                            : empRisk === "critical" ? "bg-destructive/15"
+                            : empRisk === "high" ? "bg-amber-500/15"
+                            : "bg-primary/10"
+                        )}>
+                          {conflictSet.has(emp.id)
+                            ? <AlertTriangle size={11} className="text-amber-600 dark:text-amber-400" />
+                            : empRisk === "critical" || empRisk === "high"
+                            ? <Shield size={11} className={empRisk === "critical" ? "text-destructive" : "text-amber-600 dark:text-amber-400"} />
+                            : <User size={11} className="text-primary" />
+                          }
+                        </div>
+                        <div className="min-w-0">
+                          <p className={cn("text-xs font-medium truncate",
+                            conflictSet.has(emp.id) && "text-amber-700 dark:text-amber-300",
+                            isHighlighted && "text-primary"
+                          )}>{emp.name}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{emp.teamName}</p>
+                        </div>
+                      </>
+                    }
+                    events={layers.has("events") ? getEventsForLane(emp.id) : []}
+                    allocations={layers.has("allocations") ? getAllocsForLane(emp.id) : []}
+                    rangeStart={rangeStart}
+                    rangeDays={rangeDays}
+                    dates={dates}
+                    todayISO={todayISO}
+                    layers={layers}
+                    expanded={expandedRows.has(emp.id)}
+                    onToggle={() => toggleRow(emp.id)}
+                    onAllocationClick={setSelectedAllocation}
+                    onEventClick={setSelectedEvent}
+                    availFn={layers.has("availability") ? (dayISO: string) => getAvailForDay(emp.id, dayISO) : undefined}
+                    onDragStart={(dayIndex) => handleDragStart(emp.id, dayIndex)}
+                    onDragMove={isResizing.current ? handleResizeMove : handleDragMove}
+                    dragSelection={dragState?.empId === emp.id ? {
+                      startIndex: Math.min(dragState.startDayIndex, dragState.currentDayIndex),
+                      endIndex: Math.max(dragState.startDayIndex, dragState.currentDayIndex),
+                    } : undefined}
+                    onResizeStart={handleResizeStart}
+                    resizeState={resizeState}
+                    highlighted={isHighlighted}
+                    selectedInitiativeId={selectedInitiativeId}
+                    getInitiativeIdForAlloc={getInitiativeIdForAlloc}
+                    initiativeRiskMap={initiativeRiskMap}
+                  />
+                );
+              })}
 
               {filteredEmployees.length === 0 && (
                 <div className="py-8 text-center text-sm text-muted-foreground">No employees match the current filters.</div>
@@ -623,6 +673,15 @@ export default function TimelinePage() {
 
         {/* Legend */}
         <div className="flex flex-wrap gap-5 text-[11px] text-muted-foreground">
+          {layers.has("initiatives") && (
+            <div className="flex gap-3 items-center">
+              <span className="font-semibold uppercase tracking-wider text-[10px]">Risk</span>
+              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-destructive/40" /> Critical</span>
+              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-amber-500/40" /> High</span>
+              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-yellow-500/40" /> Medium</span>
+              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-emerald-500/40" /> Low</span>
+            </div>
+          )}
           {layers.has("availability") && (
             <div className="flex gap-3 items-center">
               <span className="font-semibold uppercase tracking-wider text-[10px]">Availability</span>
@@ -637,33 +696,13 @@ export default function TimelinePage() {
               <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-indigo-500/70" /> Project bars</span>
             </div>
           )}
-          {layers.has("events") && (
-            <div className="flex gap-3 items-center">
-              <span className="font-semibold uppercase tracking-wider text-[10px]">Events</span>
-              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-primary/30" /> Event markers</span>
-            </div>
-          )}
         </div>
       </div>
 
       {/* Panels */}
-      <AllocationDetailPanel
-        open={!!selectedAllocation}
-        onOpenChange={(open) => !open && setSelectedAllocation(null)}
-        allocation={selectedAllocation}
-      />
-      <AddAllocationDialog
-        open={addAllocOpen}
-        onOpenChange={setAddAllocOpen}
-        prefillEmployeeId={addAllocPrefill.employeeId}
-        prefillStartDate={addAllocPrefill.startDate}
-        prefillEndDate={addAllocPrefill.endDate}
-      />
-      <EventDetailPanel
-        open={!!selectedEvent}
-        onOpenChange={(open) => !open && setSelectedEvent(null)}
-        event={selectedEvent}
-      />
+      <AllocationDetailPanel open={!!selectedAllocation} onOpenChange={(open) => !open && setSelectedAllocation(null)} allocation={selectedAllocation} />
+      <AddAllocationDialog open={addAllocOpen} onOpenChange={setAddAllocOpen} prefillEmployeeId={addAllocPrefill.employeeId} prefillStartDate={addAllocPrefill.startDate} prefillEndDate={addAllocPrefill.endDate} />
+      <EventDetailPanel open={!!selectedEvent} onOpenChange={(open) => !open && setSelectedEvent(null)} event={selectedEvent} />
     </TooltipProvider>
   );
 }
@@ -690,9 +729,13 @@ interface TimelineLaneProps {
   dragSelection?: { startIndex: number; endIndex: number };
   onResizeStart?: (itemId: string, itemType: "allocation" | "event", edge: "left" | "right", originalStart: string, originalEnd: string, e: React.MouseEvent) => void;
   resizeState?: { itemId: string; itemType: "allocation" | "event"; edge: "left" | "right"; originalStart: string; originalEnd: string; currentDayIndex: number } | null;
+  highlighted?: boolean;
+  selectedInitiativeId?: string | null;
+  getInitiativeIdForAlloc?: (name: string) => string | null;
+  initiativeRiskMap?: Record<string, { deliveryRisk: string }>;
 }
 
-function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rangeDays, dates, todayISO, layers, expanded, onToggle, onAllocationClick, onEventClick, className, availFn, onDragStart, onDragMove, dragSelection, onResizeStart, resizeState }: TimelineLaneProps) {
+function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rangeDays, dates, todayISO, layers, expanded, onToggle, onAllocationClick, onEventClick, className, availFn, onDragStart, onDragMove, dragSelection, onResizeStart, resizeState, highlighted, selectedInitiativeId, getInitiativeIdForAlloc, initiativeRiskMap }: TimelineLaneProps) {
   const slottedEvents = useMemo(() => assignEventSlots(events), [events]);
   const slottedAllocs = useMemo(() => assignAllocSlots(allocs), [allocs]);
 
@@ -702,8 +745,6 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
   const visibleEventSlots = expanded ? eventMaxSlot : Math.min(eventMaxSlot, MAX_VISIBLE_EVENTS);
   const hiddenCount = expanded ? 0 : Math.max(0, eventMaxSlot - MAX_VISIBLE_EVENTS);
 
-  // Calculate total row height: availability bg + alloc bars + event bars
-  const availHeight = availFn ? 0 : 0; // availability is rendered as cell backgrounds, no extra height
   const allocSectionHeight = allocMaxSlot > 0 ? allocMaxSlot * (ALLOC_HEIGHT + ROW_GAP) + ROW_GAP : 0;
   const eventSectionHeight = visibleEventSlots > 0 ? visibleEventSlots * (ROW_EVENT_HEIGHT + ROW_GAP) + ROW_GAP : 0;
   const overflowHeight = hiddenCount > 0 ? 16 : 0;
@@ -711,15 +752,14 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
   const totalContentHeight = allocSectionHeight + eventSectionHeight + overflowHeight;
   const rowHeight = Math.max(32, ROW_PADDING * 2 + totalContentHeight);
   const gridWidth = rangeDays * DAY_WIDTH;
-
-  // Offset for event layer (below alloc layer)
   const eventTopOffset = allocSectionHeight;
 
   return (
-    <div
-      className={cn("flex border-b border-border/30 last:border-0 hover:bg-accent/5 transition-colors cursor-default", className)}
-      onClick={!onDragStart ? onToggle : undefined}
-    >
+    <div className={cn(
+      "flex border-b border-border/30 last:border-0 transition-colors cursor-default",
+      highlighted ? "bg-primary/5" : "hover:bg-accent/5",
+      className
+    )} onClick={!onDragStart ? onToggle : undefined}>
       {/* Sticky label */}
       <div className="w-48 shrink-0 border-r border-border/50 px-3 py-2 flex items-center gap-2 sticky left-0 z-10 bg-card cursor-pointer" style={{ minHeight: Math.max(36, rowHeight) }} onClick={onToggle}>
         {label}
@@ -734,10 +774,7 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
           const rect = e.currentTarget.getBoundingClientRect();
           const x = e.clientX - rect.left;
           const dayIndex = Math.floor(x / DAY_WIDTH);
-          if (dayIndex >= 0 && dayIndex < rangeDays) {
-            e.preventDefault();
-            onDragStart(dayIndex);
-          }
+          if (dayIndex >= 0 && dayIndex < rangeDays) { e.preventDefault(); onDragStart(dayIndex); }
         }}
         onMouseMove={(e) => {
           if (!onDragMove) return;
@@ -747,7 +784,7 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
           onDragMove(dayIndex);
         }}
       >
-        {/* Background cells (availability + today overlay) */}
+        {/* Background cells */}
         <div className="flex absolute inset-0">
           {dates.map((d, i) => {
             const iso = toISO(d);
@@ -755,39 +792,29 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
             const isWeekend = d.getDay() === 0 || d.getDay() === 6;
             const isToday = iso === todayISO;
             return (
-              <div
-                key={i}
-                style={{
-                  width: DAY_WIDTH,
-                  ...(isToday
-                    ? { backgroundImage: "linear-gradient(hsl(var(--primary) / 0.14), hsl(var(--primary) / 0.14))" }
-                    : {}),
-                }}
-                className={cn(
-                  "border-r border-border/10 h-full",
-                  status ? availStatusColors[status] : "",
-                  isWeekend && "bg-muted/15",
-                  isToday && "border-x border-primary/30"
-                )}
-              />
+              <div key={i} style={{ width: DAY_WIDTH, ...(isToday ? { backgroundImage: "linear-gradient(hsl(var(--primary) / 0.14), hsl(var(--primary) / 0.14))" } : {}) }} className={cn(
+                "border-r border-border/10 h-full",
+                status ? availStatusColors[status] : "",
+                isWeekend && "bg-muted/15",
+                isToday && "border-x border-primary/30"
+              )} />
             );
           })}
         </div>
 
         {/* Allocation bars */}
         {slottedAllocs.map(({ alloc, slot }) => {
-          // Compute resize overrides
           const isBeingResized = resizeState?.itemId === alloc.id && resizeState?.itemType === "allocation";
           let displayStart = alloc.startDate;
           let displayEnd = alloc.endDate;
           if (isBeingResized && resizeState) {
             const newDate = toISO(addDays(rangeStart, resizeState.currentDayIndex));
-            if (resizeState.edge === "left") {
-              displayStart = newDate <= displayEnd ? newDate : displayEnd;
-            } else {
-              displayEnd = newDate >= displayStart ? newDate : displayStart;
-            }
+            if (resizeState.edge === "left") displayStart = newDate <= displayEnd ? newDate : displayEnd;
+            else displayEnd = newDate >= displayStart ? newDate : displayStart;
           }
+          const allocInitId = getInitiativeIdForAlloc?.(alloc.initiative);
+          const isAllocHighlighted = selectedInitiativeId ? allocInitId === selectedInitiativeId : false;
+          const allocRisk = allocInitId && initiativeRiskMap?.[allocInitId]?.deliveryRisk;
           return (
             <AllocationBlock
               key={alloc.id}
@@ -796,19 +823,18 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
               rangeStart={rangeStart}
               rangeDays={rangeDays}
               topOffset={ROW_PADDING}
-              onClick={(e) => {
-                e.stopPropagation();
-                onAllocationClick(alloc);
-              }}
+              onClick={(e) => { e.stopPropagation(); onAllocationClick(alloc); }}
               onResizeStart={onResizeStart}
               displayStart={displayStart}
               displayEnd={displayEnd}
               isResizing={isBeingResized}
+              isHighlighted={isAllocHighlighted}
+              riskLevel={allocRisk}
             />
           );
         })}
 
-        {/* Event blocks */}
+        {/* Event blocks (compact markers) */}
         {slottedEvents.map(({ event, slot }) => {
           if (!expanded && slot >= MAX_VISIBLE_EVENTS) return null;
           const isBeingResized = resizeState?.itemId === event.id && resizeState?.itemType === "event";
@@ -816,11 +842,8 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
           let evDisplayEnd = event.endDate;
           if (isBeingResized && resizeState) {
             const newDate = toISO(addDays(rangeStart, resizeState.currentDayIndex));
-            if (resizeState.edge === "left") {
-              evDisplayStart = newDate <= evDisplayEnd ? newDate : evDisplayEnd;
-            } else {
-              evDisplayEnd = newDate >= evDisplayStart ? newDate : evDisplayStart;
-            }
+            if (resizeState.edge === "left") evDisplayStart = newDate <= evDisplayEnd ? newDate : evDisplayEnd;
+            else evDisplayEnd = newDate >= evDisplayStart ? newDate : evDisplayStart;
           }
           return (
             <EventBlock
@@ -830,10 +853,7 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
               rangeStart={rangeStart}
               rangeDays={rangeDays}
               topOffset={ROW_PADDING + eventTopOffset}
-              onClick={(e) => {
-                e.stopPropagation();
-                onEventClick?.(event);
-              }}
+              onClick={(e) => { e.stopPropagation(); onEventClick?.(event); }}
               onResizeStart={onResizeStart}
               displayStart={evDisplayStart}
               displayEnd={evDisplayEnd}
@@ -844,26 +864,17 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
 
         {/* +N indicator */}
         {hiddenCount > 0 && (
-          <div
-            className="absolute left-2 text-[10px] font-medium text-primary cursor-pointer hover:underline"
-            style={{ top: ROW_PADDING + eventTopOffset + MAX_VISIBLE_EVENTS * (ROW_EVENT_HEIGHT + ROW_GAP) }}
-          >
+          <div className="absolute left-2 text-[10px] font-medium text-primary cursor-pointer hover:underline"
+            style={{ top: ROW_PADDING + eventTopOffset + MAX_VISIBLE_EVENTS * (ROW_EVENT_HEIGHT + ROW_GAP) }}>
             +{hiddenCount} more
           </div>
         )}
 
         {/* Drag selection overlay */}
         {dragSelection && (
-          <div
-            className="absolute top-0 bottom-0 bg-primary/15 border border-primary/40 rounded-sm pointer-events-none z-[5]"
-            style={{
-              left: dragSelection.startIndex * DAY_WIDTH,
-              width: (dragSelection.endIndex - dragSelection.startIndex + 1) * DAY_WIDTH,
-            }}
-          >
-            <span className="absolute top-1 left-1.5 text-[10px] font-medium text-primary">
-              {dragSelection.endIndex - dragSelection.startIndex + 1}d
-            </span>
+          <div className="absolute top-0 bottom-0 bg-primary/15 border border-primary/40 rounded-sm pointer-events-none z-[5]"
+            style={{ left: dragSelection.startIndex * DAY_WIDTH, width: (dragSelection.endIndex - dragSelection.startIndex + 1) * DAY_WIDTH }}>
+            <span className="absolute top-1 left-1.5 text-[10px] font-medium text-primary">{dragSelection.endIndex - dragSelection.startIndex + 1}d</span>
           </div>
         )}
 
@@ -876,43 +887,29 @@ function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rang
 
 // ── AllocationBlock ──────────────────────────────────────
 function AllocationBlock({
-  alloc,
-  slot,
-  rangeStart,
-  rangeDays,
-  topOffset,
-  onClick,
-  onResizeStart,
-  displayStart,
-  displayEnd,
-  isResizing: resizing,
+  alloc, slot, rangeStart, rangeDays, topOffset, onClick, onResizeStart, displayStart, displayEnd, isResizing: resizing, isHighlighted, riskLevel,
 }: {
-  alloc: Allocation;
-  slot: number;
-  rangeStart: Date;
-  rangeDays: number;
-  topOffset: number;
+  alloc: Allocation; slot: number; rangeStart: Date; rangeDays: number; topOffset: number;
   onClick: (e: React.MouseEvent) => void;
   onResizeStart?: (itemId: string, itemType: "allocation" | "event", edge: "left" | "right", originalStart: string, originalEnd: string, e: React.MouseEvent) => void;
-  displayStart?: string;
-  displayEnd?: string;
-  isResizing?: boolean;
+  displayStart?: string; displayEnd?: string; isResizing?: boolean; isHighlighted?: boolean; riskLevel?: string;
 }) {
   const totalPx = rangeDays * DAY_WIDTH;
   const startDate = displayStart || alloc.startDate;
   const endDate = displayEnd || alloc.endDate;
-  const aStart = new Date(startDate);
-  const aEnd = new Date(endDate);
-  aStart.setHours(0, 0, 0, 0);
-  aEnd.setHours(0, 0, 0, 0);
+  const aStart = new Date(startDate); const aEnd = new Date(endDate);
+  aStart.setHours(0, 0, 0, 0); aEnd.setHours(0, 0, 0, 0);
 
   const leftPx = Math.max(0, ((aStart.getTime() - rangeStart.getTime()) / 86400000) * DAY_WIDTH);
   const widthPx = Math.max(DAY_WIDTH * 0.8, Math.min(totalPx - leftPx, ((aEnd.getTime() - aStart.getTime()) / 86400000 + 1) * DAY_WIDTH));
   const topPx = topOffset + slot * (ALLOC_HEIGHT + ROW_GAP);
 
-  const label = alloc.percentage < 100
-    ? `${alloc.initiative} – ${alloc.percentage}%`
-    : alloc.initiative;
+  const label = alloc.percentage < 100 ? `${alloc.initiative} – ${alloc.percentage}%` : alloc.initiative;
+
+  // Risk-aware left border
+  const riskBorder = riskLevel === "critical" ? "border-l-2 border-l-destructive"
+    : riskLevel === "high" ? "border-l-2 border-l-amber-500"
+    : "";
 
   return (
     <Tooltip>
@@ -920,39 +917,24 @@ function AllocationBlock({
         <div
           onMouseDown={(e) => e.stopPropagation()}
           className={cn(
-            "absolute rounded-md flex items-center px-1.5 text-[10px] font-semibold truncate cursor-pointer border border-indigo-500/40 bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-500/30 transition-colors group",
-            resizing && "ring-2 ring-primary/50 shadow-md"
+            "absolute rounded-md flex items-center px-1.5 text-[10px] font-semibold truncate cursor-pointer border border-indigo-500/40 bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-500/30 transition-all group",
+            riskBorder,
+            resizing && "ring-2 ring-primary/50 shadow-md",
+            isHighlighted && "ring-2 ring-primary/60 bg-indigo-500/30 shadow-sm",
+            !isHighlighted && riskLevel !== "critical" && riskLevel !== "high" && "opacity-90"
           )}
-          style={{
-            left: leftPx,
-            width: widthPx,
-            top: topPx,
-            height: ALLOC_HEIGHT,
-            zIndex: resizing ? 10 : 3,
-          }}
+          style={{ left: leftPx, width: widthPx, top: topPx, height: ALLOC_HEIGHT, zIndex: resizing || isHighlighted ? 10 : 3 }}
           onClick={onClick}
         >
-          {/* Left resize handle */}
           {onResizeStart && (
-            <div
-              className="absolute left-0 top-0 bottom-0 w-2 cursor-col-resize opacity-0 group-hover:opacity-100 hover:bg-primary/30 rounded-l-md transition-opacity z-10"
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                onResizeStart(alloc.id, "allocation", "left", alloc.startDate, alloc.endDate, e);
-              }}
-            />
+            <div className="absolute left-0 top-0 bottom-0 w-2 cursor-col-resize opacity-0 group-hover:opacity-100 hover:bg-primary/30 rounded-l-md transition-opacity z-10"
+              onMouseDown={(e) => { e.stopPropagation(); onResizeStart(alloc.id, "allocation", "left", alloc.startDate, alloc.endDate, e); }} />
           )}
-          <Briefcase size={10} className="mr-1 shrink-0 opacity-70" />
+          {(riskLevel === "critical" || riskLevel === "high") && <AlertTriangle size={9} className="mr-1 shrink-0 text-amber-500" />}
           <span className="truncate">{label}</span>
-          {/* Right resize handle */}
           {onResizeStart && (
-            <div
-              className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize opacity-0 group-hover:opacity-100 hover:bg-primary/30 rounded-r-md transition-opacity z-10"
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                onResizeStart(alloc.id, "allocation", "right", alloc.startDate, alloc.endDate, e);
-              }}
-            />
+            <div className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize opacity-0 group-hover:opacity-100 hover:bg-primary/30 rounded-r-md transition-opacity z-10"
+              onMouseDown={(e) => { e.stopPropagation(); onResizeStart(alloc.id, "allocation", "right", alloc.startDate, alloc.endDate, e); }} />
           )}
         </div>
       </TooltipTrigger>
@@ -960,45 +942,28 @@ function AllocationBlock({
         <p className="font-semibold">{alloc.initiative}</p>
         <p className="text-muted-foreground">Allocation: {alloc.percentage}%</p>
         <p className="text-muted-foreground">{alloc.employeeName} · {alloc.teamName}</p>
+        {riskLevel && <p className={cn("capitalize", riskLevel === "critical" ? "text-destructive" : riskLevel === "high" ? "text-amber-500" : "text-muted-foreground")}>Risk: {riskLevel}</p>}
         <p className="tabular-nums">{formatDate(startDate)} → {formatDate(endDate)}</p>
-        {alloc.source && <p className="text-muted-foreground capitalize">Source: {alloc.source}</p>}
         <p className="text-muted-foreground/70 text-[10px]">Drag edges to resize</p>
       </TooltipContent>
     </Tooltip>
   );
 }
 
-// ── EventBlock ───────────────────────────────────────────
+// ── EventBlock (compact) ─────────────────────────────────
 function EventBlock({
-  event,
-  slot,
-  rangeStart,
-  rangeDays,
-  topOffset,
-  onClick,
-  onResizeStart,
-  displayStart,
-  displayEnd,
-  isResizing: resizing,
+  event, slot, rangeStart, rangeDays, topOffset, onClick, onResizeStart, displayStart, displayEnd, isResizing: resizing,
 }: {
-  event: TimelineEvent;
-  slot: number;
-  rangeStart: Date;
-  rangeDays: number;
-  topOffset: number;
+  event: TimelineEvent; slot: number; rangeStart: Date; rangeDays: number; topOffset: number;
   onClick?: (e: React.MouseEvent) => void;
   onResizeStart?: (itemId: string, itemType: "allocation" | "event", edge: "left" | "right", originalStart: string, originalEnd: string, e: React.MouseEvent) => void;
-  displayStart?: string;
-  displayEnd?: string;
-  isResizing?: boolean;
+  displayStart?: string; displayEnd?: string; isResizing?: boolean;
 }) {
   const totalPx = rangeDays * DAY_WIDTH;
   const startDate = displayStart || event.startDate;
   const endDate = displayEnd || event.endDate;
-  const evStart = new Date(startDate);
-  const evEnd = new Date(endDate);
-  evStart.setHours(0, 0, 0, 0);
-  evEnd.setHours(0, 0, 0, 0);
+  const evStart = new Date(startDate); const evEnd = new Date(endDate);
+  evStart.setHours(0, 0, 0, 0); evEnd.setHours(0, 0, 0, 0);
 
   const leftPx = Math.max(0, ((evStart.getTime() - rangeStart.getTime()) / 86400000) * DAY_WIDTH);
   const widthPx = Math.max(DAY_WIDTH * 0.8, Math.min(totalPx - leftPx, ((evEnd.getTime() - evStart.getTime()) / 86400000 + 1) * DAY_WIDTH));
@@ -1011,40 +976,22 @@ function EventBlock({
       <TooltipTrigger asChild>
         <div
           className={cn(
-            "absolute rounded border flex items-center px-1.5 text-[10px] font-medium truncate cursor-pointer hover:brightness-110 hover:shadow-sm transition-all group",
+            "absolute rounded border flex items-center px-1.5 text-[9px] font-medium truncate cursor-pointer hover:brightness-110 hover:shadow-sm transition-all group",
             colors,
             resizing && "ring-2 ring-primary/50 shadow-md"
           )}
-          style={{
-            left: leftPx,
-            width: widthPx,
-            top: topPx,
-            height: ROW_EVENT_HEIGHT,
-            zIndex: resizing ? 10 : 4,
-          }}
+          style={{ left: leftPx, width: widthPx, top: topPx, height: ROW_EVENT_HEIGHT, zIndex: resizing ? 10 : 2 }}
           onMouseDown={(e) => e.stopPropagation()}
           onClick={onClick}
         >
-          {/* Left resize handle */}
           {onResizeStart && (
-            <div
-              className="absolute left-0 top-0 bottom-0 w-2 cursor-col-resize opacity-0 group-hover:opacity-100 hover:bg-foreground/10 rounded-l transition-opacity z-10"
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                onResizeStart(event.id, "event", "left", event.startDate, event.endDate, e);
-              }}
-            />
+            <div className="absolute left-0 top-0 bottom-0 w-2 cursor-col-resize opacity-0 group-hover:opacity-100 hover:bg-foreground/10 rounded-l transition-opacity z-10"
+              onMouseDown={(e) => { e.stopPropagation(); onResizeStart(event.id, "event", "left", event.startDate, event.endDate, e); }} />
           )}
           <span className="truncate">{event.title}</span>
-          {/* Right resize handle */}
           {onResizeStart && (
-            <div
-              className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize opacity-0 group-hover:opacity-100 hover:bg-foreground/10 rounded-r transition-opacity z-10"
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                onResizeStart(event.id, "event", "right", event.startDate, event.endDate, e);
-              }}
-            />
+            <div className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize opacity-0 group-hover:opacity-100 hover:bg-foreground/10 rounded-r transition-opacity z-10"
+              onMouseDown={(e) => { e.stopPropagation(); onResizeStart(event.id, "event", "right", event.startDate, event.endDate, e); }} />
           )}
         </div>
       </TooltipTrigger>
