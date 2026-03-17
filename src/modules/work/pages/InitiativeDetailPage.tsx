@@ -208,7 +208,7 @@ export default function InitiativeDetailPage() {
                   );
                 })}
                 {/* Total row */}
-                <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-x-4 items-center px-3 py-2 border-t border-border/50 bg-muted/20">
+                <div className="grid grid-cols-[1fr_3.5rem_3rem_3rem_3rem_5rem] gap-x-2 items-center px-3 py-2 border-t border-border/50 bg-muted/20">
                   <span className="text-xs font-semibold">Total</span>
                   <span className="text-xs font-semibold tabular-nums text-right">{init.estimate.totalEffortDays}d</span>
                   <span className="text-xs font-bold tabular-nums text-right">{required}</span>
