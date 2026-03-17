@@ -280,7 +280,128 @@ export function getEmployeeSkillLevel(employeeId: string, skillId: string) {
   return a ? { level: a.level, role: a.role } : null;
 }
 
+// ── Initiative linkage (skills → initiatives via domain mapping) ──
+export function getInitiativesForSkill(skillId: string): { id: string; name: string; status: string }[] {
+  const skill = MOCK_SKILLS.find((s) => s.id === skillId);
+  if (!skill) return [];
+  const { initiatives } = require("@/modules/work/data") as typeof import("@/modules/work/data");
+  return initiatives
+    .filter((init) => init.domainIds.some((did) => {
+      // Map skills domain to work domain via name matching
+      const skillDomain = MOCK_DOMAINS.find((d) => d.id === skill.domainId);
+      const { domains: workDomains } = require("@/modules/work/data") as typeof import("@/modules/work/data");
+      return workDomains.some((wd) => wd.id === did && skillDomain && wd.name.toLowerCase().includes(skillDomain.name.split(" ")[0].toLowerCase()));
+    }))
+    .map((init) => ({ id: init.id, name: init.name, status: init.status }));
+}
+
+// ── Employee allocation total (from work module) ──
+export function getEmployeeAllocationTotal(employeeId: string): number {
+  const { workAllocations } = require("@/modules/work/data") as typeof import("@/modules/work/data");
+  return workAllocations
+    .filter((a) => a.employeeId === employeeId)
+    .reduce((sum, a) => sum + a.percentage, 0);
+}
+
+// ── Person context for matrix ──
+export function getPersonSkillContext(employeeId: string) {
+  const assignments = MOCK_ASSIGNMENTS.filter((a) => a.employeeId === employeeId);
+  const expertSkills = assignments.filter((a) => a.level === "expert");
+  const ownedSkills = assignments.filter((a) => a.role === "owner");
+  const ownedSystemIds = new Set<string>();
+  ownedSkills.forEach((a) => {
+    const skill = MOCK_SKILLS.find((s) => s.id === a.skillId);
+    skill?.systemIds?.forEach((sid) => ownedSystemIds.add(sid));
+  });
+
+  // Dependency risk: how many owned skills have no backup
+  const spofOwned = ownedSkills.filter((a) => {
+    const others = MOCK_ASSIGNMENTS.filter((o) => o.skillId === a.skillId && o.employeeId !== employeeId && (o.role === "backup" || o.role === "owner"));
+    return others.length === 0;
+  });
+
+  return {
+    expertCount: expertSkills.length,
+    ownedSystemCount: ownedSystemIds.size,
+    spofOwnedCount: spofOwned.length,
+    totalAllocation: getEmployeeAllocationTotal(employeeId),
+    isOverallocated: getEmployeeAllocationTotal(employeeId) > 100,
+  };
+}
+
+// ── Skill risk flags ──
+export function getSkillRiskFlags(skillId: string) {
+  const assignments = MOCK_ASSIGNMENTS.filter((a) => a.skillId === skillId);
+  const owners = assignments.filter((a) => a.role === "owner");
+  const experts = assignments.filter((a) => a.level === "expert");
+  const learners = assignments.filter((a) => a.role === "learner");
+  return {
+    noOwner: owners.length === 0,
+    singleExpert: experts.length === 1,
+    noLearners: learners.length === 0,
+  };
+}
+
+// ── Coverage actionable insights ──
+export function getCoverageInsights(skillId: string): string[] {
+  const assignments = MOCK_ASSIGNMENTS.filter((a) => a.skillId === skillId);
+  const skill = MOCK_SKILLS.find((s) => s.id === skillId);
+  const owners = assignments.filter((a) => a.role === "owner");
+  const backups = assignments.filter((a) => a.role === "backup");
+  const learners = assignments.filter((a) => a.role === "learner");
+  const insights: string[] = [];
+
+  if (owners.length === 1 && backups.length === 0) insights.push("Add backup");
+  if (learners.length === 0) insights.push("Assign learner");
+  if (owners.length === 1) {
+    const ownerAlloc = getEmployeeAllocationTotal(owners[0].employeeId);
+    if (ownerAlloc > 100) insights.push("Reduce dependency");
+  }
+  if (owners.length === 0) insights.push("Assign owner");
+
+  return insights;
+}
+
 export function getTeamExposure(): TeamExposure[] {
+  const exposures: TeamExposure[] = [];
+  
+  MOCK_DOMAINS.forEach((domain) => {
+    const domainSkills = MOCK_SKILLS.filter((s) => s.domainId === domain.id);
+    const domainOwnerAssignments = MOCK_ASSIGNMENTS.filter(
+      (a) => a.role === "owner" && domainSkills.some((s) => s.id === a.skillId)
+    );
+    
+    if (domainOwnerAssignments.length === 0) return;
+    
+    const teamMap = new Map<string, { teamId: string; teamName: string; skillIds: Set<string> }>();
+    domainOwnerAssignments.forEach((a) => {
+      const existing = teamMap.get(a.teamId);
+      if (existing) {
+        existing.skillIds.add(a.skillId);
+      } else {
+        teamMap.set(a.teamId, { teamId: a.teamId, teamName: a.teamName, skillIds: new Set([a.skillId]) });
+      }
+    });
+
+    teamMap.forEach((teamData) => {
+      const pct = Math.round((teamData.skillIds.size / domainSkills.length) * 100);
+      if (pct >= 75) {
+        exposures.push({
+          teamId: teamData.teamId,
+          teamName: teamData.teamName,
+          domainName: domain.name,
+          domainId: domain.id,
+          skillCount: teamData.skillIds.size,
+          skillNames: [...teamData.skillIds].map((sid) => MOCK_SKILLS.find((s) => s.id === sid)!.name),
+          totalSkillsInDomain: domainSkills.length,
+          concentrationPct: pct,
+        });
+      }
+    });
+  });
+
+  return exposures.sort((a, b) => b.concentrationPct - a.concentrationPct);
+}
   const exposures: TeamExposure[] = [];
   
   MOCK_DOMAINS.forEach((domain) => {
