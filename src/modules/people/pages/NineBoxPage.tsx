@@ -409,6 +409,7 @@ export default function NineBoxPage() {
         onAdd={handleAddRound}
         onRename={handleRenameRound}
         onDelete={handleDeleteRound}
+        onClone={handleCloneRound}
       />
     </div>
   );
