@@ -135,6 +135,7 @@ function App() {
                 <Route index element={<AdminOverviewPage />} />
                 <Route path="access" element={<AccessPage />} />
                 <Route path="users" element={<UsersPage />} />
+                <Route path="roles" element={<RolesPage />} />
                 <Route path="linking" element={<LinkingPage />} />
                 <Route path="governance" element={<GovernancePage />} />
                 <Route path="audit" element={<AuditPage />} />
