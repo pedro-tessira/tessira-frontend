@@ -425,53 +425,208 @@ export default function OverviewPage() {
         </div>
 
         {/* ═══════════════════════════════════════════════════════
-             PRIORITY 2: ACTIONABLE SIGNALS
+             PRIORITY 2: VISUAL CHARTS
             ═══════════════════════════════════════════════════════ */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Zap size={14} className="text-warning" />
-            <h3 className="text-sm font-semibold">Actionable Signals</h3>
-            <div className="flex gap-1.5 ml-2">
-              {criticalSignals.length > 0 &&
-              <Badge variant="secondary" className="text-[9px] h-4 bg-destructive/10 text-destructive">{criticalSignals.length} critical</Badge>
-              }
-              {highSignals.length > 0 &&
-              <Badge variant="secondary" className="text-[9px] h-4 bg-orange/10 text-orange">{highSignals.length} high</Badge>
-              }
-              {mediumSignals.length > 0 &&
-              <Badge variant="secondary" className="text-[9px] h-4 bg-warning/10 text-warning">{mediumSignals.length} medium</Badge>
-              }
-            </div>
-          </div>
-          <div className="space-y-2">
-            {signals.map((signal) =>
-            <SignalCard key={signal.id} signal={signal} />
-            )}
-          </div>
-        </div>
+        <div className="grid gap-4 lg:grid-cols-3">
+          {/* Risk Distribution Donut */}
+          <Card className="border-border/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <PieChart size={14} className="text-primary" />
+                Risk Distribution
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">Initiatives by delivery risk level</p>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {(() => {
+                const riskCounts = { critical: 0, high: 0, medium: 0, low: 0 };
+                data.allInitiativeRisks.forEach((r) => riskCounts[r.deliveryRisk]++);
+                const pieData = [
+                  { name: "Critical", value: riskCounts.critical, color: "hsl(var(--destructive))" },
+                  { name: "High", value: riskCounts.high, color: "hsl(var(--orange))" },
+                  { name: "Medium", value: riskCounts.medium, color: "hsl(var(--warning))" },
+                  { name: "Low", value: riskCounts.low, color: "hsl(var(--success))" },
+                ].filter((d) => d.value > 0);
+                return (
+                  <div className="flex items-center gap-4">
+                    <div className="h-[140px] w-[140px] shrink-0">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RePieChart>
+                          <Pie
+                            data={pieData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={35}
+                            outerRadius={60}
+                            paddingAngle={3}
+                            dataKey="value"
+                            strokeWidth={0}
+                          >
+                            {pieData.map((entry, i) => (
+                              <Cell key={i} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <ReTooltip
+                            contentStyle={{
+                              background: "hsl(var(--card))",
+                              border: "1px solid hsl(var(--border))",
+                              borderRadius: 6,
+                              fontSize: 12,
+                            }}
+                          />
+                        </RePieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="space-y-2 text-xs">
+                      {pieData.map((d) => (
+                        <div key={d.name} className="flex items-center gap-2">
+                          <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: d.color }} />
+                          <span className="text-muted-foreground">{d.name}</span>
+                          <span className="font-bold tabular-nums ml-auto">{d.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
 
-        {/* ═══════════════════════════════════════════════════════
-             PRIORITY 2b: WHAT TO DO NEXT
-            ═══════════════════════════════════════════════════════ */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Lightbulb size={14} className="text-primary" />
-            <h3 className="text-sm font-semibold">What to Do Next</h3>
-            <span className="text-[11px] text-muted-foreground">
-              — {data.recommendations.length} action{data.recommendations.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-          <div className="grid gap-2 md:grid-cols-2">
-            {visibleRecs.map((rec) =>
-            <RecommendationCard key={rec.id} rec={rec} />
-            )}
-          </div>
-          {data.recommendations.length > 4 &&
-          <Button variant="ghost" size="sm" className="text-xs text-primary" onClick={() => setShowAllRecs(!showAllRecs)}>
-              {showAllRecs ? "Show less" : `Show all ${data.recommendations.length} recommendations`}
-              <ArrowRight size={12} className="ml-1" />
-            </Button>
-          }
+          {/* Team Allocation Chart */}
+          <Card className="border-border/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Users size={14} className="text-primary" />
+                Team Allocation
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">Average allocation by team</p>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {(() => {
+                const teams = new Map<string, { name: string; allocs: number[] }>();
+                for (const eng of data.engineerCapacities) {
+                  if (!teams.has(eng.teamId)) teams.set(eng.teamId, { name: eng.teamName, allocs: [] });
+                  teams.get(eng.teamId)!.allocs.push(eng.currentAllocation);
+                }
+                const barData = [...teams.entries()].map(([, t]) => ({
+                  team: t.name,
+                  allocation: Math.round(t.allocs.reduce((s, v) => s + v, 0) / t.allocs.length),
+                }));
+                return (
+                  <div className="h-[140px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={barData} layout="vertical" margin={{ top: 0, right: 8, bottom: 0, left: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                        <XAxis
+                          type="number"
+                          domain={[0, 120]}
+                          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                          axisLine={false}
+                          tickLine={false}
+                          tickFormatter={(v) => `${v}%`}
+                        />
+                        <YAxis
+                          dataKey="team"
+                          type="category"
+                          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                          axisLine={false}
+                          tickLine={false}
+                          width={60}
+                        />
+                        <ReTooltip
+                          contentStyle={{
+                            background: "hsl(var(--card))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: 6,
+                            fontSize: 12,
+                          }}
+                          formatter={(v: number) => [`${v}%`, "Allocation"]}
+                        />
+                        <Bar dataKey="allocation" radius={[0, 4, 4, 0]} maxBarSize={16}>
+                          {barData.map((entry, i) => (
+                            <Cell
+                              key={i}
+                              fill={
+                                entry.allocation > 80
+                                  ? "hsl(var(--destructive))"
+                                  : entry.allocation >= 60
+                                  ? "hsl(var(--warning))"
+                                  : "hsl(var(--success))"
+                              }
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
+
+          {/* Delivery Risk by Initiative */}
+          <Card className="border-border/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Activity size={14} className="text-primary" />
+                Delivery Risk Scores
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">Risk score per initiative</p>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {(() => {
+                const barData = data.allInitiativeRisks.slice(0, 6).map((r) => ({
+                  name: r.name.length > 18 ? r.name.slice(0, 16) + "…" : r.name,
+                  score: r.riskScore,
+                  risk: r.deliveryRisk,
+                }));
+                const riskFill: Record<string, string> = {
+                  critical: "hsl(var(--destructive))",
+                  high: "hsl(var(--orange))",
+                  medium: "hsl(var(--warning))",
+                  low: "hsl(var(--success))",
+                };
+                return (
+                  <div className="h-[140px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={barData} layout="vertical" margin={{ top: 0, right: 8, bottom: 0, left: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                        <XAxis
+                          type="number"
+                          domain={[0, 100]}
+                          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          dataKey="name"
+                          type="category"
+                          tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
+                          axisLine={false}
+                          tickLine={false}
+                          width={80}
+                        />
+                        <ReTooltip
+                          contentStyle={{
+                            background: "hsl(var(--card))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: 6,
+                            fontSize: 12,
+                          }}
+                          formatter={(v: number) => [`${v}/100`, "Risk Score"]}
+                        />
+                        <Bar dataKey="score" radius={[0, 4, 4, 0]} maxBarSize={14}>
+                          {barData.map((entry, i) => (
+                            <Cell key={i} fill={riskFill[entry.risk] || riskFill.low} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
         </div>
 
         {/* ═══════════════════════════════════════════════════════
