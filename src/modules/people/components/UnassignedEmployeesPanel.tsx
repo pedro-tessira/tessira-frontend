@@ -46,7 +46,7 @@ export function UnassignedEmployeesPanel({
             Unassigned
           </span>
           <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-            {employees.filter((e) => !placedIds.has(e.id) && e.status === "active").length}
+            {employees.filter((e) => !placedIds.has(e.id) && e.status !== "inactive").length}
           </Badge>
         </div>
       </div>
