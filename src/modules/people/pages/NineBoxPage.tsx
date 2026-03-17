@@ -6,6 +6,9 @@ import { UnassignedEmployeesPanel } from "../components/UnassignedEmployeesPanel
 import EmployeeDetailPanel from "../components/EmployeeDetailPanel";
 import { RoundComparisonPanel } from "../components/RoundComparisonPanel";
 import { ManageReviewRoundsDialog, type ReviewRoundEntry } from "../components/ManageReviewRoundsDialog";
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
