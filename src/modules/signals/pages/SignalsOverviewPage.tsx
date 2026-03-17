@@ -193,7 +193,7 @@ export default function SignalsOverviewPage() {
                           <>
                             <span>·</span>
                             <Link
-                              to={`/app/work/initiatives/${alert.initiativeId}`}
+                              to={`/app/work/initiatives/${alert.initiativeId}?from=${encodeURIComponent("/app/signals")}`}
                               className="text-primary hover:underline"
                               onClick={(e) => e.stopPropagation()}
                             >
