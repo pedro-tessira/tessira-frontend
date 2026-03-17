@@ -222,6 +222,15 @@ export default function NineBoxPage() {
     setDragOverKey(null);
   }, []);
 
+  const handleRemoveFromRound = useCallback((empId: string) => {
+    setPlacementsMap((prev) => {
+      const roundPlacements = (prev[selectedRound] ?? []).filter((p) => p.employeeId !== empId);
+      return { ...prev, [selectedRound]: roundPlacements };
+    });
+    setMovements((prev) => prev.filter((m) => m.employeeId !== empId));
+    toast({ title: "Removed from round", description: "Employee moved back to unassigned" });
+  }, [selectedRound]);
+
   return (
     <div className="space-y-6">
       <ModulePageHeader
