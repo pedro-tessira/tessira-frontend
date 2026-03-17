@@ -188,7 +188,7 @@ export default function InitiativeDetailPage() {
                   const gap = Math.round((roleAlloc - rb.fte) * 10) / 10;
                   const roleStatus = roleAlloc < rb.fte * 0.85 ? "understaffed" : roleAlloc > rb.fte * 1.15 ? "overstaffed" : "balanced";
                   return (
-                    <div key={rb.role} className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-x-4 items-center px-3 py-2 border-t border-border/20">
+                    <div key={rb.role} className="grid grid-cols-[1fr_3.5rem_3rem_3rem_3rem_5rem] gap-x-2 items-center px-3 py-2 border-t border-border/20">
                       <span className="text-xs font-medium">{rb.role}</span>
                       <span className="text-xs tabular-nums text-right">{rb.days}d</span>
                       <span className="text-xs font-bold tabular-nums text-right">{rb.fte}</span>
