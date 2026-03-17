@@ -735,9 +735,10 @@ interface TimelineLaneProps {
   selectedInitiativeId?: string | null;
   getInitiativeIdForAlloc?: (name: string) => string | null;
   initiativeRiskMap?: Record<string, { deliveryRisk: string }>;
+  onLabelClick?: () => void;
 }
 
-function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rangeDays, dates, todayISO, layers, expanded, onToggle, onAllocationClick, onEventClick, className, availFn, onDragStart, onDragMove, dragSelection, onResizeStart, resizeState, highlighted, selectedInitiativeId, getInitiativeIdForAlloc, initiativeRiskMap }: TimelineLaneProps) {
+function TimelineLane({ id, label, events, allocations: allocs, rangeStart, rangeDays, dates, todayISO, layers, expanded, onToggle, onAllocationClick, onEventClick, className, availFn, onDragStart, onDragMove, dragSelection, onResizeStart, resizeState, highlighted, selectedInitiativeId, getInitiativeIdForAlloc, initiativeRiskMap, onLabelClick }: TimelineLaneProps) {
   const slottedEvents = useMemo(() => assignEventSlots(events), [events]);
   const slottedAllocs = useMemo(() => assignAllocSlots(allocs), [allocs]);
 
