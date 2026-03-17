@@ -772,7 +772,7 @@ function CapacityRow({
                     } : {}),
                   }}
                   className={cn(
-                    "h-8",
+                    "h-full min-h-[2rem]",
                     isMonday && !isToday && "border-l-2 border-border/40",
                     !isMonday && !isToday && "border-r border-border/10",
                     isWeekend ? "bg-muted/15" : cellColor,
