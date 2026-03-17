@@ -35,9 +35,9 @@ export default function ManageTeamMembersDialog({ open, onOpenChange, team }: Pr
     if (!addEmployeeId) return;
     addMembership(addEmployeeId, team.id, addRole);
     const emp = employees.find((e) => e.id === addEmployeeId);
-    toast({ title: "Member added", description: `${emp?.firstName} ${emp?.lastName} added to ${team.name}.` });
     setAddEmployeeId("");
     setAddRole("member");
+    setTimeout(() => toast({ title: "Member added", description: `${emp?.firstName} ${emp?.lastName} added to ${team.name}.` }), 150);
   };
 
   return (
