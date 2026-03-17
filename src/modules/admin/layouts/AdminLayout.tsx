@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet } from "react-router-dom";
 import {
   LayoutDashboard,
   ShieldCheck,
@@ -6,6 +6,7 @@ import {
   Link2,
   Building2,
   ScrollText,
+  UserCheck,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 
@@ -13,6 +14,7 @@ const ADMIN_NAV = [
   { label: "Overview", href: "/app/admin", icon: LayoutDashboard, end: true },
   { label: "Access & Auth", href: "/app/admin/access", icon: ShieldCheck },
   { label: "Users", href: "/app/admin/users", icon: Users },
+  { label: "Roles", href: "/app/admin/roles", icon: UserCheck },
   { label: "Linking", href: "/app/admin/linking", icon: Link2 },
   { label: "Governance", href: "/app/admin/governance", icon: Building2 },
   { label: "Audit", href: "/app/admin/audit", icon: ScrollText },
@@ -24,7 +26,7 @@ export default function AdminLayout() {
       <div>
         <h1 className="text-xl font-semibold tracking-tight">Organization Settings</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Tenant settings, access control, governance, and audit.
+          Tenant administration, access control, governance, and audit.
         </p>
       </div>
 
