@@ -7,6 +7,7 @@ import type {
   HorizonEmployee,
   Allocation,
 } from "./types";
+import { workAllocations } from "@/modules/work/data";
 
 // ── Helpers ──────────────────────────────────────────────
 function daysFromNow(offset: number): string {
