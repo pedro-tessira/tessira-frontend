@@ -15,6 +15,8 @@ import { useNavigate } from "react-router-dom";
 export default function TeamDetailPage() {
   const { teamId } = useParams<{ teamId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const fromParam = searchParams.get("from");
   const { getTeam, getTeamMembers, deleteTeam, removeMembership } = usePeopleStore();
   const team = getTeam(teamId ?? "");
   const members = teamId ? getTeamMembers(teamId) : [];
