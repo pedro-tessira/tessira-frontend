@@ -3,6 +3,7 @@ import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { StatCard } from "@/shared/components/StatCard";
 import { NineBoxCard, type MovementRecord } from "../components/NineBoxCard";
 import EmployeeDetailPanel from "../components/EmployeeDetailPanel";
+import { ManageReviewRoundsDialog, type ReviewRoundEntry } from "../components/ManageReviewRoundsDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -10,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/shared/lib/utils";
 import { usePeopleStore } from "../contexts/PeopleStoreContext";
-import { Users2, AlertTriangle, Star, TrendingUp } from "lucide-react";
+import { Users2, AlertTriangle, Star, TrendingUp, Settings2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 // ── 9-box domain types ──────────────────────────────────────
@@ -109,6 +110,7 @@ function getBoxLabel(perf: PerformanceLevel, pot: PotentialLevel) {
 export default function NineBoxPage() {
   const { teams, memberships } = usePeopleStore();
   const [teamFilter, setTeamFilter] = useState<string>("all");
+  const [rounds, setRounds] = useState<ReviewRound[]>([...REVIEW_ROUNDS]);
   const [selectedRound, setSelectedRound] = useState<string>("q1-2026");
   const [placementsMap, setPlacementsMap] = useState<Record<string, NineBoxPlacement[]>>(() => {
     const map: Record<string, NineBoxPlacement[]> = {};
@@ -119,9 +121,36 @@ export default function NineBoxPage() {
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const [roundsDialogOpen, setRoundsDialogOpen] = useState(false);
 
   const currentPlacements = placementsMap[selectedRound] ?? [];
-  const currentRound = REVIEW_ROUNDS.find((r) => r.id === selectedRound);
+  const currentRound = rounds.find((r) => r.id === selectedRound);
+
+  // Round management handlers
+  const handleAddRound = useCallback((id: string, label: string) => {
+    setRounds((prev) => [{ id, label, placements: [] }, ...prev]);
+    setPlacementsMap((prev) => ({ ...prev, [id]: [] }));
+    setSelectedRound(id);
+  }, []);
+
+  const handleRenameRound = useCallback((id: string, label: string) => {
+    setRounds((prev) => prev.map((r) => (r.id === id ? { ...r, label } : r)));
+  }, []);
+
+  const handleDeleteRound = useCallback((id: string) => {
+    setRounds((prev) => prev.filter((r) => r.id !== id));
+    setPlacementsMap((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    if (selectedRound === id) {
+      setRounds((prev) => {
+        if (prev.length > 0) setSelectedRound(prev[0].id);
+        return prev;
+      });
+    }
+  }, [selectedRound]);
 
   const filteredPlacements = useMemo(() => {
     if (teamFilter === "all") return currentPlacements;
@@ -239,11 +268,14 @@ export default function NineBoxPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {REVIEW_ROUNDS.map((r) => (
+              {rounds.map((r) => (
                 <SelectItem key={r.id} value={r.id}>{r.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setRoundsDialogOpen(true)}>
+            <Settings2 className="h-3.5 w-3.5" />
+          </Button>
         </div>
       </div>
 
@@ -336,6 +368,16 @@ export default function NineBoxPage() {
               ]?.label
             : undefined
         }
+      />
+
+      <ManageReviewRoundsDialog
+        open={roundsDialogOpen}
+        onOpenChange={setRoundsDialogOpen}
+        rounds={rounds.map((r) => ({ id: r.id, label: r.label }))}
+        activeRoundId={selectedRound}
+        onAdd={handleAddRound}
+        onRename={handleRenameRound}
+        onDelete={handleDeleteRound}
       />
     </div>
   );
