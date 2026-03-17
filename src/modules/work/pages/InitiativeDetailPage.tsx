@@ -172,7 +172,7 @@ export default function InitiativeDetailPage() {
             <div className="space-y-2">
               <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">FTE by Role</p>
               <div className="rounded-md border border-border/30 overflow-hidden">
-                <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-x-4 px-3 py-1.5 bg-muted/40 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                <div className="grid grid-cols-[1fr_3.5rem_3rem_3rem_3rem_5rem] gap-x-2 px-3 py-1.5 bg-muted/40 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
                   <span>Role</span>
                   <span className="text-right">Effort</span>
                   <span className="text-right">Req.</span>
