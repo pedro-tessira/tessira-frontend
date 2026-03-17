@@ -29,7 +29,7 @@ interface Props {
 }
 
 export function ManageReviewRoundsDialog({
-  open, onOpenChange, rounds, activeRoundId, onAdd, onRename, onDelete,
+  open, onOpenChange, rounds, activeRoundId, onAdd, onRename, onDelete, onClone,
 }: Props) {
   const [newLabel, setNewLabel] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
