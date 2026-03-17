@@ -406,50 +406,50 @@ export default function CapacityIntelligencePage() {
         }
 
         {/* ── Recommended Actions ── */}
-        {decisionSummary.recommendations.length > 0 &&
-        <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Zap size={14} className="text-primary" />
-                <h3 className="text-sm font-semibold">Recommended Actions</h3>
-                <Badge variant="secondary" className="text-[10px] h-4 bg-primary/10 text-primary">{decisionSummary.recommendations.length}</Badge>
-              </div>
-              {decisionSummary.recommendations.length > 4 &&
-            <Button variant="ghost" size="sm" className="h-7 text-[11px] gap-1" onClick={() => setShowAllRecs(!showAllRecs)}>
-                  {showAllRecs ? <><ChevronUp size={12} /> Show less</> : <><ChevronDown size={12} /> Show all</>}
-                </Button>
-            }
-            </div>
-            <div className="grid gap-2 grid-cols-1 md:grid-cols-2">
-              {topRecs.map((rec) => {
-              const Icon = recIcon(rec.type);
-              const priorityStyle = rec.priority === "high" ?
-              "border-destructive/20 bg-destructive/5" :
-              rec.priority === "medium" ?
-              "border-amber-500/20 bg-amber-500/5" :
-              "border-border/50 bg-card";
-              return (
-                <div key={rec.id} className={cn("rounded-md border p-3 space-y-1.5 tessira-transition hover:shadow-sm", priorityStyle)}>
-                    <div className="flex items-start gap-2">
-                      <div className={cn(
-                      "h-6 w-6 rounded-md flex items-center justify-center shrink-0",
-                      rec.priority === "high" ? "bg-destructive/10" : rec.priority === "medium" ? "bg-amber-500/10" : "bg-muted"
-                    )}>
-                        <Icon size={12} className={rec.priority === "high" ? "text-destructive" : rec.priority === "medium" ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-medium leading-tight">{rec.label}</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">{rec.detail}</p>
-                      </div>
-                      <Badge variant="outline" className={cn("text-[9px] h-4 shrink-0",
-                    rec.priority === "high" ? "border-destructive/30 text-destructive" : rec.priority === "medium" ? "border-amber-500/30 text-amber-600 dark:text-amber-400" : "text-muted-foreground"
-                    )}>{rec.priority}</Badge>
-                    </div>
-                  </div>);
+        {decisionSummary.recommendations.length > 0
 
-            })}
-            </div>
-          </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         }
 
         {/* ── Initiative Staffing (enriched with risk) ── */}
