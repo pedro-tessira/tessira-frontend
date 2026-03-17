@@ -5,6 +5,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -30,6 +31,7 @@ export default function AddEmployeeDialog({ open, onOpenChange }: Props) {
     country: "", countryCode: "", timezone: "",
     startDate: new Date().toISOString().slice(0, 10),
     managerId: "" as string,
+    excludeFromCapacity: false,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -38,6 +40,7 @@ export default function AddEmployeeDialog({ open, onOpenChange }: Props) {
     addEmployee({
       ...form,
       managerId: form.managerId || null,
+      excludeFromCapacity: form.excludeFromCapacity,
     });
     const name = `${form.firstName} ${form.lastName}`;
     setForm({
@@ -46,6 +49,7 @@ export default function AddEmployeeDialog({ open, onOpenChange }: Props) {
       country: "", countryCode: "", timezone: "",
       startDate: new Date().toISOString().slice(0, 10),
       managerId: "",
+      excludeFromCapacity: false,
     });
     onOpenChange(false);
     setTimeout(() => toast({ title: "Employee added", description: `${name} has been added.` }), 150);
@@ -118,6 +122,13 @@ export default function AddEmployeeDialog({ open, onOpenChange }: Props) {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="flex items-center justify-between rounded-md border border-border/50 px-3 py-2.5">
+            <div>
+              <Label className="text-xs font-medium">Exclude from Capacity</Label>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Management or non-IC roles excluded from planning metrics</p>
+            </div>
+            <Switch checked={form.excludeFromCapacity} onCheckedChange={(v) => setForm((p) => ({ ...p, excludeFromCapacity: v }))} />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>

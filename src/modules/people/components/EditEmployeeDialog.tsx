@@ -5,6 +5,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -33,6 +34,7 @@ export default function EditEmployeeDialog({ open, onOpenChange, employee }: Pro
     department: "", status: "active" as EmployeeStatus,
     country: "", countryCode: "", timezone: "",
     startDate: "", managerId: "",
+    excludeFromCapacity: false,
   });
 
   useEffect(() => {
@@ -44,6 +46,7 @@ export default function EditEmployeeDialog({ open, onOpenChange, employee }: Pro
         country: employee.country, countryCode: employee.countryCode,
         timezone: employee.timezone, startDate: employee.startDate,
         managerId: employee.managerId ?? "",
+        excludeFromCapacity: employee.excludeFromCapacity ?? false,
       });
     }
   }, [employee]);
@@ -55,6 +58,7 @@ export default function EditEmployeeDialog({ open, onOpenChange, employee }: Pro
     updateEmployee(employee.id, {
       ...form,
       managerId: form.managerId || null,
+      excludeFromCapacity: form.excludeFromCapacity,
     });
     const name = `${form.firstName} ${form.lastName}`;
     onOpenChange(false);
@@ -133,6 +137,13 @@ export default function EditEmployeeDialog({ open, onOpenChange, employee }: Pro
               <Label className="text-xs">Timezone</Label>
               <Input value={form.timezone} onChange={(e) => setForm((p) => ({ ...p, timezone: e.target.value }))} />
             </div>
+          </div>
+          <div className="flex items-center justify-between rounded-md border border-border/50 px-3 py-2.5">
+            <div>
+              <Label className="text-xs font-medium">Exclude from Capacity</Label>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Management or non-IC roles excluded from planning metrics</p>
+            </div>
+            <Switch checked={form.excludeFromCapacity} onCheckedChange={(v) => setForm((p) => ({ ...p, excludeFromCapacity: v }))} />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
