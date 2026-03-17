@@ -1,7 +1,7 @@
 import { useState } from "react";
 import KPICards from "../components/KPICards";
 import CapacityForecast from "../components/CapacityForecast";
-import DomainLoadChart from "../components/DeliveryStreamsLoad";
+import InitiativeAllocationChart from "../components/DeliveryStreamsLoad";
 import SkillCoverageHeatmap from "../components/SkillCoverageHeatmap";
 import SystemResilienceMap from "../components/SystemResilienceMap";
 import TeamAllocation from "../components/TeamAllocation";
@@ -24,7 +24,7 @@ export default function OverviewPage() {
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Overview</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Engineering capacity, skills coverage, and delivery risk at a glance.
+            Engineering capacity, initiative staffing, and delivery risk at a glance.
           </p>
         </div>
         <DashboardFilters filters={filters} onChange={setFilters} />
@@ -32,10 +32,10 @@ export default function OverviewPage() {
 
       <KPICards />
 
-      {/* Row 1: Capacity Forecast | Domain Load */}
+      {/* Row 1: Capacity Forecast | Initiative Allocation */}
       <div className="grid gap-4 lg:grid-cols-2">
         <CapacityForecast />
-        <DomainLoadChart domainFilter={filters.domain} />
+        <InitiativeAllocationChart domainFilter={filters.domain} />
       </div>
 
       {/* Row 2: Skill Coverage | System Resilience */}

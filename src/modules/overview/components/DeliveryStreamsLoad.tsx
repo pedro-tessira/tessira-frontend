@@ -1,71 +1,71 @@
 import { useNavigate } from "react-router-dom";
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
-} from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DOMAIN_LOAD, domainLoadColor } from "../data";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/shared/lib/utils";
+import { initiatives, getRequiredFTE, getAllocatedFTE, getStaffingStatus } from "@/modules/work/data";
+import type { StaffingStatus } from "@/modules/work/types";
+import { Rocket } from "lucide-react";
+
+const staffingConfig: Record<StaffingStatus, { label: string; barColor: string; badgeClass: string }> = {
+  understaffed: { label: "Understaffed", barColor: "bg-destructive", badgeClass: "bg-destructive/10 text-destructive" },
+  balanced: { label: "Balanced", barColor: "bg-success", badgeClass: "bg-success/10 text-success" },
+  overstaffed: { label: "Overstaffed", barColor: "bg-warning", badgeClass: "bg-warning/10 text-warning" },
+};
 
 interface Props {
   domainFilter?: string;
 }
 
-export default function DomainLoadChart({ domainFilter }: Props) {
+export default function InitiativeAllocationChart({ domainFilter }: Props) {
   const navigate = useNavigate();
-  const data = domainFilter && domainFilter !== "all"
-    ? DOMAIN_LOAD.filter((d) => d.domain === domainFilter)
-    : DOMAIN_LOAD;
+
+  const activeInits = initiatives.filter((i) => i.status !== "completed");
+  const data = (domainFilter && domainFilter !== "all")
+    ? activeInits.filter((i) => i.domainIds.some((d) => d === domainFilter))
+    : activeInits;
+
+  const items = data.map((init) => ({
+    id: init.id,
+    name: init.name,
+    required: getRequiredFTE(init),
+    allocated: getAllocatedFTE(init.id),
+    status: getStaffingStatus(init),
+  }));
 
   return (
     <Card
       className="border-border/50 cursor-pointer transition-colors hover:border-primary/30"
-      onClick={() => navigate("/app/horizon")}
+      onClick={() => navigate("/app/horizon/capacity")}
     >
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold">Domain Load</CardTitle>
-        <p className="text-xs text-muted-foreground">FTE allocation per engineering domain — neutral color</p>
+        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <Rocket size={14} className="text-primary" />
+          Initiative Allocation
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">Required vs allocated FTE per active initiative</p>
       </CardHeader>
-      <CardContent className="pt-0">
-        <div className="h-[220px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={data}
-              layout="vertical"
-              margin={{ top: 4, right: 16, bottom: 0, left: 0 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-              <XAxis
-                type="number"
-                domain={[0, 5]}
-                tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v) => `${v} FTE`}
-              />
-              <YAxis
-                type="category"
-                dataKey="domain"
-                tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                axisLine={false}
-                tickLine={false}
-                width={110}
-              />
-              <Tooltip
-                contentStyle={{
-                  background: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: 6,
-                  fontSize: 12,
-                }}
-                formatter={(v: number) => [`${v} FTE`, "Allocation"]}
-              />
-              <Bar dataKey="fte" radius={[0, 4, 4, 0]} barSize={18}>
-                {data.map((entry, i) => (
-                  <Cell key={i} fill={domainLoadColor(entry.status)} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+      <CardContent className="pt-0 space-y-2.5">
+        {items.map((item) => {
+          const sc = staffingConfig[item.status];
+          const fillPct = item.required > 0 ? Math.min(100, Math.round((item.allocated / item.required) * 100)) : 0;
+          return (
+            <div key={item.id} className="space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium truncate mr-2">{item.name}</span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-muted-foreground tabular-nums">{item.allocated}/{item.required} FTE</span>
+                  <Badge variant="secondary" className={cn("text-[9px] h-4", sc.badgeClass)}>{sc.label}</Badge>
+                </div>
+              </div>
+              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                <div className={cn("h-full rounded-full transition-all", sc.barColor)} style={{ width: `${fillPct}%` }} />
+              </div>
+            </div>
+          );
+        })}
+        {items.length === 0 && (
+          <p className="text-xs text-muted-foreground text-center py-4">No active initiatives</p>
+        )}
       </CardContent>
     </Card>
   );

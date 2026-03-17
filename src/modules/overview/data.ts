@@ -5,7 +5,7 @@ import { freeCapacityRisk, deliveryRisk, coverageRisk, riskHsl, allocationRisk }
 export const METRICS = [
   { label: "Active Initiatives", value: "6", trend: "+2 this sprint", link: "/app/work/initiatives" },
   { label: "Active Domains", value: "5", trend: "All areas covered", link: "/app/work/domains" },
-  { label: "Free Capacity", value: "45%", trend: "Across 12 engineers", link: "/app/horizon" },
+  { label: "Free Capacity", value: "45%", trend: "Across 12 engineers", link: "/app/horizon/capacity" },
   { label: "Skill Coverage", value: "91%", trend: "3 gaps identified", link: "/app/skills" },
 ];
 
@@ -15,15 +15,6 @@ export const CAPACITY_FORECAST = [
   { week: "Week 2", current: null, projected: 78 },
   { week: "Week 3", current: null, projected: 71 },
   { week: "Week 4", current: null, projected: 85 },
-];
-
-/* Domain Load (FTE allocation per engineering domain) */
-export const DOMAIN_LOAD = [
-  { domain: "Auth Platform", fte: 4.2, status: "heavy" as const },
-  { domain: "Payments Platform", fte: 2.8, status: "normal" as const },
-  { domain: "Frontend Platform", fte: 3.5, status: "heavy" as const },
-  { domain: "Data Platform", fte: 1.0, status: "light" as const },
-  { domain: "Observability", fte: 2.5, status: "normal" as const },
 ];
 
 /* Skill Coverage Heatmap */
@@ -52,7 +43,7 @@ export const ENGINEERS = ["A. Morgan", "S. Chen", "M. Johnson", "P. Patel", "T. 
 export interface ResilienceCell {
   system: string;
   engineer: string;
-  level: 0 | 1 | 2 | 3; // 0=none, 1=aware, 2=proficient, 3=owner
+  level: 0 | 1 | 2 | 3;
 }
 
 export const RESILIENCE_DATA: ResilienceCell[] = [];
@@ -101,22 +92,18 @@ export const RECENT_ACTIVITY = [
 
 /* ── Helpers (Risk-based coloring) ── */
 
-/** Team Allocation bar: use NEUTRAL color (primary). Risk shown via Free Capacity indicator. */
 export function allocationColor(_v: number) {
   return "hsl(var(--primary))";
 }
 
-/** Delivery Risk: color by risk score */
 export function riskColor(v: number) {
   return riskHsl(deliveryRisk(v));
 }
 
-/** Domain Load: neutral brand color (not risk-based — load is informational) */
 export function domainLoadColor(_status: "heavy" | "normal" | "light") {
   return "hsl(var(--primary))";
 }
 
-/** Coverage heatmap: color by knowledge risk */
 export function heatmapBg(coverage: number) {
   const risk = coverageRisk(coverage);
   if (risk === "healthy") return "bg-success/20";
