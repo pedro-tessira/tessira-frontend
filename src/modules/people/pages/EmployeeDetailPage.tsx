@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
-  Mail, MapPin, Clock, Calendar, Users2, Shield, Zap, Activity, Pencil, Trash2,
+  Mail, MapPin, Clock, Calendar, Users2, Shield, Zap, Activity, Pencil, Trash2, ShieldOff,
 } from "lucide-react";
 import { ModulePageHeader } from "@/shared/components/ModulePageHeader";
 import { StatusBadge } from "../components/StatusBadge";
