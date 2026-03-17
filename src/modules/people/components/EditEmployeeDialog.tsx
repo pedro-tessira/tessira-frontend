@@ -58,6 +58,7 @@ export default function EditEmployeeDialog({ open, onOpenChange, employee }: Pro
     updateEmployee(employee.id, {
       ...form,
       managerId: form.managerId || null,
+      excludeFromCapacity: form.excludeFromCapacity,
     });
     const name = `${form.firstName} ${form.lastName}`;
     onOpenChange(false);
