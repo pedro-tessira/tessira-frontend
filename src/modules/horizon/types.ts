@@ -89,4 +89,5 @@ export interface HorizonEmployee {
   name: string;
   teamId: string;
   teamName: string;
+  excludeFromCapacity?: boolean;
 }
