@@ -62,7 +62,7 @@ export default function AdminUserDetailPage() {
   const [editForm, setEditForm] = useState({ displayName: "", email: "" });
 
   // Confirm dialogs
-  const [confirmAction, setConfirmAction] = useState<"suspend" | "deactivate" | null>(null);
+  const [confirmAction, setConfirmAction] = useState<AdminUserStatus | null>(null);
 
   const availableRoles = initialRoles;
   const unassignedRoles = availableRoles.filter((r) => !assignedRoles.includes(r.name));
