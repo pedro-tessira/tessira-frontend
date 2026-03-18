@@ -354,10 +354,46 @@ export default function AdminUserDetailPage() {
               />
             </div>
           </div>
+          {/* Severity filter chips */}
+          <div className="flex items-center gap-1.5">
+            {(["info", "warning", "critical"] as const).map((sev) => {
+              const active = severityFilter === sev;
+              const chipStyle: Record<string, string> = {
+                info: active ? "bg-muted text-foreground border-border" : "bg-transparent text-muted-foreground border-border/50 hover:bg-muted/50",
+                warning: active ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30" : "bg-transparent text-muted-foreground border-border/50 hover:bg-amber-500/10",
+                critical: active ? "bg-destructive/15 text-destructive border-destructive/30" : "bg-transparent text-muted-foreground border-border/50 hover:bg-destructive/10",
+              };
+              return (
+                <button
+                  key={sev}
+                  onClick={() => { setSeverityFilter(active ? null : sev); setActivityLimit(5); }}
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium capitalize transition-colors",
+                    chipStyle[sev]
+                  )}
+                >
+                  <div className={cn(
+                    "h-1.5 w-1.5 rounded-full",
+                    sev === "critical" ? "bg-destructive" : sev === "warning" ? "bg-amber-500" : "bg-muted-foreground/50"
+                  )} />
+                  {sev}
+                </button>
+              );
+            })}
+            {severityFilter && (
+              <button
+                onClick={() => { setSeverityFilter(null); setActivityLimit(5); }}
+                className="text-[10px] text-muted-foreground hover:text-foreground ml-1 transition-colors"
+              >
+                Clear
+              </button>
+            )}
+          </div>
           {(() => {
             const query = activitySearch.toLowerCase();
             const userActivities = auditLog
               .filter((e) => e.actor === userData.displayName || e.resource === userData.displayName)
+              .filter((e) => !severityFilter || e.severity === severityFilter)
               .filter((e) =>
                 !query ||
                 e.action.toLowerCase().includes(query) ||
