@@ -68,6 +68,7 @@ export default function AdminUserDetailPage() {
   // Activity log
   const [activitySearch, setActivitySearch] = useState("");
   const [activityLimit, setActivityLimit] = useState(5);
+  const [severityFilter, setSeverityFilter] = useState<string | null>(null);
 
   const availableRoles = initialRoles;
   const unassignedRoles = availableRoles.filter((r) => !assignedRoles.includes(r.name));
