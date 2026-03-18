@@ -22,20 +22,21 @@ import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TenantSwitcher } from "@/shared/components/TenantSwitcher";
 import { UserMenu } from "@/shared/components/UserMenu";
+import { routePaths } from "@/app/routing/routePaths";
 
 const NAV_ITEMS = [
-  { label: "Overview", href: "/app/overview", icon: LayoutDashboard },
-  { label: "Work", href: "/app/work", icon: Briefcase },
-  { label: "Horizon", href: "/app/horizon", icon: CalendarRange },
-  { label: "People", href: "/app/people", icon: Users2 },
-  { label: "Skills", href: "/app/skills", icon: Zap },
-  { label: "Signals", href: "/app/signals", icon: Activity },
-  { label: "Insights", href: "/app/insights", icon: BarChart3 },
+  { label: "Overview", href: routePaths.app.overview, icon: LayoutDashboard },
+  { label: "Work", href: routePaths.app.work.root, icon: Briefcase },
+  { label: "Horizon", href: routePaths.app.horizon.root, icon: CalendarRange },
+  { label: "People", href: routePaths.app.people.root, icon: Users2 },
+  { label: "Skills", href: routePaths.app.skills.root, icon: Zap },
+  { label: "Signals", href: routePaths.app.signals.root, icon: Activity },
+  { label: "Insights", href: routePaths.app.insights.root, icon: BarChart3 },
 ];
 
 const BOTTOM_ITEMS = [
-  { label: "Org Settings", href: "/app/admin", icon: Settings },
-  { label: "Help", href: "/app/help", icon: HelpCircle },
+  { label: "Org Settings", href: routePaths.app.admin.root, icon: Settings },
+  { label: "Help", href: routePaths.app.help, icon: HelpCircle },
 ];
 
 function Breadcrumb() {

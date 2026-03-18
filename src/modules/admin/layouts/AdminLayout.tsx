@@ -9,15 +9,16 @@ import {
   UserCheck,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { routePaths } from "@/app/routing/routePaths";
 
 const ADMIN_NAV = [
-  { label: "Overview", href: "/app/admin", icon: LayoutDashboard, end: true },
-  { label: "Access & Auth", href: "/app/admin/access", icon: ShieldCheck },
-  { label: "Users", href: "/app/admin/users", icon: Users },
-  { label: "Roles", href: "/app/admin/roles", icon: UserCheck },
-  { label: "Linking", href: "/app/admin/linking", icon: Link2 },
-  { label: "Governance", href: "/app/admin/governance", icon: Building2 },
-  { label: "Audit", href: "/app/admin/audit", icon: ScrollText },
+  { label: "Overview", href: routePaths.app.admin.root, icon: LayoutDashboard, end: true },
+  { label: "Access & Auth", href: routePaths.app.admin.access, icon: ShieldCheck },
+  { label: "Users", href: routePaths.app.admin.users, icon: Users },
+  { label: "Roles", href: routePaths.app.admin.roles, icon: UserCheck },
+  { label: "Linking", href: routePaths.app.admin.linking, icon: Link2 },
+  { label: "Governance", href: routePaths.app.admin.governance, icon: Building2 },
+  { label: "Audit", href: routePaths.app.admin.audit, icon: ScrollText },
 ];
 
 export default function AdminLayout() {

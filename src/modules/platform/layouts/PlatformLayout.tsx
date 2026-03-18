@@ -11,15 +11,16 @@ import {
   Shield,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { routePaths } from "@/app/routing/routePaths";
 
 const PLATFORM_NAV = [
-  { label: "Tenants", href: "/platform", icon: Building2, end: true },
-  { label: "Users", href: "/platform/users", icon: Users },
-  { label: "Subscriptions", href: "/platform/subscriptions", icon: CreditCard },
-  { label: "Usage", href: "/platform/usage", icon: BarChart3 },
-  { label: "Feature Flags", href: "/platform/flags", icon: Flag },
-  { label: "Audit", href: "/platform/audit", icon: ScrollText },
-  { label: "Support", href: "/platform/support", icon: Wrench },
+  { label: "Tenants", href: routePaths.platform.root, icon: Building2, end: true },
+  { label: "Users", href: routePaths.platform.users, icon: Users },
+  { label: "Subscriptions", href: routePaths.platform.subscriptions, icon: CreditCard },
+  { label: "Usage", href: routePaths.platform.usage, icon: BarChart3 },
+  { label: "Feature Flags", href: routePaths.platform.flags, icon: Flag },
+  { label: "Audit", href: routePaths.platform.audit, icon: ScrollText },
+  { label: "Support", href: routePaths.platform.support, icon: Wrench },
 ];
 
 export default function PlatformLayout() {
@@ -56,7 +57,7 @@ export default function PlatformLayout() {
 
         <div className="border-t border-border/50 p-3">
           <button
-            onClick={() => navigate("/app/overview")}
+            onClick={() => navigate(routePaths.app.overview)}
             className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent/50 hover:text-foreground tessira-transition"
           >
             <ArrowLeft size={16} strokeWidth={1.8} />

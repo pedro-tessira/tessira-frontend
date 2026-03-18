@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/shared/lib/utils";
+import { routePaths } from "@/app/routing/routePaths";
 
 const NAV_LINKS = [
   { label: "Product", href: "#modules" },
@@ -39,18 +40,18 @@ export function LandingNav() {
 
         <div className="hidden md:flex items-center gap-3">
           <Link
-            to="/app"
+            to={routePaths.auth.login}
             className="text-sm font-medium text-muted-foreground hover:text-foreground tessira-transition"
           >
             Sign In
           </Link>
-          <a
-            href="#waitlist"
+          <Link
+            to={routePaths.auth.signup}
             className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 tessira-transition"
           >
             Request Access
             <ArrowRight size={14} />
-          </a>
+          </Link>
         </div>
 
         <button
@@ -75,15 +76,15 @@ export function LandingNav() {
             </a>
           ))}
           <div className="pt-3 border-t border-border/50 flex flex-col gap-2">
-            <Link to="/app" className="text-sm font-medium text-foreground">
+            <Link to={routePaths.auth.login} className="text-sm font-medium text-foreground">
               Sign In
             </Link>
-            <a
-              href="#waitlist"
+            <Link
+              to={routePaths.auth.signup}
               className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
             >
               Request Access
-            </a>
+            </Link>
           </div>
         </div>
       )}
