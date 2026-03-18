@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { User, Shield, LogOut, ArrowLeftRight } from "lucide-react";
 import { useTenant } from "@/shared/contexts/TenantContext";
+import { routePaths } from "@/app/routing/routePaths";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,16 +28,16 @@ export function UserMenu({ collapsed }: { collapsed?: boolean }) {
       <DropdownMenuContent align="end" side={collapsed ? "right" : "top"} className="w-52">
         <DropdownMenuLabel className="text-xs text-muted-foreground">Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => navigate("/app/account")}>
+        <DropdownMenuItem onClick={() => navigate(routePaths.app.account.root)}>
           <User size={14} className="mr-2" />
           My Account
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate("/app/overview")}>
+        <DropdownMenuItem onClick={() => navigate(routePaths.app.overview)}>
           <ArrowLeftRight size={14} className="mr-2" />
           Switch Organization
         </DropdownMenuItem>
         {isPlatformAdmin && (
-          <DropdownMenuItem onClick={() => navigate("/platform")}>
+          <DropdownMenuItem onClick={() => navigate(routePaths.platform.root)}>
             <Shield size={14} className="mr-2" />
             Platform Admin
           </DropdownMenuItem>

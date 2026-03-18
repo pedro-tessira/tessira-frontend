@@ -1,11 +1,12 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { Globe, Boxes, Rocket } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { routePaths } from "@/app/routing/routePaths";
 
 const WORK_NAV = [
-  { label: "Value Streams", href: "/app/work", icon: Globe, end: true },
-  { label: "Domains", href: "/app/work/domains", icon: Boxes },
-  { label: "Initiatives", href: "/app/work/initiatives", icon: Rocket },
+  { label: "Value Streams", href: routePaths.app.work.root, icon: Globe, end: true },
+  { label: "Domains", href: routePaths.app.work.domains, icon: Boxes },
+  { label: "Initiatives", href: routePaths.app.work.initiatives, icon: Rocket },
 ];
 
 export default function WorkLayout() {

@@ -1,13 +1,14 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { User, ShieldCheck, Monitor, Bell, Key } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { routePaths } from "@/app/routing/routePaths";
 
 const ACCOUNT_NAV = [
-  { label: "Profile", href: "/app/account", icon: User, end: true },
-  { label: "Security", href: "/app/account/security", icon: ShieldCheck },
-  { label: "Sessions", href: "/app/account/sessions", icon: Monitor },
-  { label: "Notifications", href: "/app/account/notifications", icon: Bell },
-  { label: "API Tokens", href: "/app/account/tokens", icon: Key },
+  { label: "Profile", href: routePaths.app.account.root, icon: User, end: true },
+  { label: "Security", href: routePaths.app.account.security, icon: ShieldCheck },
+  { label: "Sessions", href: routePaths.app.account.sessions, icon: Monitor },
+  { label: "Notifications", href: routePaths.app.account.notifications, icon: Bell },
+  { label: "API Tokens", href: routePaths.app.account.tokens, icon: Key },
 ];
 
 export default function AccountPage() {
