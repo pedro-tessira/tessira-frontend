@@ -18,6 +18,36 @@ export function ProtectedRoute() {
   return <Outlet />;
 }
 
+export function TenantAdminRoute() {
+  const { status, isAuthenticated, isTenantAdmin } = useAuth();
+
+  if (status === "bootstrapping") {
+    return null;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to={routePaths.auth.login} replace />;
+  }
+
+  if (!isTenantAdmin) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-6">
+        <div className="w-full max-w-md rounded-xl border border-border/50 bg-card p-6 text-center">
+          <h1 className="text-lg font-semibold tracking-tight">Admin access required</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Your active tenant role does not allow access to organization settings.
+          </p>
+          <Button className="mt-4" asChild>
+            <Link to={routePaths.app.overview}>Return to workspace</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return <Outlet />;
+}
+
 export function PlatformRoute() {
   const { status, isAuthenticated, isPlatformAdmin } = useAuth();
 

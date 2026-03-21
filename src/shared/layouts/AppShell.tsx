@@ -23,6 +23,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { TenantSwitcher } from "@/shared/components/TenantSwitcher";
 import { UserMenu } from "@/shared/components/UserMenu";
 import { routePaths } from "@/app/routing/routePaths";
+import { useAuth } from "@/modules/auth/contexts/AuthContext";
 
 const NAV_ITEMS = [
   { label: "Overview", href: routePaths.app.overview, icon: LayoutDashboard },
@@ -32,11 +33,6 @@ const NAV_ITEMS = [
   { label: "Skills", href: routePaths.app.skills.root, icon: Zap },
   { label: "Signals", href: routePaths.app.signals.root, icon: Activity },
   { label: "Insights", href: routePaths.app.insights.root, icon: BarChart3 },
-];
-
-const BOTTOM_ITEMS = [
-  { label: "Org Settings", href: routePaths.app.admin.root, icon: Settings },
-  { label: "Help", href: routePaths.app.help, icon: HelpCircle },
 ];
 
 function Breadcrumb() {
@@ -65,6 +61,7 @@ function Breadcrumb() {
 }
 
 export function AppShell() {
+  const { isTenantAdmin } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -186,7 +183,7 @@ export function AppShell() {
 
       {/* Bottom Nav */}
       <div className="border-t border-border/50 p-3 space-y-0.5">
-        {BOTTOM_ITEMS.map((item) => (
+        {bottomItems.map((item) => (
           <NavLink
             key={item.href}
             to={item.href}
@@ -271,3 +268,7 @@ export function AppShell() {
     </div>
   );
 }
+  const bottomItems = [
+    ...(isTenantAdmin ? [{ label: "Org Settings", href: routePaths.app.admin.root, icon: Settings }] : []),
+    { label: "Help", href: routePaths.app.help, icon: HelpCircle },
+  ];

@@ -10,6 +10,7 @@ import { signalsRoutes } from "@/modules/signals/routes";
 import { insightsRoutes } from "@/modules/insights/routes";
 import { adminRoutes } from "@/modules/admin/routes";
 import { accountRoutes } from "@/modules/account/routes";
+import { TenantAdminRoute } from "@/modules/auth/components/ProtectedRoute";
 import { routePaths } from "./routePaths";
 
 export const tenantAppRoutes = (
@@ -22,7 +23,7 @@ export const tenantAppRoutes = (
     {skillsRoutes}
     {signalsRoutes}
     {insightsRoutes}
-    {adminRoutes}
+    <Route element={<TenantAdminRoute />}>{adminRoutes}</Route>
     {accountRoutes}
     <Route path="help" element={<HelpPage />} />
   </Route>

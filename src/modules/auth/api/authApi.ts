@@ -138,6 +138,13 @@ export const authApi = {
     return request<AuthTenant[]>("/api/auth/tenants");
   },
 
+  switchTenant(tenantId: string) {
+    return request<void>("/api/auth/switch-tenant", {
+      method: "POST",
+      body: JSON.stringify({ tenantId }),
+    });
+  },
+
   listSsoProviders() {
     return request<SsoProviderSummary[]>("/api/auth/sso-providers");
   },
