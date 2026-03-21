@@ -1,6 +1,6 @@
 import { Check, ChevronDown, Building2 } from "lucide-react";
 import { useTenant } from "@/shared/contexts/TenantContext";
-import { cn } from "@/shared/lib/utils";
+import { useAuth } from "@/modules/auth/contexts/AuthContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,10 +12,14 @@ import {
 
 export function TenantSwitcher() {
   const { currentTenant, tenants, switchTenant } = useTenant();
+  const { isSwitchingTenant } = useAuth();
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-2 rounded-md border border-border/50 bg-background px-2.5 py-1.5 text-sm font-medium hover:bg-accent tessira-transition outline-none">
+      <DropdownMenuTrigger
+        className="flex items-center gap-2 rounded-md border border-border/50 bg-background px-2.5 py-1.5 text-sm font-medium hover:bg-accent tessira-transition outline-none disabled:cursor-not-allowed disabled:opacity-60"
+        disabled={isSwitchingTenant || tenants.length <= 1}
+      >
         <Building2 size={14} className="text-muted-foreground" />
         <span className="max-w-[140px] truncate">{currentTenant.name}</span>
         <ChevronDown size={12} className="text-muted-foreground" />
@@ -26,8 +30,9 @@ export function TenantSwitcher() {
         {tenants.map((tenant) => (
           <DropdownMenuItem
             key={tenant.id}
-            onClick={() => switchTenant(tenant.id)}
+            onClick={() => void switchTenant(tenant.id)}
             className="flex items-center justify-between"
+            disabled={isSwitchingTenant}
           >
             <div className="flex flex-col">
               <span className="text-sm font-medium">{tenant.name}</span>

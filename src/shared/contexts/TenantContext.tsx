@@ -15,14 +15,19 @@ export interface Tenant {
 interface TenantContextValue {
   currentTenant: Tenant;
   tenants: Tenant[];
-  switchTenant: (tenantId: string) => void;
+  switchTenant: (tenantId: string) => Promise<void>;
   isPlatformAdmin: boolean;
 }
 
 const TenantContext = createContext<TenantContextValue | null>(null);
 
 export function TenantProvider({ children }: { children: ReactNode }) {
-  const { tenants: authTenants, isPlatformAdmin } = useAuth();
+  const {
+    tenants: authTenants,
+    activeTenantId,
+    switchTenant,
+    isPlatformAdmin,
+  } = useAuth();
 
   const tenants = useMemo<Tenant[]>(
     () =>
@@ -39,7 +44,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     [authTenants],
   );
 
-  const currentTenant = tenants[0] ?? {
+  const currentTenant = tenants.find((tenant) => tenant.id === activeTenantId) ?? tenants[0] ?? {
     id: "unknown",
     name: "No tenant",
     slug: "no-tenant",
@@ -55,9 +60,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       value={{
         currentTenant,
         tenants,
-        switchTenant: () => {
-          throw new Error("Tenant switching is not part of the current bootstrap slice");
-        },
+        switchTenant,
         isPlatformAdmin,
       }}
     >
