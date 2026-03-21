@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { useAuth } from "@/modules/auth/contexts/AuthContext";
 
 export interface Tenant {
   id: string;
@@ -18,26 +19,48 @@ interface TenantContextValue {
   isPlatformAdmin: boolean;
 }
 
-const MOCK_TENANTS: Tenant[] = [
-  { id: "t1", name: "Planet Engineering", slug: "planet-eng", plan: "enterprise", region: "eu-west-1", status: "active", userCount: 142, createdAt: "2024-01-15" },
-  { id: "t2", name: "BNP Paribas", slug: "bnp", plan: "enterprise", region: "eu-central-1", status: "active", userCount: 89, createdAt: "2024-03-22" },
-  { id: "t3", name: "Startup X", slug: "startup-x", plan: "team", region: "us-east-1", status: "trial", userCount: 12, createdAt: "2025-11-01" },
-];
-
 const TenantContext = createContext<TenantContextValue | null>(null);
 
 export function TenantProvider({ children }: { children: ReactNode }) {
-  const [currentTenantId, setCurrentTenantId] = useState("t1");
+  const { tenants: authTenants, isPlatformAdmin } = useAuth();
 
-  const switchTenant = useCallback((tenantId: string) => {
-    setCurrentTenantId(tenantId);
-    // In production: invalidate queries, reload tenant-scoped data
-  }, []);
+  const tenants = useMemo<Tenant[]>(
+    () =>
+      authTenants.map((tenant) => ({
+        id: tenant.tenantId,
+        name: tenant.displayName,
+        slug: tenant.displayName.toLowerCase().replace(/\s+/g, "-"),
+        plan: "enterprise",
+        region: "unknown",
+        status: "active",
+        userCount: 0,
+        createdAt: "",
+      })),
+    [authTenants],
+  );
 
-  const currentTenant = MOCK_TENANTS.find((t) => t.id === currentTenantId) ?? MOCK_TENANTS[0];
+  const currentTenant = tenants[0] ?? {
+    id: "unknown",
+    name: "No tenant",
+    slug: "no-tenant",
+    plan: "starter",
+    region: "unknown",
+    status: "trial",
+    userCount: 0,
+    createdAt: "",
+  };
 
   return (
-    <TenantContext.Provider value={{ currentTenant, tenants: MOCK_TENANTS, switchTenant, isPlatformAdmin: true }}>
+    <TenantContext.Provider
+      value={{
+        currentTenant,
+        tenants,
+        switchTenant: () => {
+          throw new Error("Tenant switching is not part of the current bootstrap slice");
+        },
+        isPlatformAdmin,
+      }}
+    >
       {children}
     </TenantContext.Provider>
   );
