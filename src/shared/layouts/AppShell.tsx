@@ -66,6 +66,10 @@ export function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const isMobile = useIsMobile();
   const location = useLocation();
+  const bottomItems = [
+    ...(isTenantAdmin ? [{ label: "Org Settings", href: routePaths.app.admin.root, icon: Settings }] : []),
+    { label: "Help", href: routePaths.app.help, icon: HelpCircle },
+  ];
 
   // Close mobile sidebar on navigation
   useEffect(() => {
@@ -268,7 +272,3 @@ export function AppShell() {
     </div>
   );
 }
-  const bottomItems = [
-    ...(isTenantAdmin ? [{ label: "Org Settings", href: routePaths.app.admin.root, icon: Settings }] : []),
-    { label: "Help", href: routePaths.app.help, icon: HelpCircle },
-  ];
