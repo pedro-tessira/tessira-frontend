@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, ArrowRight, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,29 +7,68 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { routePaths } from "@/app/routing/routePaths";
+import { ApiError, authApi } from "@/modules/auth/api/authApi";
+import { useAuth } from "@/modules/auth/contexts/AuthContext";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const { login, isAuthenticated, status } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [providers, setProviders] = useState<{ id: string; displayName: string; provider: string }[]>([]);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
+  useEffect(() => {
+    void authApi.listSsoProviders()
+      .then((response) => {
+        setProviders(response.map((provider) => ({
+          id: provider.id,
+          displayName: provider.displayName,
+          provider: provider.provider,
+        })));
+      })
+      .catch(() => {
+        setProviders([]);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (status === "authenticated" && isAuthenticated) {
+      const target = (location.state as { from?: string } | null)?.from ?? routePaths.app.overview;
+      navigate(target, { replace: true });
+    }
+  }, [isAuthenticated, location.state, navigate, status]);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    setFormError(null);
+    try {
+      await login({ email, password });
       toast({ title: "Welcome back", description: "Signed in successfully." });
-      navigate(routePaths.app.overview);
-    }, 800);
+    } catch (error) {
+      const message = error instanceof ApiError
+        ? error.details[0] ?? error.message
+        : "Unable to sign in right now.";
+      setFormError(message);
+      toast({
+        title: "Sign-in failed",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSocial = (provider: string) => {
     toast({
       title: `${provider} sign-in`,
-      description: "This is a UI mockup — no real auth configured.",
+      description: "SSO redirect is not implemented in this slice yet.",
     });
   };
 
@@ -76,7 +115,7 @@ export default function LoginPage() {
 
           <div className="grid gap-3">
             <div className="grid grid-cols-2 gap-3">
-              <Button variant="outline" className="h-10 text-sm" onClick={() => handleSocial("Google")}>
+              <Button variant="outline" className="h-10 text-sm" onClick={() => handleSocial(providers.find((p) => p.provider === "GOOGLE")?.displayName ?? "Google")}>
                 <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
                   <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
@@ -85,7 +124,7 @@ export default function LoginPage() {
                 </svg>
                 Google
               </Button>
-              <Button variant="outline" className="h-10 text-sm" onClick={() => handleSocial("Apple")}>
+              <Button variant="outline" className="h-10 text-sm" onClick={() => handleSocial(providers.find((p) => p.provider === "APPLE")?.displayName ?? "Apple")}>
                 <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
                 </svg>
@@ -94,7 +133,7 @@ export default function LoginPage() {
             </div>
             <Button variant="outline" className="h-10 text-sm w-full" onClick={() => handleSocial("SSO")}>
               <Building2 className="mr-2 h-4 w-4" />
-              Company SSO
+              {providers.length > 0 ? "Company SSO" : "SSO unavailable"}
             </Button>
           </div>
 
@@ -106,6 +145,11 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
+            {formError ? (
+              <div className="rounded-md border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+                {formError}
+              </div>
+            ) : null}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-foreground">Email</Label>
               <Input
@@ -120,7 +164,7 @@ export default function LoginPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password" className="text-foreground">Password</Label>
-                <button type="button" className="text-xs text-primary hover:underline">
+                <button type="button" className="text-xs text-primary hover:underline" disabled>
                   Forgot password?
                 </button>
               </div>

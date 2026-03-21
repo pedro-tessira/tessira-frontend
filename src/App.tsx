@@ -3,6 +3,8 @@ import { BrowserRouter } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/modules/auth/contexts/AuthContext";
+import { AuthBootstrapGate } from "@/modules/auth/components/AuthBootstrapGate";
 import { TenantProvider } from "@/shared/contexts/TenantContext";
 import { HealthWeightsProvider } from "@/modules/signals/contexts/HealthWeightsContext";
 import { PeopleStoreProvider } from "@/modules/people/contexts/PeopleStoreContext";
@@ -12,21 +14,25 @@ const queryClient = new QueryClient();
 
 function App() {
   return (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <TenantProvider>
-      <HealthWeightsProvider>
-      <PeopleStoreProvider>
-        <Toaster />
-        <Sonner />
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
         <BrowserRouter>
-          <AppRoutes />
+          <AuthProvider>
+            <AuthBootstrapGate>
+              <TenantProvider>
+                <HealthWeightsProvider>
+                  <PeopleStoreProvider>
+                    <Toaster />
+                    <Sonner />
+                    <AppRoutes />
+                  </PeopleStoreProvider>
+                </HealthWeightsProvider>
+              </TenantProvider>
+            </AuthBootstrapGate>
+          </AuthProvider>
         </BrowserRouter>
-      </PeopleStoreProvider>
-      </HealthWeightsProvider>
-      </TenantProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 }
 
